@@ -1,0 +1,6 @@
+Patch notes:
+- Add dynamic rows UI for neraca (tanah & kendaraan)
+- JS: addTanah, addKendaraan, removeRow, calcNeraca sums arrays and updates visible single fields
+- Backend: save_section.php lerans arrays 'tanah_nilai' and 'kendaraan_nilai' safely and sums them; fallback to legacy fields
+
+This is a temporary note created by the patch process.

@@ -1,0 +1,4 @@
+<?php
+$form_banner_title = 'Form analisa: debitur PNS';
+$pegawai_tipe_save = 'pns';
+include __DIR__ . '/partials/pegawai_page.inc.php';

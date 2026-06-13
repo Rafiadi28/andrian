@@ -1,0 +1,831 @@
+/**
+ * ============================================================================
+ * MODERN FORM STYLING - BANKING THEME
+ * Form PPPK & Perangkat Desa
+ * ============================================================================
+ * Features:
+ * - Professional banking design
+ * - Consistent spacing & alignment
+ * - Responsive layout (mobile/tablet/desktop)
+ * - Modern typography
+ * - Accessible form elements
+ * ============================================================================
+ */
+
+/* ============================================================================
+   1. RESET & BASE STYLES
+   ============================================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Color Palette */
+    --color-primary: #4f46e5;
+    --color-primary-light: #6366f1;
+    --color-primary-dark: #4338ca;
+    --color-secondary: #10b981;
+    --color-danger: #ef4444;
+    --color-warning: #f59e0b;
+    
+    /* Neutrals */
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+    
+    /* Spacing */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 2.5rem;
+    --space-3xl: 3rem;
+    
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    
+    --line-height-tight: 1.3;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+    
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+    
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 200ms ease;
+    --transition-slow: 300ms ease;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    color: var(--color-gray-900);
+    background: var(--color-gray-50);
+}
+
+/* ============================================================================
+   2. CONTAINER & LAYOUT
+   ============================================================================ */
+
+.form-modern-container {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: var(--space-lg);
+    width: 100%;
+}
+
+.form-modern-card {
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-gray-200);
+    overflow: hidden;
+}
+
+.form-modern-card-header {
+    padding: var(--space-xl);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: var(--color-white);
+    text-align: center;
+}
+
+.form-modern-card-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+}
+
+.form-modern-card-header p {
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
+    margin: 0;
+}
+
+.form-modern-card-content {
+    padding: var(--space-xl);
+}
+
+/* ============================================================================
+   3. SECTION STYLING
+   ============================================================================ */
+
+.form-section {
+    margin-bottom: var(--space-3xl);
+    padding: var(--space-xl);
+    background: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-gray-200);
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+}
+
+.form-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-lg);
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.form-section-icon {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.form-section-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-gray-900);
+    margin: 0;
+}
+
+.form-section-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    margin-top: var(--space-md);
+    line-height: var(--line-height-relaxed);
+}
+
+/* ============================================================================
+   4. FORM GRID & LAYOUT
+   ============================================================================ */
+
+.form-grid {
+    display: grid;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.form-grid-1 {
+    grid-template-columns: 1fr;
+}
+
+.form-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.form-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* ============================================================================
+   5. FORM GROUP & LABELS
+   ============================================================================ */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.form-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-gray-700);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    line-height: var(--line-height-tight);
+}
+
+.form-label-required {
+    color: var(--color-danger);
+    font-weight: 700;
+    font-size: 1.2em;
+}
+
+.form-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    margin-top: var(--space-xs);
+    line-height: var(--line-height-normal);
+}
+
+/* ============================================================================
+   6. INPUT FIELDS
+   ============================================================================ */
+
+.form-input,
+.form-select,
+.form-textarea {
+    display: block;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+    border: 1.5px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    color: var(--color-gray-900);
+    transition: all var(--transition-normal);
+    appearance: none;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: var(--color-gray-400);
+}
+
+/* Focus State */
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: var(--color-white);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+/* Disabled State */
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled {
+    background: var(--color-gray-100);
+    color: var(--color-gray-400);
+    cursor: not-allowed;
+    border-color: var(--color-gray-200);
+}
+
+/* Error State */
+.form-input.form-error,
+.form-select.form-error,
+.form-textarea.form-error {
+    border-color: var(--color-danger);
+    background: #fef2f2;
+}
+
+.form-input.form-error:focus,
+.form-select.form-error:focus,
+.form-textarea.form-error:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+/* Select Arrow */
+.form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* ============================================================================
+   7. DISPLAY BOX (Readonly Fields)
+   ============================================================================ */
+
+.form-display-box {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid #d1fae5;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: #166534;
+    min-height: 44px;
+}
+
+.form-display-value {
+    color: #059669;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   8. ERROR MESSAGES
+   ============================================================================ */
+
+.form-error-message {
+    font-size: var(--font-size-sm);
+    color: var(--color-danger);
+    display: none;
+    margin-top: var(--space-xs);
+    font-weight: 500;
+    animation: slideDown var(--transition-fast) ease;
+}
+
+.form-error-message.show {
+    display: block;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   9. FILE UPLOAD
+   ============================================================================ */
+
+.form-file-wrapper {
+    position: relative;
+}
+
+.form-file-input {
+    display: none;
+}
+
+.form-file-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: 2.5rem 2rem;
+    border: 2px dashed var(--color-primary);
+    border-radius: var(--radius-md);
+    background: rgba(79, 70, 229, 0.05);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-align: center;
+}
+
+.form-file-label:hover {
+    background: rgba(79, 70, 229, 0.1);
+    border-color: var(--color-primary-light);
+    transform: translateY(-2px);
+}
+
+.form-file-label.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.05));
+    border-color: var(--color-secondary);
+}
+
+.form-file-icon {
+    font-size: 2rem;
+}
+
+.form-file-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.form-file-text-main {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.form-file-text-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+}
+
+/* File Preview */
+.form-file-preview {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid #d1fae5;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: #166534;
+    display: none;
+    animation: slideDown var(--transition-fast) ease;
+}
+
+.form-file-preview.show {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.form-file-preview-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.form-file-preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    min-width: 0;
+}
+
+.form-file-preview-name {
+    font-weight: 600;
+    color: #15803d;
+    word-break: break-word;
+}
+
+.form-file-preview-size {
+    font-size: var(--font-size-sm);
+    color: #16a34a;
+    opacity: 0.8;
+}
+
+/* ============================================================================
+   10. DYNAMIC ITEMS (ANGSURAN)
+   ============================================================================ */
+
+.form-dynamic-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.form-dynamic-item {
+    padding: var(--space-lg);
+    border: 1.5px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.form-dynamic-item:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-dynamic-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1.5px solid var(--color-gray-200);
+    gap: var(--space-md);
+}
+
+.form-dynamic-item-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: var(--color-white);
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    flex-shrink: 0;
+}
+
+.form-dynamic-item-title {
+    font-weight: 600;
+    color: var(--color-gray-900);
+    flex: 1;
+}
+
+.form-dynamic-item-delete {
+    background: #fee2e2;
+    color: var(--color-danger);
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.form-dynamic-item-delete:hover {
+    background: #fecaca;
+    color: #b91c1c;
+    transform: translateY(-1px);
+}
+
+.form-dynamic-item-content {
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* ============================================================================
+   11. TOTAL / SUMMARY BOX
+   ============================================================================ */
+
+.form-summary-box {
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, #fef3c7 0%, #fef08a 100%);
+    border: 2px solid #fcd34d;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+}
+
+.form-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+}
+
+.form-summary-row:not(:last-child) {
+    border-bottom: 1px solid #fde68a;
+}
+
+.form-summary-label {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: #92400e;
+}
+
+.form-summary-value {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: #b45309;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   12. BUTTONS
+   ============================================================================ */
+
+.form-button-group {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    margin: var(--space-xl) 0;
+}
+
+.form-button-group-spaced {
+    justify-content: space-between;
+}
+
+.btn {
+    padding: 0.875rem 1.75rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    font-family: var(--font-family);
+    white-space: nowrap;
+    min-height: 44px;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Primary Button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: var(--color-white);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    border: 1.5px solid var(--color-gray-300);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--color-gray-200);
+    border-color: var(--color-gray-400);
+}
+
+/* Success Button */
+.btn-success {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #059669 100%);
+    color: var(--color-white);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* Danger Button */
+.btn-danger {
+    background: linear-gradient(135deg, var(--color-danger) 0%, #dc2626 100%);
+    color: var(--color-white);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* Small Button */
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: var(--font-size-sm);
+}
+
+/* ============================================================================
+   13. RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .form-modern-container {
+        padding: var(--space-md);
+    }
+
+    .form-modern-card-header {
+        padding: var(--space-lg);
+    }
+
+    .form-modern-card-header h1 {
+        font-size: var(--font-size-xl);
+    }
+
+    .form-modern-card-content {
+        padding: var(--space-lg);
+    }
+
+    .form-section {
+        padding: var(--space-lg);
+        margin-bottom: var(--space-2xl);
+    }
+
+    .form-grid-2,
+    .form-grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .form-dynamic-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+
+    .form-dynamic-item-delete {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .form-button-group-spaced {
+        flex-direction: column;
+    }
+
+    .form-button-group-spaced .btn {
+        width: 100%;
+    }
+
+    .form-file-label {
+        padding: 2rem 1.5rem;
+    }
+
+    .form-summary-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        font-size: 14px;
+    }
+
+    .form-modern-container {
+        padding: var(--space-md);
+    }
+
+    .form-modern-card-header {
+        padding: var(--space-lg) var(--space-md);
+    }
+
+    .form-modern-card-header h1 {
+        font-size: var(--font-size-lg);
+    }
+
+    .form-modern-card-content {
+        padding: var(--space-md);
+    }
+
+    .form-section {
+        padding: var(--space-md);
+    }
+
+    .form-section-header {
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+    }
+
+    .form-section-icon {
+        font-size: 1.5rem;
+    }
+
+    .form-section-title {
+        font-size: var(--font-size-base);
+    }
+
+    .form-button-group {
+        flex-direction: column;
+    }
+
+    .form-button-group .btn {
+        width: 100%;
+    }
+
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: var(--font-size-sm);
+    }
+
+    .form-dynamic-item {
+        padding: var(--space-md);
+    }
+
+    .form-dynamic-item-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================================
+   14. UTILITIES
+   ============================================================================ */
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--color-gray-500);
+}
+
+.mt-0 { margin-top: 0; }
+.mt-xs { margin-top: var(--space-xs); }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+.mt-xl { margin-top: var(--space-xl); }
+
+.mb-0 { margin-bottom: 0; }
+.mb-xs { margin-bottom: var(--space-xs); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.mb-xl { margin-bottom: var(--space-xl); }
+
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-lg { gap: var(--space-lg); }
+
+/* ============================================================================
+   END OF MODERN FORM STYLING
+   ============================================================================ */

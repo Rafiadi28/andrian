@@ -1,0 +1,68 @@
+                <div id="tab-penghasilan" class="tab-content">
+                    <h3 class="tab-title">2. Penghasilan &amp; kemampuan bayar (PNS)</h3>
+                    <p class="text-muted" style="margin-bottom:1.25rem;font-size:0.92rem;">Data penghasilan rutin ASN (bukan usaha
+                        wiraswasta). Angka dalam Rupiah per bulan kecuali dinyatakan lain.</p>
+
+                    <div class="section-header">Data kepegawaian</div>
+                    <div class="grid-2">
+                        <div class="custom-form-group"><label>NIP <span style="color:red">*</span></label><input type="text"
+                                id="pns_nip" name="pns_nip" required maxlength="18" minlength="18" pattern="\d{18}"
+                                title="NIP 18 digit"></div>
+                        <div class="custom-form-group"><label>Instansi / Unit kerja <span style="color:red">*</span></label><input
+                                type="text" id="pns_instansi" name="pns_instansi" required style="text-transform:uppercase;"></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="custom-form-group"><label>Golongan / Ruang</label><input type="text" id="pns_golongan"
+                                name="pns_golongan" style="text-transform:uppercase;"></div>
+                        <div class="custom-form-group"><label>Masa kerja (uraian)</label><input type="text" id="pns_masa_kerja"
+                                name="pns_masa_kerja" placeholder="cth: 15 TAHUN"></div>
+                    </div>
+
+                    <div class="section-header">Penghasilan &amp; kewajiban bulanan</div>
+                    <div class="grid-2">
+                        <div class="custom-form-group"><label>Gaji pokok (Rp/bln)</label><input type="number" id="pns_gaji_pokok"
+                                name="pns_gaji_pokok" min="0" value="0" oninput="updateScoringSummary()"></div>
+                        <div class="custom-form-group"><label>Tunjangan tetap + bersifat tetap (Rp/bln)</label><input type="number"
+                                id="pns_tunjangan" name="pns_tunjangan" min="0" value="0" oninput="updateScoringSummary()"></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="custom-form-group"><label>Potongan rutin (pajak, iuran wajib, dll.) (Rp/bln)</label><input
+                                type="number" id="pns_potongan" name="pns_potongan" min="0" value="0" oninput="updateScoringSummary()"></div>
+                        <div class="custom-form-group"><label>Angsuran kredit lain di luar bank ini (Rp/bln)</label><input
+                                type="number" id="pns_angsuran_lain" name="pns_angsuran_lain" min="0" value="0" oninput="updateScoringSummary()"></div>
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Sisa penghasilan bersih estimasi (otomatis)</label>
+                        <div id="pns_sisa_gaji_display"
+                            style="padding:0.75rem 1rem;background:#f0fdf4;border-radius:8px;font-weight:600;color:#166534;">Rp 0
+                        </div>
+                    </div>
+                    <p style="font-size:0.82rem;color:#64748b;">Sisa ≈ (Gaji pokok + Tunjangan) − Potongan − Angsuran lain. Untuk
+                        uji kelayakan, kapasitas angsuran memakai 70% dari angka ini (konservatif).</p>
+
+                    <button type="button" id="btn-save-penghasilan_pegawai" class="btn-save-section"
+                        onclick="syncPnsSisa(); saveSection('penghasilan_pegawai');" style="margin-top:1.5rem;">
+                        <span class="spinner"></span>
+                        <span class="btn-text">💾 Simpan data penghasilan PNS</span>
+                    </button>
+                    <div id="toast-penghasilan_pegawai" class="toast-msg"></div>
+                </div>
+                <script>
+                    function syncPnsSisa() {
+                        var gp = parseFloat(document.getElementById('pns_gaji_pokok').value) || 0;
+                        var tj = parseFloat(document.getElementById('pns_tunjangan').value) || 0;
+                        var pot = parseFloat(document.getElementById('pns_potongan').value) || 0;
+                        var cic = parseFloat(document.getElementById('pns_angsuran_lain').value) || 0;
+                        var sisa = gp + tj - pot - cic;
+                        var el = document.getElementById('pns_sisa_gaji_display');
+                        if (el) el.textContent = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.max(0, sisa));
+                        updateScoringSummary();
+                    }
+                    document.addEventListener('DOMContentLoaded', function () {
+                        ['pns_gaji_pokok', 'pns_tunjangan', 'pns_potongan', 'pns_angsuran_lain'].forEach(function (id) {
+                            var n = document.getElementById(id);
+                            if (n) n.addEventListener('input', syncPnsSisa);
+                        });
+                        syncPnsSisa();
+                    });
+                </script>

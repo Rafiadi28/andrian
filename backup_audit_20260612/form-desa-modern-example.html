@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Perangkat Desa - Modern Design</title>
+    
+    <!-- Modern Form Styling -->
+    <link rel="stylesheet" href="/assets/form-modern-style.css">
+    
+    <style>
+        /* Additional inline styles if needed for specific behavior */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        form {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- MAIN CONTAINER -->
+    <div class="form-modern-container">
+        
+        <!-- CARD WRAPPER -->
+        <div class="form-modern-card">
+            
+            <!-- CARD HEADER -->
+            <div class="form-modern-card-header">
+                <h1>📋 Form Input Perangkat Desa</h1>
+                <p>Sistem Kredit - Bank Kredit Wonosobo 2026</p>
+            </div>
+            
+            <!-- CARD CONTENT -->
+            <div class="form-modern-card-content">
+                <form id="formDesaPekerja" method="POST" enctype="multipart/form-data">
+                    
+                    <!-- ========================================
+                         SECTION 1: DATA JABATAN & SK
+                         ======================================== -->
+                    <section class="form-section">
+                        <div class="form-section-header">
+                            <span class="form-section-icon">👤</span>
+                            <h2 class="form-section-title">1. Data Jabatan & Surat Keputusan</h2>
+                        </div>
+                        <p class="form-section-subtitle">Lengkapi informasi jabatan dan surat keputusan Anda.</p>
+                        
+                        <!-- Grid: 2 columns on desktop, 1 on mobile -->
+                        <div class="form-grid form-grid-2">
+                            
+                            <!-- Field: Jabatan -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Jabatan
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <select id="jabatan" class="form-select" required>
+                                    <option value="">-- Pilih Jabatan --</option>
+                                    <option value="Kepala Desa">Kepala Desa</option>
+                                    <option value="Sekretaris Desa">Sekretaris Desa</option>
+                                    <option value="Bendahara">Bendahara</option>
+                                    <option value="Perangkat Desa Lainnya">Perangkat Desa Lainnya</option>
+                                </select>
+                                <span class="form-error-message" id="error-jabatan"></span>
+                            </div>
+                            
+                            <!-- Field: Nomor SK -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Nomor SK
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="no_sk" 
+                                    class="form-input"
+                                    placeholder="Contoh: SK/001/2026"
+                                    required
+                                >
+                                <span class="form-error-message" id="error-no_sk"></span>
+                                <p class="form-hint">Format: SK/NNN/YYYY</p>
+                            </div>
+                            
+                            <!-- Field: Tanggal Mulai -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Tanggal Mulai Menjabat
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <input 
+                                    type="date" 
+                                    id="tgl_mulai" 
+                                    class="form-input"
+                                    required
+                                >
+                                <span class="form-error-message" id="error-tgl_mulai"></span>
+                            </div>
+                            
+                            <!-- Field: Tanggal Akhir -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Tanggal Akhir Menjabat
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <input 
+                                    type="date" 
+                                    id="tgl_akhir" 
+                                    class="form-input"
+                                    required
+                                >
+                                <span class="form-error-message" id="error-tgl_akhir"></span>
+                            </div>
+                            
+                            <!-- Display: Sisa Masa Jabatan -->
+                            <div class="form-group">
+                                <label class="form-label">Sisa Masa Jabatan</label>
+                                <div class="form-display-box">
+                                    <span class="form-display-value" id="sisa_masa_display">-</span>
+                                </div>
+                                <p class="form-hint">Dihitung otomatis dari tanggal akhir</p>
+                            </div>
+                            
+                        </div>
+                    </section>
+                    
+                    <!-- ========================================
+                         SECTION 2: DATA PENGHASILAN
+                         ======================================== -->
+                    <section class="form-section">
+                        <div class="form-section-header">
+                            <span class="form-section-icon">💰</span>
+                            <h2 class="form-section-title">2. Data Penghasilan</h2>
+                        </div>
+                        <p class="form-section-subtitle">Informasi penghasilan rutin Anda per bulan.</p>
+                        
+                        <div class="form-grid form-grid-3">
+                            
+                            <!-- Field: Penghasilan Tetap -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Penghasilan Tetap
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <input 
+                                    type="number" 
+                                    id="penghasilan_tetap" 
+                                    class="form-input"
+                                    placeholder="0"
+                                    min="0"
+                                    required
+                                >
+                                <span class="form-error-message" id="error-penghasilan_tetap"></span>
+                                <p class="form-hint">Dalam Rupiah</p>
+                            </div>
+                            
+                            <!-- Field: Penghasilan Tambahan -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Penghasilan Tambahan
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <input 
+                                    type="number" 
+                                    id="penghasilan_tambahan" 
+                                    class="form-input"
+                                    placeholder="0"
+                                    min="0"
+                                    required
+                                >
+                                <span class="form-error-message" id="error-penghasilan_tambahan"></span>
+                            </div>
+                            
+                            <!-- Field: Biaya Hidup -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Biaya Hidup Per Bulan
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <input 
+                                    type="number" 
+                                    id="biaya_hidup" 
+                                    class="form-input"
+                                    placeholder="0"
+                                    min="0"
+                                    required
+                                >
+                                <span class="form-error-message" id="error-biaya_hidup"></span>
+                            </div>
+                            
+                        </div>
+                    </section>
+                    
+                    <!-- ========================================
+                         SECTION 3: UPLOAD DOKUMEN
+                         ======================================== -->
+                    <section class="form-section">
+                        <div class="form-section-header">
+                            <span class="form-section-icon">📄</span>
+                            <h2 class="form-section-title">3. Surat Keputusan (Agunan)</h2>
+                        </div>
+                        <p class="form-section-subtitle">Upload fotocopy Surat Keputusan Pengangkatan Jabatan.</p>
+                        
+                        <div class="form-grid form-grid-1">
+                            
+                            <!-- File Upload -->
+                            <div class="form-group">
+                                <label class="form-label">
+                                    File SK (PDF/JPG/PNG)
+                                    <span class="form-label-required">*</span>
+                                </label>
+                                <div class="form-file-wrapper">
+                                    <input 
+                                        type="file" 
+                                        id="file_sk" 
+                                        class="form-file-input"
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        required
+                                    >
+                                    <label for="file_sk" class="form-file-label">
+                                        <span class="form-file-icon">📎</span>
+                                        <span class="form-file-text">
+                                            <span class="form-file-text-main">Klik atau Drag File di sini</span>
+                                            <span class="form-file-text-hint">PDF, JPG, PNG • Max 2MB</span>
+                                        </span>
+                                    </label>
+                                    <div class="form-file-preview" id="file_preview_sk"></div>
+                                    <span class="form-error-message" id="error-file_sk"></span>
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" id="file_sk_name" value="">
+                            
+                        </div>
+                    </section>
+                    
+                    <!-- ========================================
+                         SECTION 4: ANGSURAN BANK WONOSOBO
+                         ======================================== -->
+                    <section class="form-section">
+                        <div class="form-section-header">
+                            <span class="form-section-icon">🏦</span>
+                            <h2 class="form-section-title">4. Angsuran Bank Wonosobo</h2>
+                        </div>
+                        <p class="form-section-subtitle">Daftar semua kredit/angsuran Anda di Bank Kredit Wonosobo.</p>
+                        
+                        <!-- Dynamic Items Container -->
+                        <div id="angsuran_container" class="form-dynamic-container">
+                            <!-- Items akan di-generate oleh JavaScript -->
+                        </div>
+                        
+                        <!-- Add Button -->
+                        <div class="form-button-group">
+                            <button type="button" class="btn btn-primary" onclick="addAngsuran()">
+                                ➕ Tambah Angsuran
+                            </button>
+                        </div>
+                        
+                        <!-- Total Summary Box -->
+                        <div class="form-summary-box">
+                            <div class="form-summary-row">
+                                <span class="form-summary-label">Total Angsuran Bank Wonosobo:</span>
+                                <span class="form-summary-value" id="total_angsuran_display">Rp 0</span>
+                            </div>
+                            <input type="hidden" id="total_angsuran" value="0">
+                        </div>
+                    </section>
+                    
+                    <!-- ========================================
+                         ACTION BUTTONS
+                         ======================================== -->
+                    <div class="form-button-group form-button-group-spaced">
+                        <button type="reset" class="btn btn-secondary">
+                            🔄 Bersihkan Form
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            ✓ Simpan Data Perangkat Desa
+                        </button>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========================================
+         JAVASCRIPT UNTUK FORM FUNCTIONALITY
+         ======================================== -->
+    <script>
+        // ============================================================================
+        // FORM MANAGER - Encapsulated in IIFE
+        // ============================================================================
+        const FormDesaManager = (function() {
+            
+            let angsuranCounter = 0;
+            
+            // ---- Utility Functions ----
+            
+            /**
+             * Calculate date difference in format "X tahun Y bulan"
+             */
+            function calculateDateDiff(startDate, endDate) {
+                const start = new Date(startDate + 'T00:00:00');
+                const end = new Date(endDate + 'T00:00:00');
+                
+                let years = end.getFullYear() - start.getFullYear();
+                let months = end.getMonth() - start.getMonth();
+                let days = end.getDate() - start.getDate();
+                
+                if (days < 0) {
+                    months--;
+                    const lastDay = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+                    days += lastDay;
+                }
+                
+                if (months < 0) {
+                    years--;
+                    months += 12;
+                }
+                
+                return `${years} tahun ${months} bulan`;
+            }
+            
+            /**
+             * Format number to currency (Rp format)
+             */
+            function formatRupiah(number) {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(number);
+            }
+            
+            /**
+             * Parse rupiah string to number
+             */
+            function parseRupiah(str) {
+                return parseInt(str.replace(/\D/g, '')) || 0;
+            }
+            
+            /**
+             * Validate required field
+             */
+            function validateRequired(value, fieldName) {
+                if (!value || value.trim() === '') {
+                    showError(fieldName, `${fieldName} harus diisi`);
+                    return false;
+                }
+                clearError(fieldName);
+                return true;
+            }
+            
+            /**
+             * Show error message
+             */
+            function showError(fieldId, message) {
+                const errorEl = document.getElementById(`error-${fieldId}`);
+                const inputEl = document.getElementById(fieldId);
+                if (errorEl) {
+                    errorEl.textContent = message;
+                    errorEl.classList.add('show');
+                }
+                if (inputEl) {
+                    inputEl.classList.add('form-error');
+                }
+            }
+            
+            /**
+             * Clear error message
+             */
+            function clearError(fieldId) {
+                const errorEl = document.getElementById(`error-${fieldId}`);
+                const inputEl = document.getElementById(fieldId);
+                if (errorEl) {
+                    errorEl.textContent = '';
+                    errorEl.classList.remove('show');
+                }
+                if (inputEl) {
+                    inputEl.classList.remove('form-error');
+                }
+            }
+            
+            // ---- Event Handlers ----
+            
+            /**
+             * Handle date change - calculate sisa masa jabatan
+             */
+            function handleDateChange() {
+                const tglMulai = document.getElementById('tgl_mulai').value;
+                const tglAkhir = document.getElementById('tgl_akhir').value;
+                
+                if (tglMulai && tglAkhir) {
+                    if (new Date(tglAkhir) <= new Date(tglMulai)) {
+                        showError('tgl_akhir', 'Tanggal akhir harus lebih besar dari tanggal mulai');
+                        document.getElementById('sisa_masa_display').textContent = '-';
+                    } else {
+                        clearError('tgl_akhir');
+                        const diff = calculateDateDiff(tglMulai, tglAkhir);
+                        document.getElementById('sisa_masa_display').textContent = diff;
+                    }
+                }
+            }
+            
+            /**
+             * Handle file upload
+             */
+            function handleFileUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Validate file size (max 2MB)
+                const maxSize = 2 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    showError('file_sk', `File terlalu besar. Maksimal 2MB. Ukuran file: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                    return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    showError('file_sk', 'Format file tidak didukung. Gunakan PDF, JPG, atau PNG');
+                    return;
+                }
+                
+                clearError('file_sk');
+                
+                // Show file preview
+                const preview = document.getElementById('file_preview_sk');
+                const ext = file.name.split('.').pop().toLowerCase();
+                const icon = ext === 'pdf' ? '📄' : '🖼️';
+                const size = (file.size / 1024).toFixed(2);
+                
+                preview.innerHTML = `
+                    <span class="form-file-preview-icon">${icon}</span>
+                    <div class="form-file-preview-info">
+                        <span class="form-file-preview-name">${file.name}</span>
+                        <span class="form-file-preview-size">${size} KB</span>
+                    </div>
+                `;
+                preview.classList.add('show');
+                
+                // Store filename
+                document.getElementById('file_sk_name').value = file.name;
+            }
+            
+            /**
+             * Add new angsuran item
+             */
+            function addAngsuran() {
+                angsuranCounter++;
+                const container = document.getElementById('angsuran_container');
+                
+                const item = document.createElement('div');
+                item.className = 'form-dynamic-item';
+                item.dataset.index = angsuranCounter;
+                item.innerHTML = `
+                    <div class="form-dynamic-item-header">
+                        <span class="form-dynamic-item-number">${angsuranCounter}</span>
+                        <span class="form-dynamic-item-title">Angsuran Bank Wonosobo #${angsuranCounter}</span>
+                        <button 
+                            type="button" 
+                            class="form-dynamic-item-delete"
+                            onclick="FormDesaManager.removeAngsuran(${angsuranCounter})"
+                        >
+                            🗑️ Hapus
+                        </button>
+                    </div>
+                    
+                    <div class="form-dynamic-item-content">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Nomor Rekening
+                                <span class="form-label-required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                data-index="${angsuranCounter}"
+                                class="form-input angsuran-no_rek"
+                                placeholder="Contoh: 123456789"
+                                required
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                Nominal Angsuran
+                                <span class="form-label-required">*</span>
+                            </label>
+                            <input 
+                                type="number" 
+                                data-index="${angsuranCounter}"
+                                class="form-input angsuran-nominal"
+                                placeholder="0"
+                                min="0"
+                                oninput="FormDesaManager.updateTotalAngsuran()"
+                                required
+                            >
+                            <p class="form-hint">Dalam Rupiah</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                Jenis Kredit
+                                <span class="form-label-required">*</span>
+                            </label>
+                            <select 
+                                data-index="${angsuranCounter}"
+                                class="form-select angsuran-jenis"
+                                required
+                            >
+                                <option value="">-- Pilih Jenis Kredit --</option>
+                                <option value="KPR">KPR (Kredit Pemilikan Rumah)</option>
+                                <option value="KKB">KKB (Kredit Kendaraan Bermotor)</option>
+                                <option value="KMG">KMG (Kredit Modal Kerja)</option>
+                                <option value="KRG">KRG (Kredit Pertanian)</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+                updateTotalAngsuran();
+            }
+            
+            /**
+             * Remove angsuran item
+             */
+            function removeAngsuran(index) {
+                const item = document.querySelector(`[data-index="${index}"]`);
+                if (item) {
+                    item.remove();
+                    updateTotalAngsuran();
+                }
+            }
+            
+            /**
+             * Update total angsuran
+             */
+            function updateTotalAngsuran() {
+                const items = document.querySelectorAll('.angsuran-nominal');
+                let total = 0;
+                
+                items.forEach(item => {
+                    const value = parseInt(item.value) || 0;
+                    total += value;
+                });
+                
+                document.getElementById('total_angsuran').value = total;
+                document.getElementById('total_angsuran_display').textContent = formatRupiah(total);
+            }
+            
+            // ---- Form Submission ----
+            
+            function handleSubmit(e) {
+                e.preventDefault();
+                
+                // Validate required fields
+                let isValid = true;
+                
+                const requiredFields = ['jabatan', 'no_sk', 'tgl_mulai', 'tgl_akhir', 'penghasilan_tetap', 'penghasilan_tambahan', 'biaya_hidup'];
+                
+                requiredFields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (!field.value || field.value.trim() === '') {
+                        showError(fieldId, 'Field ini harus diisi');
+                        isValid = false;
+                    }
+                });
+                
+                if (!isValid) {
+                    alert('Mohon lengkapi semua field yang diperlukan');
+                    return;
+                }
+                
+                // Collect form data
+                const formData = {
+                    jabatan: document.getElementById('jabatan').value,
+                    no_sk: document.getElementById('no_sk').value,
+                    tgl_mulai: document.getElementById('tgl_mulai').value,
+                    tgl_akhir: document.getElementById('tgl_akhir').value,
+                    sisa_masa: document.getElementById('sisa_masa_display').textContent,
+                    penghasilan_tetap: document.getElementById('penghasilan_tetap').value,
+                    penghasilan_tambahan: document.getElementById('penghasilan_tambahan').value,
+                    biaya_hidup: document.getElementById('biaya_hidup').value,
+                    file_sk: document.getElementById('file_sk_name').value,
+                    total_angsuran: document.getElementById('total_angsuran').value,
+                    angsuran_items: []
+                };
+                
+                // Collect angsuran items
+                const items = document.querySelectorAll('.form-dynamic-item');
+                items.forEach((item, idx) => {
+                    const no_rek = item.querySelector('.angsuran-no_rek').value;
+                    const nominal = item.querySelector('.angsuran-nominal').value;
+                    const jenis = item.querySelector('.angsuran-jenis').value;
+                    
+                    if (no_rek && nominal && jenis) {
+                        formData.angsuran_items.push({
+                            no_rek,
+                            nominal,
+                            jenis
+                        });
+                    }
+                });
+                
+                // Log untuk testing
+                console.log('Form Data:', formData);
+                alert('Form valid! Data siap dikirim ke server.\n\nLihat console untuk detail data.');
+            }
+            
+            // ---- Initialize ----
+            
+            function init() {
+                // Date change listener
+                document.getElementById('tgl_mulai').addEventListener('change', handleDateChange);
+                document.getElementById('tgl_akhir').addEventListener('change', handleDateChange);
+                
+                // File upload listener
+                document.getElementById('file_sk').addEventListener('change', handleFileUpload);
+                
+                // Form submit listener
+                document.getElementById('formDesaPekerja').addEventListener('submit', handleSubmit);
+                
+                // Add first empty angsuran item
+                addAngsuran();
+            }
+            
+            // Public API
+            return {
+                init,
+                addAngsuran,
+                removeAngsuran,
+                updateTotalAngsuran
+            };
+        })();
+        
+        // Initialize form on page load
+        document.addEventListener('DOMContentLoaded', FormDesaManager.init);
+    </script>
+</body>
+</html>

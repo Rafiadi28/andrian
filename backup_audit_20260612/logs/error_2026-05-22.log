@@ -1,0 +1,1 @@
+[2026-05-22 06:38:58] save_section catch error | Context: {"section":"submit","message":"SQLSTATE[01000]: Warning: 1265 Data truncated for column 'level_approval' at row 1","code":"01000","line":1550,"file":"D:\\laragon\\www\\andrian\\bank-kredit\\analis\\save_section.php","user_id":2}
