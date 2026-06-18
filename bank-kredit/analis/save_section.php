@@ -5,6 +5,15 @@ require_once __DIR__ . '/../helpers/repayment_override.php';
 require_once __DIR__ . '/../helpers/repayment_snapshot.php';
 requireSameRole('analis');
 
+// Type assertion for static analysis — $pdo is guaranteed initialized by functions.php
+/** @var PDO $pdo */
+// @phpstan-ignore-next-line
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Database connection error']);
+    exit;
+}
+
 header('Content-Type: application/json');
 
 if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
