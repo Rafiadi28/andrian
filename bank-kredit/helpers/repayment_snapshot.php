@@ -302,3 +302,4 @@ function getRepaymentParameterSnapshotForApproval(PDO $pdo, int $id_pengajuan): 
 {
     return fetchRepaymentParameterSnapshot($pdo, $id_pengajuan);
 }
+?>
