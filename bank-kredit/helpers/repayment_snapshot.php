@@ -241,7 +241,6 @@ function captureRepaymentParameterSnapshot(
  */
 function fetchRepaymentParameterSnapshot(PDO $pdo, int $id_pengajuan)
 {
-    /** @var array|null **/
     try {
         $stmt = $pdo->prepare("
             SELECT rps.*,
@@ -295,7 +294,6 @@ function formatRepaymentParameterSnapshot(array $snapshot): string
  */
 function getRepaymentParameterSnapshotForApproval(PDO $pdo, int $id_pengajuan)
 {
-    /** @var array|null **/
     return fetchRepaymentParameterSnapshot($pdo, $id_pengajuan);
 }
 ?>
