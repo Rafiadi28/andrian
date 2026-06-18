@@ -2,6 +2,13 @@
 require_once 'config/database.php';
 require_once 'includes/schema_realtime_migrate.php';
 
+// Type assertion for static analysis — $pdo is guaranteed initialized by config/database.php
+/** @var PDO $pdo */
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    echo "Error: Database connection not initialized\n";
+    exit(1);
+}
+
 bankKreditEnsureSchema($pdo);
 
 echo "=== STEP 9 SNAPSHOT TABLE VERIFICATION ===\n\n";
