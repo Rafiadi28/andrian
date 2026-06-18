@@ -1,11 +1,5 @@
 <?php
-/**
- * Repayment Parameter Snapshot Management
- * 
- * STEP 9: Sinkronisasi hasil analisa
- * Captures and manages repayment parameter snapshots at time of analysis save
- * Ensures all approval levels use same parameters (immutable snapshot)
- */
+
 
 if (isset($_SERVER['SCRIPT_FILENAME']) && @realpath((string) $_SERVER['SCRIPT_FILENAME']) === @realpath(__FILE__)) {
     http_response_code(403);
@@ -74,7 +68,7 @@ function bankKreditEnsureRepaymentSnapshotSchema(PDO $pdo)
 }
 
 /**
- * Capture repayment parameter snapshot when analyst saves pengajuan
+ * Capture repayment parameter snapshot
  * 
  * @param PDO $pdo
  * @param int $id_pengajuan
@@ -245,8 +239,9 @@ function captureRepaymentParameterSnapshot(
  * @param int $id_pengajuan
  * @return array|null Snapshot record or null if not found
  */
-function fetchRepaymentParameterSnapshot(PDO $pdo, int $id_pengajuan): ?array
+function fetchRepaymentParameterSnapshot(PDO $pdo, int $id_pengajuan)
 {
+    /** @var array|null **/
     try {
         $stmt = $pdo->prepare("
             SELECT rps.*,
@@ -298,8 +293,9 @@ function formatRepaymentParameterSnapshot(array $snapshot): string
  * @param int $id_pengajuan
  * @return array Snapshot data for use in approval
  */
-function getRepaymentParameterSnapshotForApproval(PDO $pdo, int $id_pengajuan): ?array
+function getRepaymentParameterSnapshotForApproval(PDO $pdo, int $id_pengajuan)
 {
+    /** @var array|null **/
     return fetchRepaymentParameterSnapshot($pdo, $id_pengajuan);
 }
 ?>
