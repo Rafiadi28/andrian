@@ -16,6 +16,28 @@ if (!isset($pdo) || !($pdo instanceof PDO)) {
 
 header('Content-Type: application/json');
 
+// Function stubs for static analysis (actual implementations in repayment_snapshot.php)
+if (!function_exists('captureRepaymentParameterSnapshot')) {
+    /**
+     * Stub for static analysis - actual implementation in helpers/repayment_snapshot.php
+     * @param PDO $pdo
+     * @param int $id_pengajuan
+     * @param string $jenis_kredit
+     * @param float $nilai_dasar
+     * @param array|null $overrideData
+     * @return array
+     */
+    function captureRepaymentParameterSnapshot(
+        PDO $pdo,
+        int $id_pengajuan,
+        string $jenis_kredit,
+        float $nilai_dasar,
+        ?array $overrideData = null
+    ): array {
+        return [];
+    }
+}
+
 if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
     echo json_encode(['success' => false, 'message' => 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.']);
     exit;
@@ -28,7 +50,7 @@ if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
 /**
  * Validate and sanitize text input: trim, limit length, prevent injection
  */
-function validateText($value, $maxLength = 100, $fieldName = 'field', $allowUpper = true)
+function validateText(mixed $value, int $maxLength = 100, string $fieldName = 'field', bool $allowUpper = true): string
 {
     $value = trim((string)$value);
     
@@ -49,7 +71,7 @@ function validateText($value, $maxLength = 100, $fieldName = 'field', $allowUppe
 /**
  * Validate and sanitize numeric strings
  */
-function validateNumber($value, $fieldName = 'field')
+function validateNumber(mixed $value, string $fieldName = 'field'): string
 {
     $value = trim((string)$value);
     
@@ -63,7 +85,7 @@ function validateNumber($value, $fieldName = 'field')
 /**
  * Validate decimal numbers
  */
-function validateDecimal($value, $fieldName = 'field')
+function validateDecimal(mixed $value, string $fieldName = 'field'): float
 {
     $value = floatval($value);
     
@@ -77,7 +99,7 @@ function validateDecimal($value, $fieldName = 'field')
 /**
  * Validate date format
  */
-function validateDate($value, $fieldName = 'field')
+function validateDate(mixed $value, string $fieldName = 'field'): ?string
 {
     $value = trim((string)$value);
     
