@@ -96,14 +96,13 @@ if (!empty($pending_items)) {
 function getComplianceStatusBadge($id_pengajuan) {
     global $compliance_status_cache;
     $status = $compliance_status_cache[$id_pengajuan] ?? 'tidak_ada';
-    
+
     if ($status === 'lengkap') {
-        return '<span class="badge badge-success" title="Assessment kepatuhan sudah lengkap">✓ Compliance OK</span>';
+        return '<span class="badge badge-success" title="Assessment kepatuhan sudah lengkap">Compliance OK</span>';
     } elseif ($status === 'partial') {
-        return '<span class="badge badge-warning" title="Assessment kepatuhan masih belum lengkap">⚠ Compliance Partial</span>';
-    } else {
-        return '<span class="badge badge-danger" title="Menunggu assessment kepatuhan">✗ Waiting Compliance</span>';
+        return '<span class="badge badge-warning" title="Assessment kepatuhan masih belum lengkap">Partial</span>';
     }
+    return '<span class="badge badge-danger" title="Menunggu assessment kepatuhan">Belum Ada</span>';
 }
 
 // URL helper function
@@ -132,6 +131,7 @@ function sort_link_proses($column, $label) {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proses Approval - <?= strtoupper(str_replace('_', ' ', $my_role)) ?></title>
     <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -139,12 +139,14 @@ function sort_link_proses($column, $label) {
     <?php include __DIR__ . '/navbar.php'; ?>
 
     <div class="container">
-        <div class="flex-between mb-4">
-            <h1>Antrian Proses (<?= strtoupper(str_replace('_',' ', $my_role)) ?>)</h1>
-        </div>
+        <?php
+        $page_title = 'Antrian Proses';
+        $page_subtitle = 'Pengajuan yang menunggu keputusan ' . ucwords(str_replace('_', ' ', $my_role));
+        include __DIR__ . '/page_header.inc.php';
+        ?>
 
-        <?php if(isset($success)): ?><div class="alert alert-success">✓ <?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
-        <?php if(isset($error)): ?><div class="alert alert-error">✗ <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
+        <?php if(isset($success)): ?><div class="alert alert-success"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
+        <?php if(isset($error)): ?><div class="alert alert-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
 
         <!-- Filter Section -->
         <div class="filter-section">
@@ -165,65 +167,65 @@ function sort_link_proses($column, $label) {
                     </div>
                     <div></div>
                     <div></div>
-                    <button type="submit" class="btn btn-primary">🔍 Cari</button>
-                    <a href="?" class="btn btn-secondary">↺ Reset</a>
+                    <button type="submit" class="btn btn-primary">Cari</button>
+                    <a href="?" class="btn btn-secondary">Reset</a>
                 </div>
             </form>
         </div>
 
         <div class="record-info">
-            📊 Menampilkan <strong><?= count($pending_items) ?></strong> dari <strong><?= $total_records ?></strong> pengajuan 
-            <?php if (!empty($search)): ?><span class="search-highlight"> | Pencarian: "<?= htmlspecialchars($search) ?>"</span><?php endif; ?>
+            Menampilkan <strong><?= count($pending_items) ?></strong> dari <strong><?= $total_records ?></strong> pengajuan
+            <?php if (!empty($search)): ?><span class="search-highlight"> — "<?= htmlspecialchars($search) ?>"</span><?php endif; ?>
         </div>
 
         <div class="card">
             <?php if(empty($pending_items)): ?>
                 <div class="empty-state">
                     <?php if (!empty($search)): ?>
-                        <p>❌ Tidak ada hasil untuk pencarian "<?= htmlspecialchars($search) ?>". <a href="?">Lihat semua →</a></p>
+                        <p>Tidak ada hasil untuk pencarian tersebut. <a href="?">Lihat semua</a></p>
                     <?php else: ?>
-                        <p>✅ Tidak ada pengajuan yang perlu diproses.</p>
+                        <p>Tidak ada pengajuan yang perlu diproses.</p>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
                 <div class="table-responsive">
-                    <table>
+                    <table class="table-stack">
                         <thead>
                             <tr>
                                 <th><?= sort_link_proses('tanggal_pengajuan', 'Tgl Input') ?></th>
                                 <th><?= sort_link_proses('nama_debitur', 'Debitur') ?></th>
                                 <th><?= sort_link_proses('jumlah_kredit', 'Nominal') ?></th>
                                 <th>Jenis</th>
-                                <th style="min-width: 120px;">Compliance</th>
+                                <th>Compliance</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach($pending_items as $item): 
+                            <?php foreach($pending_items as $item):
                                 $comp_status = $compliance_status_cache[$item['id_pengajuan']] ?? 'tidak_ada';
                                 $is_compliance_blocked = ($comp_status !== 'lengkap') && in_array($my_role, ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama']);
                             ?>
-                            <tr<?= $is_compliance_blocked ? ' style="background-color: #fff5f5;"' : '' ?>>
-                                <td><?= date('d/M/Y', strtotime($item['tanggal_pengajuan'])) ?></td>
-                                <td>
+                            <tr<?= $is_compliance_blocked ? ' class="row-blocked"' : '' ?>>
+                                <td data-label="Tgl"><?= date('d/M/Y', strtotime($item['tanggal_pengajuan'])) ?></td>
+                                <td data-label="Debitur">
                                     <strong><?= htmlspecialchars($item['nama_debitur']) ?></strong><br>
                                     <small class="text-muted"><?= htmlspecialchars($item['pekerjaan']) ?></small>
                                 </td>
-                                <td><?= formatRupiah($item['jumlah_kredit']) ?></td>
-                                <td><span class="badge badge-process"><?= htmlspecialchars($item['jenis_kredit'] ?? '-') ?></span></td>
-                                <td>
+                                <td data-label="Nominal"><?= formatRupiah($item['jumlah_kredit']) ?></td>
+                                <td data-label="Jenis"><span class="badge badge-process"><?= htmlspecialchars($item['jenis_kredit'] ?? '-') ?></span></td>
+                                <td data-label="Compliance">
                                     <?= getComplianceStatusBadge($item['id_pengajuan']) ?>
                                     <?php if ($is_compliance_blocked): ?>
-                                        <br><small style="color:#d32f2f;">⚠ Blokir approval</small>
+                                        <br><small class="text-sm" style="color:var(--danger);">Blokir approval</small>
                                     <?php endif; ?>
                                 </td>
-                                <td>
-                                    <div class="flex gap-1">
-                                        <a href="../detail.php?id=<?= $item['id_pengajuan'] ?>" class="btn btn-secondary" style="font-size:0.8rem; padding: 0.5rem 1rem;">Detail</a>
+                                <td data-label="Aksi">
+                                    <div class="table-actions">
+                                        <a href="../detail.php?id=<?= $item['id_pengajuan'] ?>" class="btn btn-secondary btn-sm">Detail</a>
                                         <?php if ($is_compliance_blocked): ?>
-                                            <button class="btn btn-secondary" style="font-size:0.8rem; padding: 0.5rem 1rem; opacity: 0.6;" disabled title="Approval diblokir: menunggu assessment kepatuhan" onclick="alert('⚠️ Pengajuan ini TIDAK BISA diproses sampai Dept. Kepatuhan menyelesaikan assessment.\n\nSilakan hubungi Dept. Kepatuhan untuk menyelesaikan compliance assessment terlebih dahulu.');">Proses (Blokir)</button>
+                                            <button class="btn btn-secondary btn-sm" disabled title="Menunggu assessment kepatuhan" onclick="alert('Pengajuan ini tidak bisa diproses sampai Dept. Kepatuhan menyelesaikan assessment.');">Blokir</button>
                                         <?php else: ?>
-                                            <button onclick="openModal('<?= $item['id_pengajuan'] ?>', '<?= htmlspecialchars($item['nama_debitur'], ENT_QUOTES) ?>', '<?= formatRupiah($item['jumlah_kredit']) ?>')" class="btn btn-primary" style="font-size:0.8rem; padding: 0.5rem 1rem;">Proses</button>
+                                            <button onclick="openModal('<?= $item['id_pengajuan'] ?>', '<?= htmlspecialchars($item['nama_debitur'], ENT_QUOTES) ?>', '<?= formatRupiah($item['jumlah_kredit']) ?>')" class="btn btn-primary btn-sm">Proses</button>
                                         <?php endif; ?>
                                     </div>
                                 </td>

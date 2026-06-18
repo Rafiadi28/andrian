@@ -574,6 +574,54 @@ function bankKreditEnsureSchema(PDO $pdo)
             }
         }
 
+        // Master Parameter Repayment Capacity
+        $tableExistsMasterParamRepayment = $pdo->query("SHOW TABLES LIKE 'master_parameter_repayment'")->rowCount() > 0;
+        if (!$tableExistsMasterParamRepayment) {
+            $pdo->exec("
+                CREATE TABLE master_parameter_repayment (
+                    id_parameter INT AUTO_INCREMENT PRIMARY KEY,
+                    jenis_kredit VARCHAR(50) NOT NULL DEFAULT 'default'
+                        COMMENT 'default|umum|pppk|perangkat_desa|kpr|kretamas|cashcolateral',
+                    dasar_perhitungan VARCHAR(50) NOT NULL DEFAULT 'net_cashflow'
+                        COMMENT 'net_cashflow|gaji_bersih|gaji_bersih_pendapatan|laba_bersih',
+                    persen_maks_angsuran DECIMAL(5,2) NOT NULL DEFAULT 75.00
+                        COMMENT 'Persentase maksimal angsuran dari dasar perhitungan',
+                    status ENUM('aktif','nonaktif') NOT NULL DEFAULT 'aktif',
+                    tgl_berlaku_mulai DATE NOT NULL,
+                    tgl_berlaku_sampai DATE NULL,
+                    keterangan_kebijakan TEXT NULL,
+                    status_approval ENUM('draft','menunggu','disetujui','ditolak') NOT NULL DEFAULT 'draft',
+                    created_by INT NULL,
+                    approved_by INT NULL,
+                    approved_at TIMESTAMP NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_mpr_jenis (jenis_kredit),
+                    INDEX idx_mpr_status (status),
+                    INDEX idx_mpr_approval (status_approval),
+                    INDEX idx_mpr_berlaku (tgl_berlaku_mulai, tgl_berlaku_sampai)
+                )
+            ");
+
+            bankKreditSeedRepaymentPolicyDefaults($pdo);
+        }
+
+        if ($tableExistsMasterParamRepayment) {
+            bankKreditEnsureRepaymentPolicyDefaults($pdo);
+            bankKreditEnsureRepaymentRbacSchema($pdo);
+            bankKreditEnsureRepaymentEffectiveDateSchema($pdo);
+            bankKreditEnsureRepaymentOverrideSchema($pdo);
+            bankKreditEnsureRepaymentParameterAuditSchema($pdo);
+            bankKreditEnsureAuditRepaymentAnalisaSchema($pdo);
+            // STEP 9: Ensure snapshot schema
+            try {
+                require_once __DIR__ . '/../helpers/repayment_snapshot.php';
+                bankKreditEnsureRepaymentSnapshotSchema($pdo);
+            } catch (Throwable $e) {
+                error_log('STEP 9 snapshot schema: ' . $e->getMessage());
+            }
+        }
+
         bankKreditEnsureIndexes($pdo);
         bankKreditEnsureForeignKeys($pdo);
     } catch (Throwable $e) {
@@ -790,5 +838,317 @@ function bankKreditEnsureIndexes(PDO $pdo)
             'idx_audit_user_waktu',
             "CREATE INDEX idx_audit_user_waktu ON {$t} (id_user, waktu)"
         );
+    }
+}
+
+/**
+ * Kebijakan default repayment (STEP 4) — disalin di sini agar migrasi mandiri.
+ *
+ * @return array<int, array{jenis:string,dasar:string,persen:float,ket:string}>
+ */
+function bankKreditRepaymentPolicyRows()
+{
+    return [
+        ['jenis' => 'umum', 'dasar' => 'net_cashflow', 'persen' => 75.00, 'ket' => 'Kebijakan default: Umum/Wiraswasta — Cashflow 75%.'],
+        ['jenis' => 'perangkat_desa', 'dasar' => 'gaji_bersih', 'persen' => 75.00, 'ket' => 'Kebijakan default: Perangkat Desa — Gaji Bersih 75%.'],
+        ['jenis' => 'pppk', 'dasar' => 'gaji_bersih', 'persen' => 95.00, 'ket' => 'Kebijakan default: PPPK — Gaji Bersih 95%.'],
+        ['jenis' => 'kretamas', 'dasar' => 'gaji_bersih_pendapatan', 'persen' => 95.00, 'ket' => 'Kebijakan default: Kredit Emas — Gaji Bersih/Pendapatan 95%.'],
+        ['jenis' => 'cashcolateral', 'dasar' => 'gaji_bersih_pendapatan', 'persen' => 95.00, 'ket' => 'Kebijakan default: Cash Collateral — Gaji Bersih/Pendapatan 95%.'],
+    ];
+}
+
+/**
+ * Seed parameter repayment saat tabel baru dibuat.
+ */
+function bankKreditSeedRepaymentPolicyDefaults(PDO $pdo)
+{
+    $insertParam = $pdo->prepare("
+        INSERT INTO master_parameter_repayment
+            (jenis_kredit, dasar_perhitungan, persen_maks_angsuran, status, tgl_berlaku_mulai, keterangan_kebijakan, status_approval)
+        VALUES (?, ?, ?, 'aktif', '2020-01-01', ?, 'disetujui')
+    ");
+    foreach (bankKreditRepaymentPolicyRows() as $dp) {
+        $checkParam = $pdo->prepare("SELECT id_parameter FROM master_parameter_repayment WHERE jenis_kredit = ? LIMIT 1");
+        $checkParam->execute([$dp['jenis']]);
+        if ($checkParam->rowCount() === 0) {
+            $insertParam->execute([$dp['jenis'], $dp['dasar'], $dp['persen'], $dp['ket']]);
+        }
+    }
+
+    $checkDefault = $pdo->prepare("SELECT id_parameter FROM master_parameter_repayment WHERE jenis_kredit = 'default' LIMIT 1");
+    $checkDefault->execute();
+    if ($checkDefault->rowCount() === 0) {
+        $insertParam->execute([
+            'default',
+            'net_cashflow',
+            75.00,
+            'Fallback parameter 75% net cashflow untuk jenis kredit tanpa parameter khusus.',
+        ]);
+    }
+}
+
+/**
+ * Selaraskan kebijakan default (STEP 4) pada database yang sudah ada — sekali per versi.
+ */
+function bankKreditEnsureRepaymentPolicyDefaults(PDO $pdo)
+{
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS bank_kredit_meta (
+                meta_key VARCHAR(64) PRIMARY KEY,
+                meta_value VARCHAR(255) NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $targetVersion = 2;
+        $stmtVer = $pdo->prepare("SELECT meta_value FROM bank_kredit_meta WHERE meta_key = 'repayment_policy_version' LIMIT 1");
+        $stmtVer->execute();
+        $currentVersion = (int) ($stmtVer->fetchColumn() ?: 0);
+
+        $upsert = $pdo->prepare("
+            UPDATE master_parameter_repayment
+            SET dasar_perhitungan = ?, persen_maks_angsuran = ?, keterangan_kebijakan = ?,
+                status = 'aktif', status_approval = 'disetujui',
+                tgl_berlaku_mulai = '2020-01-01', tgl_berlaku_sampai = NULL, updated_at = NOW()
+            WHERE id_parameter = ?
+        ");
+        $insert = $pdo->prepare("
+            INSERT INTO master_parameter_repayment
+                (jenis_kredit, dasar_perhitungan, persen_maks_angsuran, status, tgl_berlaku_mulai, keterangan_kebijakan, status_approval)
+            VALUES (?, ?, ?, 'aktif', '2020-01-01', ?, 'disetujui')
+        ");
+        $find = $pdo->prepare("SELECT id_parameter FROM master_parameter_repayment WHERE jenis_kredit = ? ORDER BY id_parameter ASC LIMIT 1");
+
+        $applyPolicy = function (array $dp) use ($find, $upsert, $insert) {
+            $find->execute([$dp['jenis']]);
+            $existingId = $find->fetchColumn();
+            if ($existingId) {
+                $upsert->execute([$dp['dasar'], $dp['persen'], $dp['ket'], $existingId]);
+            } else {
+                $insert->execute([$dp['jenis'], $dp['dasar'], $dp['persen'], $dp['ket']]);
+            }
+        };
+
+        if ($currentVersion < $targetVersion) {
+            foreach (bankKreditRepaymentPolicyRows() as $dp) {
+                $applyPolicy($dp);
+            }
+
+            $find->execute(['default']);
+            if (!$find->fetchColumn()) {
+                $insert->execute([
+                    'default',
+                    'net_cashflow',
+                    75.00,
+                    'Fallback parameter 75% net cashflow untuk jenis kredit tanpa parameter khusus.',
+                ]);
+            }
+
+            $pdo->prepare("
+                INSERT INTO bank_kredit_meta (meta_key, meta_value) VALUES ('repayment_policy_version', ?)
+                ON DUPLICATE KEY UPDATE meta_value = VALUES(meta_value)
+            ")->execute([(string) $targetVersion]);
+        } else {
+            foreach (bankKreditRepaymentPolicyRows() as $dp) {
+                $check = $pdo->prepare("SELECT id_parameter FROM master_parameter_repayment WHERE jenis_kredit = ? LIMIT 1");
+                $check->execute([$dp['jenis']]);
+                if ($check->rowCount() === 0) {
+                    $insert->execute([$dp['jenis'], $dp['dasar'], $dp['persen'], $dp['ket']]);
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('bankKreditEnsureRepaymentPolicyDefaults: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Patch skema RBAC approval berjenjang untuk master parameter repayment.
+ */
+function bankKreditEnsureRepaymentRbacSchema(PDO $pdo)
+{
+    try {
+        $tableExists = $pdo->query("SHOW TABLES LIKE 'master_parameter_repayment'")->rowCount() > 0;
+        if (!$tableExists) {
+            return;
+        }
+
+        $col = $pdo->query("SHOW COLUMNS FROM master_parameter_repayment LIKE 'status_approval'")->fetch(PDO::FETCH_ASSOC);
+        if ($col && strpos((string) ($col['Type'] ?? ''), 'disetujui_kadiv') === false) {
+            $pdo->exec("
+                ALTER TABLE master_parameter_repayment
+                MODIFY status_approval ENUM('draft','menunggu','disetujui_kadiv','disetujui','ditolak')
+                NOT NULL DEFAULT 'draft'
+            ");
+        }
+
+        $rbacColumns = [
+            'submitted_by' => "INT NULL COMMENT 'User yang mengajukan usulan (Kabag Kredit)' AFTER approved_at",
+            'submitted_at' => "TIMESTAMP NULL COMMENT 'Waktu pengajuan usulan' AFTER submitted_by",
+            'approved_kadiv_by' => "INT NULL COMMENT 'Kadiv yang menyetujui tahap 1' AFTER submitted_at",
+            'approved_kadiv_at' => "TIMESTAMP NULL COMMENT 'Waktu persetujuan Kadiv' AFTER approved_kadiv_by",
+            'catatan_kadiv' => "TEXT NULL COMMENT 'Catatan review Kadiv' AFTER approved_kadiv_at",
+            'catatan_direksi' => "TEXT NULL COMMENT 'Catatan persetujuan/penolakan Direksi' AFTER catatan_kadiv",
+        ];
+
+        foreach ($rbacColumns as $column => $definition) {
+            if ($pdo->query("SHOW COLUMNS FROM master_parameter_repayment LIKE " . $pdo->quote($column))->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE master_parameter_repayment ADD COLUMN {$column} {$definition}");
+            }
+        }
+
+        $logExists = $pdo->query("SHOW TABLES LIKE 'repayment_parameter_workflow_log'")->rowCount() > 0;
+        if (!$logExists) {
+            $pdo->exec("
+                CREATE TABLE repayment_parameter_workflow_log (
+                    id_log INT AUTO_INCREMENT PRIMARY KEY,
+                    id_parameter INT NOT NULL,
+                    aksi VARCHAR(50) NOT NULL,
+                    status_dari VARCHAR(32) NULL,
+                    status_ke VARCHAR(32) NOT NULL,
+                    id_user INT NULL,
+                    catatan TEXT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_rpw_param (id_parameter),
+                    INDEX idx_rpw_waktu (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+        }
+    } catch (Throwable $e) {
+        error_log('bankKreditEnsureRepaymentRbacSchema: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Skema effective date repayment: tanggal analisa pengajuan + snapshot parameter.
+ */
+function bankKreditEnsureRepaymentEffectiveDateSchema(PDO $pdo)
+{
+    try {
+        if ($pdo->query("SHOW TABLES LIKE 'pengajuan_kredit'")->rowCount() === 0) {
+            return;
+        }
+
+        $columns = [
+            'tanggal_analisa' => "DATE NULL COMMENT 'Tanggal acuan pemilihan parameter repayment' AFTER tanggal_pengajuan",
+            'id_parameter_repayment' => "INT NULL COMMENT 'Parameter repayment yang dipakai saat analisa' AFTER repayment_capacity",
+            'repayment_parameter_snapshot' => "JSON NULL COMMENT 'Snapshot parameter saat analisa terakhir disimpan' AFTER id_parameter_repayment",
+        ];
+
+        foreach ($columns as $column => $definition) {
+            if ($pdo->query("SHOW COLUMNS FROM pengajuan_kredit LIKE " . $pdo->quote($column))->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN {$column} {$definition}");
+            }
+        }
+
+        $pdo->exec("
+            UPDATE pengajuan_kredit
+            SET tanggal_analisa = DATE(tanggal_pengajuan)
+            WHERE tanggal_analisa IS NULL AND tanggal_pengajuan IS NOT NULL
+        ");
+    } catch (Throwable $e) {
+        error_log('bankKreditEnsureRepaymentEffectiveDateSchema: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Kolom override repayment per pengajuan (hanya Direksi, tidak mengubah master).
+ */
+function bankKreditEnsureRepaymentOverrideSchema(PDO $pdo)
+{
+    try {
+        if ($pdo->query("SHOW TABLES LIKE 'pengajuan_kredit'")->rowCount() === 0) {
+            return;
+        }
+
+        $columns = [
+            'repayment_capacity_dihitung' => "DECIMAL(15,2) NULL COMMENT 'RPC hasil perhitungan master (tanpa override)' AFTER id_parameter_repayment",
+            'repayment_override_aktif' => "TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 jika override Direksi aktif' AFTER repayment_capacity_dihitung",
+            'repayment_override_nilai' => "DECIMAL(15,2) NULL COMMENT 'Nilai RPC setelah override' AFTER repayment_override_aktif",
+            'repayment_override_alasan' => "TEXT NULL COMMENT 'Alasan override Direksi' AFTER repayment_override_nilai",
+            'repayment_override_by' => "INT NULL COMMENT 'User Direksi yang meng-override' AFTER repayment_override_alasan",
+            'repayment_override_at' => "TIMESTAMP NULL COMMENT 'Waktu override' AFTER repayment_override_by",
+        ];
+
+        foreach ($columns as $column => $definition) {
+            if ($pdo->query("SHOW COLUMNS FROM pengajuan_kredit LIKE " . $pdo->quote($column))->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN {$column} {$definition}");
+            }
+        }
+
+        $pdo->exec("
+            UPDATE pengajuan_kredit
+            SET repayment_capacity_dihitung = repayment_capacity
+            WHERE repayment_capacity_dihitung IS NULL AND repayment_capacity > 0
+        ");
+    } catch (Throwable $e) {
+        error_log('bankKreditEnsureRepaymentOverrideSchema: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Audit log parameter repayment — append-only (tidak ada UPDATE/DELETE dari aplikasi).
+ */
+function bankKreditEnsureRepaymentParameterAuditSchema(PDO $pdo)
+{
+    try {
+        $exists = $pdo->query("SHOW TABLES LIKE 'repayment_parameter_audit_log'")->rowCount() > 0;
+        if (!$exists) {
+            $pdo->exec("
+                CREATE TABLE repayment_parameter_audit_log (
+                    id_audit BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    id_parameter INT NOT NULL,
+                    aksi VARCHAR(64) NOT NULL,
+                    waktu TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    id_user INT NULL COMMENT 'User yang melakukan perubahan',
+                    role_user VARCHAR(64) NULL COMMENT 'Role pengguna saat perubahan',
+                    nilai_sebelum JSON NULL COMMENT 'Snapshot nilai sebelum perubahan',
+                    nilai_sesudah JSON NULL COMMENT 'Snapshot nilai sesudah perubahan',
+                    alasan_perubahan TEXT NULL,
+                    status_approval VARCHAR(32) NULL,
+                    id_user_penyetuju INT NULL COMMENT 'User yang menyetujui (jika aksi approval)',
+                    role_penyetuju VARCHAR(64) NULL,
+                    INDEX idx_rpau_param (id_parameter),
+                    INDEX idx_rpau_waktu (waktu),
+                    INDEX idx_rpau_aksi (aksi)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                COMMENT='Audit trail parameter repayment — immutable append-only'
+            ");
+        }
+    } catch (Throwable $e) {
+        error_log('bankKreditEnsureRepaymentParameterAuditSchema: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Tabel Audit Trail khusus untuk hasil perhitungan repayment (saat submit / simpan analisa).
+ */
+function bankKreditEnsureAuditRepaymentAnalisaSchema(PDO $pdo)
+{
+    try {
+        $exists = $pdo->query("SHOW TABLES LIKE 'audit_repayment_analisa'")->rowCount() > 0;
+        if (!$exists) {
+            $pdo->exec("
+                CREATE TABLE audit_repayment_analisa (
+                    id_audit BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    id_pengajuan INT NOT NULL,
+                    id_analis INT NULL,
+                    nama_analis VARCHAR(150),
+                    tanggal_analisa DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    jenis_kredit VARCHAR(50),
+                    dasar_perhitungan VARCHAR(50),
+                    persen_digunakan DECIMAL(5,2),
+                    nilai_basis DECIMAL(15,2),
+                    maksimal_angsuran DECIMAL(15,2),
+                    override_aktif TINYINT(1) DEFAULT 0,
+                    id_override_by INT NULL,
+                    nama_override_by VARCHAR(150),
+                    INDEX idx_ara_pengajuan (id_pengajuan)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+        }
+    } catch (Throwable $e) {
+        error_log('bankKreditEnsureAuditRepaymentAnalisaSchema: ' . $e->getMessage());
     }
 }

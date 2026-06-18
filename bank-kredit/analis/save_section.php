@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../helpers/credit_helper.php';
+require_once __DIR__ . '/../helpers/repayment_override.php';
+require_once __DIR__ . '/../helpers/repayment_snapshot.php';
 requireSameRole('analis');
 
 header('Content-Type: application/json');
@@ -309,6 +311,9 @@ try {
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute($params);
 
+                    $pdo->prepare("UPDATE pengajuan_kredit SET tanggal_analisa = COALESCE(tanggal_analisa, ?) WHERE id_pengajuan = ?")
+                        ->execute([date('Y-m-d'), $id_pengajuan]);
+
                     // 📋 Audit log
                     log_activity($pdo, $_SESSION['user_id'] ?? 0, "Memperbarui Data Pemohon (ID Pengajuan: $id_pengajuan)");
 
@@ -322,12 +327,14 @@ try {
                          status_perkawinan, nama_pasangan, tempat_lahir_pasangan, tanggal_lahir_pasangan, pekerjaan_pasangan, alamat_pekerjaan_pasangan,
                          alamat_ktp, dukuh, desa, kecamatan, kota_kabupaten, alamat_domisili, no_hp, jumlah_tanggungan, nama_ibu_kandung,
                          nib, nama_instansi, alamat_instansi, telepon_kantor, departemen_bagian, jabatan, pinjaman_ke, jenis_pekerjaan,
+                         tanggal_analisa,
                          file_pendukung, nama_usaha, bidang_usaha, lama_usaha, omset_per_bulan, biaya_operasional, laba_bersih, repayment_capacity,
                          jumlah_kredit, jangka_waktu, tujuan_kredit, jenis_kredit, jenis_jaminan, status_pengajuan, input_by) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?, ?, ?, ?,
+                                ?,
                                 ?, '', '', '', 0, 0, 0, 0,
                                 0, 0, '', 'KMK', 'tanah_bangunan', 'draft', ?)";
                     $params = [
@@ -362,6 +369,7 @@ try {
                         $jabatan,
                         $pinjaman_ke,
                         $jenis_pekerjaan_post,
+                        date('Y-m-d'),
                         $file_pendukung,
                         $_SESSION['user_id']
                     ];
@@ -465,17 +473,52 @@ try {
                     $cic = floatval($_POST['pppk_total_angsuran'] ?? $_POST['pppk_angsuran_lain'] ?? 0);
                 }
 
-                // ⚠️ BANKING STANDARD: Repayment Capacity Calculation
-                // FORMULA: Repayment = Gaji - (Biaya Hidup + Angsuran Lain)
-                // Dengan safety margin 75% untuk buffer debitur
+                // Repayment Capacity dari master parameter (dasar + persen per jenis kredit)
                 $biaya_operasional = 0.0;
                 $laba = $gaji_pp;
                 $total_pengeluaran = $biaya_hidup + $cic;
                 $net_cashflow = $laba - $total_pengeluaran;
                 
-                // Gunakan helper function untuk hitung repayment capacity (75%)
-                $rpc = hitungRepayment($net_cashflow);
-                $rpc = max(0, $rpc);
+                // === START LOGIKA REVISI FINANSIAL ===
+                $is_revisi_unlock = false;
+                $rpc_lama = 0.0;
+                if ($id_pengajuan > 0) {
+                    $stmtO = $pdo->prepare("SELECT status_pengajuan, laba_bersih, biaya_hidup, cicilan_lain, repayment_capacity_dihitung, repayment_capacity FROM pengajuan_kredit WHERE id_pengajuan = ?");
+                    $stmtO->execute([$id_pengajuan]);
+                    $old = $stmtO->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($old && $old['status_pengajuan'] === 'revisi') {
+                        if ((float)$old['laba_bersih'] !== (float)$laba || (float)$old['biaya_hidup'] !== (float)$biaya_hidup || (float)$old['cicilan_lain'] !== (float)$cic) {
+                            $rpc_lama = (float)($old['repayment_capacity_dihitung'] ?? $old['repayment_capacity'] ?? 0);
+                            $pdo->prepare("UPDATE pengajuan_kredit SET id_parameter_repayment = NULL, tanggal_analisa = ? WHERE id_pengajuan = ?")
+                                ->execute([date('Y-m-d'), $id_pengajuan]);
+                            $is_revisi_unlock = true;
+                        }
+                    }
+                }
+                // === END LOGIKA REVISI FINANSIAL ===
+                
+                $repaymentResult = persistRepaymentCalculationForPengajuan($pdo, $id_pengajuan, 'pppk', [
+                    'net_cashflow' => $net_cashflow,
+                    'gaji_bersih' => $gaji_pp,
+                    'pendapatan' => $gaji_pp,
+                    'laba_bersih' => $laba,
+                ]);
+                $rpc = $repaymentResult['rpc'];
+                $rpc_dihitung = $repaymentResult['rpc_dihitung'];
+                $id_param_repayment = $repaymentResult['id_parameter'];
+                $snapshot_json = $repaymentResult['snapshot_json'];
+                
+                // STEP 9: Capture repayment parameter snapshot
+                $snapshotResult = captureRepaymentParameterSnapshot($pdo, $id_pengajuan, 'pppk', $gaji_pp, [
+                    'override_aktif' => (int)($overrideData['override_aktif'] ?? 0),
+                    'override_by' => (int)($overrideData['override_by'] ?? 0),
+                    'override_alasan' => $overrideData['override_alasan'] ?? null,
+                ]);
+                if ($snapshotResult['success']) {
+                    // Snapshot captured successfully
+                    logError('repayment_snapshot_pppk', ['id_snapshot' => $snapshotResult['id_snapshot'], 'rpc' => $rpc]);
+                }
                 
                 // Klasifikasi repayment quality
                 $klasifikasi_rpc = klasifikasi_repayment($rpc, $gaji_pp);
@@ -519,7 +562,7 @@ try {
                     omset_per_bulan=?, biaya_bahan_baku=0, biaya_gaji=0, biaya_listrik=0, biaya_air=0, biaya_sewa=0, biaya_transportasi=0, biaya_lainnya=0,
                     biaya_operasional=?, laba_bersih=?, penyusutan=0, cashflow_usaha=?,
                     biaya_hidup=?, cicilan_lain=?, total_pengeluaran_tetap=?,
-                    net_cashflow=?, repayment_capacity=?, angsuran_diajukan=?, status_kelayakan=?,
+                    net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?,
                     pppk_agunan_no_sk=?" . $fileSkSql . "
                     WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
 
@@ -528,7 +571,7 @@ try {
                     $gaji_pp,
                     $biaya_operasional, $laba, $laba,
                     $biaya_hidup, $cic, $total_pengeluaran,
-                    $net_cashflow, $rpc, $angsuran_diajukan, $status_kelayakan,
+                    $net_cashflow, $rpc, $rpc_dihitung, $id_param_repayment, $snapshot_json, $angsuran_diajukan, $status_kelayakan,
                     $agunan_no_sk,
                 ];
                 if ($file_sk_pppk_saved !== null) {
@@ -591,9 +634,46 @@ try {
                 $total_pengeluaran = $biaya_hidup + $cic;
                 $net_cashflow = $laba - $total_pengeluaran;
                 
-                // Gunakan helper function (75% margin)
-                $rpc = hitungRepayment($net_cashflow);
-                $rpc = max(0, $rpc);
+                // === START LOGIKA REVISI FINANSIAL ===
+                $is_revisi_unlock = false;
+                $rpc_lama = 0.0;
+                if ($id_pengajuan > 0) {
+                    $stmtO = $pdo->prepare("SELECT status_pengajuan, laba_bersih, biaya_hidup, cicilan_lain, repayment_capacity_dihitung, repayment_capacity FROM pengajuan_kredit WHERE id_pengajuan = ?");
+                    $stmtO->execute([$id_pengajuan]);
+                    $old = $stmtO->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($old && $old['status_pengajuan'] === 'revisi') {
+                        if ((float)$old['laba_bersih'] !== (float)$laba || (float)$old['biaya_hidup'] !== (float)$biaya_hidup || (float)$old['cicilan_lain'] !== (float)$cic) {
+                            $rpc_lama = (float)($old['repayment_capacity_dihitung'] ?? $old['repayment_capacity'] ?? 0);
+                            $pdo->prepare("UPDATE pengajuan_kredit SET id_parameter_repayment = NULL, tanggal_analisa = ? WHERE id_pengajuan = ?")
+                                ->execute([date('Y-m-d'), $id_pengajuan]);
+                            $is_revisi_unlock = true;
+                        }
+                    }
+                }
+                // === END LOGIKA REVISI FINANSIAL ===
+                
+                $repaymentResult = persistRepaymentCalculationForPengajuan($pdo, $id_pengajuan, 'perangkat_desa', [
+                    'net_cashflow' => $net_cashflow,
+                    'gaji_bersih' => $tetap + $tambahan,
+                    'pendapatan' => $tetap + $tambahan,
+                    'laba_bersih' => $laba,
+                ]);
+                $rpc = $repaymentResult['rpc'];
+                $rpc_dihitung = $repaymentResult['rpc_dihitung'];
+                $id_param_repayment = $repaymentResult['id_parameter'];
+                $snapshot_json = $repaymentResult['snapshot_json'];
+                
+                // STEP 9: Capture repayment parameter snapshot for Perangkat Desa
+                $snapshotResult = captureRepaymentParameterSnapshot($pdo, $id_pengajuan, 'perangkat_desa', $tetap + $tambahan, [
+                    'override_aktif' => (int)($overrideData['override_aktif'] ?? 0),
+                    'override_by' => (int)($overrideData['override_by'] ?? 0),
+                    'override_alasan' => $overrideData['override_alasan'] ?? null,
+                ]);
+                if ($snapshotResult['success']) {
+                    // Snapshot captured successfully
+                    logError('repayment_snapshot_perangkat_desa', ['id_snapshot' => $snapshotResult['id_snapshot'], 'rpc' => $rpc]);
+                }
                 
                 if ($angsuran_diajukan > 0) {
                     $status_kelayakan = ($rpc >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
@@ -631,7 +711,7 @@ try {
                     omset_per_bulan=?, biaya_bahan_baku=0, biaya_gaji=0, biaya_listrik=0, biaya_air=0, biaya_sewa=0, biaya_transportasi=0, biaya_lainnya=0,
                     biaya_operasional=0, laba_bersih=?, penyusutan=0, cashflow_usaha=?,
                     biaya_hidup=?, cicilan_lain=?, total_pengeluaran_tetap=?,
-                    net_cashflow=?, repayment_capacity=?, angsuran_diajukan=?, status_kelayakan=?,
+                    net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?,
                     pppk_agunan_no_sk=?" . $fileSkSql . "
                     WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
                 
@@ -648,6 +728,9 @@ try {
                     $total_pengeluaran,     // total_pengeluaran_tetap
                     $net_cashflow,          // net_cashflow
                     $rpc,                   // repayment_capacity
+                    $rpc_dihitung,          // repayment_capacity_dihitung
+                    $id_param_repayment,    // id_parameter_repayment
+                    $snapshot_json,         // repayment_parameter_snapshot
                     $angsuran_diajukan,     // angsuran_diajukan
                     $status_kelayakan,      // status_kelayakan
                     '-'                     // pppk_agunan_no_sk (tidak digunakan untuk perangkat_desa)
@@ -662,11 +745,20 @@ try {
 
             // 📋 Log activity untuk audit trail
             $jenis_pegawai = ($jenis_pekerjaan_post === 'pppk') ? 'PPPK' : 'PERANGKAT_DESA';
-            log_activity($pdo, $_SESSION['user_id'] ?? 0, 
-                "Menyimpan Data Penghasilan $jenis_pegawai (ID Pengajuan: $id_pengajuan | Repayment Capacity: " . 
-                number_format($rpc, 0, ',', '.') . " | Status: " . ($status_kelayakan ?: 'Pending') . ")");
+            
+            if (isset($is_revisi_unlock) && $is_revisi_unlock) {
+                log_activity($pdo, $_SESSION['user_id'] ?? 0, 
+                    "REVISI FINANSIAL $jenis_pegawai: Terdeteksi perubahan gaji/cashflow. Parameter direset ke yang terbaru. Repayment lama: Rp " . number_format($rpc_lama,0) . " -> Baru: Rp " . number_format($rpc,0)
+                );
+                $msg = 'Data berhasil disimpan. NOTIFIKASI: Revisi data finansial mengubah hasil perhitungan Repayment Capacity menjadi Rp ' . number_format($rpc,0,',','.');
+            } else {
+                log_activity($pdo, $_SESSION['user_id'] ?? 0, 
+                    "Menyimpan Data Penghasilan $jenis_pegawai (ID Pengajuan: $id_pengajuan | Repayment Capacity: " . 
+                    number_format($rpc, 0, ',', '.') . " | Status: " . ($status_kelayakan ?: 'Pending') . ")");
+                $msg = 'Data penghasilan berhasil disimpan!';
+            }
 
-            echo json_encode(['success' => true, 'message' => 'Data penghasilan berhasil disimpan!', 'id_pengajuan' => $id_pengajuan]);
+            echo json_encode(['success' => true, 'message' => $msg, 'id_pengajuan' => $id_pengajuan]);
             break;
 
         // ============================================================
@@ -716,9 +808,47 @@ try {
             // F. Net Cashflow (Laba - Pengeluaran)
             $net_cashflow = $laba - $total_pengeluaran;
 
-            // G. Repayment Capacity (75% standard margin)
-            $rpc = hitungRepayment($net_cashflow);
-            $rpc = max(0, $rpc);
+            // === START LOGIKA REVISI FINANSIAL ===
+            $is_revisi_unlock = false;
+            $rpc_lama = 0.0;
+            if ($id_pengajuan > 0) {
+                $stmtO = $pdo->prepare("SELECT status_pengajuan, omset_per_bulan, pendapatan_lain, biaya_operasional, biaya_hidup, cicilan_lain, repayment_capacity_dihitung, repayment_capacity FROM pengajuan_kredit WHERE id_pengajuan = ?");
+                $stmtO->execute([$id_pengajuan]);
+                $old = $stmtO->fetch(PDO::FETCH_ASSOC);
+                
+                if ($old && $old['status_pengajuan'] === 'revisi') {
+                    if ((float)$old['omset_per_bulan'] !== (float)$omset || (float)$old['pendapatan_lain'] !== (float)$pendapatan_lain || (float)$old['biaya_operasional'] !== (float)$total_biaya || (float)$old['biaya_hidup'] !== (float)$biaya_hidup || (float)$old['cicilan_lain'] !== (float)$cicilan_lain) {
+                        $rpc_lama = (float)($old['repayment_capacity_dihitung'] ?? $old['repayment_capacity'] ?? 0);
+                        $pdo->prepare("UPDATE pengajuan_kredit SET id_parameter_repayment = NULL, tanggal_analisa = ? WHERE id_pengajuan = ?")
+                            ->execute([date('Y-m-d'), $id_pengajuan]);
+                        $is_revisi_unlock = true;
+                    }
+                }
+            }
+            // === END LOGIKA REVISI FINANSIAL ===
+
+            // G. Repayment Capacity dari master parameter
+            $repaymentResult = persistRepaymentCalculationForPengajuan($pdo, $id_pengajuan, $jenis_pekerjaan_post, [
+                'net_cashflow' => $net_cashflow,
+                'gaji_bersih' => 0,
+                'pendapatan' => $omset + $pendapatan_lain,
+                'laba_bersih' => $laba,
+            ]);
+            $rpc = $repaymentResult['rpc'];
+            $rpc_dihitung = $repaymentResult['rpc_dihitung'];
+            $id_param_repayment = $repaymentResult['id_parameter'];
+            $snapshot_json = $repaymentResult['snapshot_json'];
+            
+            // STEP 9: Capture repayment parameter snapshot for business type (umum, kretamas, etc.)
+            $snapshotResult = captureRepaymentParameterSnapshot($pdo, $id_pengajuan, $jenis_pekerjaan_post, $laba, [
+                'override_aktif' => (int)($overrideData['override_aktif'] ?? 0),
+                'override_by' => (int)($overrideData['override_by'] ?? 0),
+                'override_alasan' => $overrideData['override_alasan'] ?? null,
+            ]);
+            if ($snapshotResult['success']) {
+                // Snapshot captured successfully
+                logError('repayment_snapshot_usaha', ['id_snapshot' => $snapshotResult['id_snapshot'], 'jenis' => $jenis_pekerjaan_post, 'rpc' => $rpc]);
+            }
 
             // H. Uji Kelayakan
             $angsuran_diajukan = floatval($_POST['angsuran_diajukan'] ?? 0);
@@ -844,7 +974,7 @@ try {
                 penyusutan=?, cashflow_usaha=?,
                 biaya_hidup=?, cicilan_lain=?, total_pengeluaran_tetap=?,
                 net_cashflow=?,
-                repayment_capacity=?,
+                repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?,
                 angsuran_diajukan=?, status_kelayakan=? {$file_updates}
                 WHERE id_pengajuan=? AND " . ANALIS_DRAFT_LIKE;
 
@@ -853,13 +983,23 @@ try {
                 $b_bahan_baku, $b_gaji, $b_listrik, $b_air, $b_sewa, $b_transportasi, $b_lainnya,
                 $total_biaya, $laba, 0, $laba,
                 $biaya_hidup, $cicilan_lain, $total_pengeluaran,
-                $net_cashflow, $rpc, $angsuran_diajukan, $status_kelayakan
+                $net_cashflow, $rpc, $rpc_dihitung, $id_param_repayment, $snapshot_json, $angsuran_diajukan, $status_kelayakan
             ];
             $params = array_merge($params, $file_params, [$id_pengajuan]);
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            echo json_encode(['success' => true, 'message' => 'Data Usaha & Analisa Kemampuan Bayar berhasil disimpan!']);
+            
+            if (isset($is_revisi_unlock) && $is_revisi_unlock) {
+                log_activity($pdo, $_SESSION['user_id'] ?? 0, 
+                    "REVISI FINANSIAL UMUM: Terdeteksi perubahan cashflow. Parameter direset ke yang terbaru. Repayment lama: Rp " . number_format($rpc_lama,0) . " -> Baru: Rp " . number_format($rpc,0)
+                );
+                $msg = 'Data berhasil disimpan. NOTIFIKASI: Revisi data finansial mengubah hasil perhitungan Repayment Capacity menjadi Rp ' . number_format($rpc,0,',','.');
+            } else {
+                $msg = 'Data Usaha & Analisa Kemampuan Bayar berhasil disimpan!';
+            }
+            
+            echo json_encode(['success' => true, 'message' => $msg]);
             break;
 
         // ============================================================
@@ -887,6 +1027,39 @@ try {
                 $grace_period = $waktu - 1;
             }
 
+            // === START LOGIKA REVISI FINANSIAL (STRUKTUR) ===
+            $is_revisi_unlock = false;
+            $rpc_lama = 0.0;
+            $rpc_baru = 0.0;
+            if ($id_pengajuan > 0) {
+                $stmtO = $pdo->prepare("SELECT status_pengajuan, jumlah_kredit, jangka_waktu, jenis_kredit, jenis_pekerjaan, net_cashflow, laba_bersih, repayment_capacity_dihitung, repayment_capacity FROM pengajuan_kredit WHERE id_pengajuan = ?");
+                $stmtO->execute([$id_pengajuan]);
+                $old = $stmtO->fetch(PDO::FETCH_ASSOC);
+                
+                if ($old && $old['status_pengajuan'] === 'revisi') {
+                    if ((float)$old['jumlah_kredit'] !== $jumlah || (int)$old['jangka_waktu'] !== $waktu || $old['jenis_kredit'] !== $jenis_kredit) {
+                        $rpc_lama = (float)($old['repayment_capacity_dihitung'] ?? $old['repayment_capacity'] ?? 0);
+                        $pdo->prepare("UPDATE pengajuan_kredit SET id_parameter_repayment = NULL, tanggal_analisa = ? WHERE id_pengajuan = ?")
+                            ->execute([date('Y-m-d'), $id_pengajuan]);
+                        
+                        $repaymentResult = persistRepaymentCalculationForPengajuan($pdo, $id_pengajuan, $old['jenis_pekerjaan'] ?? 'umum', [
+                            'net_cashflow' => (float)($old['net_cashflow'] ?? 0),
+                            'gaji_bersih' => (float)($old['laba_bersih'] ?? 0),
+                            'pendapatan' => (float)($old['laba_bersih'] ?? 0),
+                            'laba_bersih' => (float)($old['laba_bersih'] ?? 0),
+                        ]);
+                        
+                        $rpc_baru = $repaymentResult['rpc'];
+                        // Lakukan pre-update untuk parameter baru sebelum update struktur dilakukan
+                        $pdo->prepare("UPDATE pengajuan_kredit SET repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=? WHERE id_pengajuan=?")
+                            ->execute([$repaymentResult['rpc'], $repaymentResult['rpc_dihitung'], $repaymentResult['id_parameter'], $repaymentResult['snapshot_json'], $id_pengajuan]);
+                        
+                        $is_revisi_unlock = true;
+                    }
+                }
+            }
+            // === END LOGIKA REVISI FINANSIAL (STRUKTUR) ===
+
             $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET jumlah_kredit=?, suku_bunga=?, jangka_waktu=?, jangka_tempo=?, grace_period=?, tujuan_kredit=?, jenis_kredit=? WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
             $stmt->execute([$jumlah, $suku_bunga, $waktu, $jangka_tempo, $grace_period, $tujuan, $jenis_kredit, $id_pengajuan]);
 
@@ -901,7 +1074,16 @@ try {
                     ->execute([$status_kelayakan, $id_pengajuan]);
             }
 
-            echo json_encode(['success' => true, 'message' => 'Struktur Kredit berhasil disimpan!']);
+            if (isset($is_revisi_unlock) && $is_revisi_unlock) {
+                log_activity($pdo, $_SESSION['user_id'] ?? 0, 
+                    "REVISI FINANSIAL STRUKTUR: Terdeteksi perubahan plafon/tenor/jenis_kredit. Parameter direset ke yang terbaru. Repayment lama: Rp " . number_format($rpc_lama,0) . " -> Baru: Rp " . number_format($rpc_baru,0)
+                );
+                $msg = 'Struktur Kredit Data berhasil disimpan. NOTIFIKASI: Revisi mengubah hasil perhitungan Repayment Capacity menjadi Rp ' . number_format($rpc_baru,0,',','.');
+            } else {
+                $msg = 'Struktur Kredit berhasil disimpan!';
+            }
+
+            echo json_encode(['success' => true, 'message' => $msg]);
             break;
 
         // ============================================================
@@ -1644,7 +1826,7 @@ try {
                 exit;
             }
 
-            $stmtPreSubmit = $pdo->prepare("SELECT jumlah_kredit, jangka_waktu, nama_debitur, nik FROM pengajuan_kredit WHERE id_pengajuan = ?");
+            $stmtPreSubmit = $pdo->prepare("SELECT jumlah_kredit, jangka_waktu, nama_debitur, nik, angsuran_diajukan, repayment_capacity, repayment_override_aktif, repayment_override_alasan FROM pengajuan_kredit WHERE id_pengajuan = ?");
             $stmtPreSubmit->execute([$id_pengajuan]);
             $preSubmit = $stmtPreSubmit->fetch(PDO::FETCH_ASSOC);
             if (!$preSubmit) {
@@ -1661,6 +1843,20 @@ try {
             }
             if (trim((string) ($preSubmit['nama_debitur'] ?? '')) === '' || trim((string) ($preSubmit['nik'] ?? '')) === '') {
                 echo json_encode(['success' => false, 'message' => 'Data pemohon (nama & NIK) harus lengkap sebelum submit.']);
+                exit;
+            }
+            
+            // VALIDASI REPAYMENT CAPACITY
+            $angsuran_diajukan = (float)($preSubmit['angsuran_diajukan'] ?? 0);
+            $repayment_capacity = (float)($preSubmit['repayment_capacity'] ?? 0);
+            if ($angsuran_diajukan > $repayment_capacity) {
+                $overrideInfo = ((int)($preSubmit['repayment_override_aktif'] ?? 0) === 1) ? 
+                    " [Status Override Direksi AKTIF: " . htmlspecialchars($preSubmit['repayment_override_alasan'] ?? '') . "]" : "";
+                
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Gagal Meneruskan: Angsuran kredit (Rp ' . number_format($angsuran_diajukan,0,',','.') . ') melebihi Repayment Capacity maksimal (Rp ' . number_format($repayment_capacity,0,',','.') . ').' . $overrideInfo
+                ]);
                 exit;
             }
 

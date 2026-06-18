@@ -8,7 +8,6 @@ $action = $_GET['action'] ?? 'list';
 // Note: Saving now handled via API endpoint (api/save_assessment_kepatuhan.php) via AJAX
 // This maintains consistency with analis assessment form
 ?>
-?>
 <!DOCTYPE html>
 <html lang="id">
 <head>

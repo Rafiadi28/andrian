@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../includes/functions.php';
 requireSameRole('analis');
 
-// List My Submissions (kolom terbatas + pagination)
 $perPage = 30;
 $pageRiwayat = max(1, (int) ($_GET['page'] ?? 1));
 $uid = (int) $_SESSION['user_id'];
@@ -21,11 +20,15 @@ $stmt->bindValue(':lim', $perPage, PDO::PARAM_INT);
 $stmt->bindValue(':off', $offRiwayat, PDO::PARAM_INT);
 $stmt->execute();
 $my_submissions = $stmt->fetchAll();
+
+$page_title = 'Riwayat Pengajuan';
+$page_subtitle = 'Daftar semua pengajuan yang Anda buat';
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Pengajuan Saya</title>
     <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -33,10 +36,11 @@ $my_submissions = $stmt->fetchAll();
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
 
     <div class="container">
-        <h1>Riwayat Pengajuan Saya</h1>
+        <?php include __DIR__ . '/../includes/page_header.inc.php'; ?>
+
         <div class="card">
             <div class="table-responsive">
-                <table>
+                <table class="table-stack">
                     <thead>
                         <tr>
                             <th>Tanggal</th>
@@ -49,42 +53,42 @@ $my_submissions = $stmt->fetchAll();
                     </thead>
                     <tbody>
                         <?php if(empty($my_submissions)): ?>
-                        <tr><td colspan="6" style="text-align:center;">Belum ada pengajuan.</td></tr>
+                        <tr><td colspan="6" class="text-center">Belum ada pengajuan.</td></tr>
                         <?php else: ?>
                             <?php foreach($my_submissions as $s): ?>
                             <tr>
-                                <td><?= date('d/M/Y', strtotime($s['tanggal_pengajuan'])) ?></td>
-                                <td><?= htmlspecialchars($s['nama_debitur']) ?></td>
-                                <td><?= formatRupiah($s['jumlah_kredit']) ?></td>
-                                <td><span class="badge badge-process"><?= strtoupper($s['posisi_saat_ini']) ?></span></td>
-                                <td>
-                                    <?php     
-                                        if($s['status_pengajuan'] == 'disetujui') echo '<span class="badge badge-active">DISETUJUI</span>';
-                                        else if($s['status_pengajuan'] == 'ditolak') echo '<span class="badge badge-sick">DITOLAK</span>';
+                                <td data-label="Tanggal"><?= date('d/M/Y', strtotime($s['tanggal_pengajuan'])) ?></td>
+                                <td data-label="Debitur" class="font-medium"><?= htmlspecialchars($s['nama_debitur']) ?></td>
+                                <td data-label="Jumlah"><?= formatRupiah($s['jumlah_kredit']) ?></td>
+                                <td data-label="Posisi"><span class="badge badge-process"><?= strtoupper($s['posisi_saat_ini']) ?></span></td>
+                                <td data-label="Status">
+                                    <?php
+                                        if ($s['status_pengajuan'] == 'disetujui') echo '<span class="badge badge-active">DISETUJUI</span>';
+                                        elseif ($s['status_pengajuan'] == 'ditolak') echo '<span class="badge badge-sick">DITOLAK</span>';
                                         else echo '<span class="badge badge-process">PROSES</span>';
                                     ?>
                                 </td>
-                                <td>
-                                    <a href="../detail.php?id=<?= $s['id_pengajuan'] ?>" class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem;">Detail</a>
+                                <td data-label="Aksi">
+                                    <a href="../detail.php?id=<?= $s['id_pengajuan'] ?>" class="btn btn-secondary btn-sm">Detail</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
-                <?php if ($totalRiwayatPages > 1): ?>
-                    <p style="margin-top: 1rem; text-align: center; color: #64748b; font-size: 0.95rem;">
-                        Halaman <?= (int) $pageRiwayat ?> dari <?= (int) $totalRiwayatPages ?>
-                        (<?= (int) $totalRiwayat ?> pengajuan)
-                        <?php if ($pageRiwayat > 1): ?>
-                            <a href="?page=<?= (int) ($pageRiwayat - 1) ?>" class="btn btn-secondary" style="margin-left: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.85rem;">Sebelumnya</a>
-                        <?php endif; ?>
-                        <?php if ($pageRiwayat < $totalRiwayatPages): ?>
-                            <a href="?page=<?= (int) ($pageRiwayat + 1) ?>" class="btn btn-secondary" style="margin-left: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.85rem;">Berikutnya</a>
-                        <?php endif; ?>
-                    </p>
+            </div>
+
+            <?php if ($totalRiwayatPages > 1): ?>
+            <div class="pagination">
+                <?php if ($pageRiwayat > 1): ?>
+                    <a href="?page=<?= (int) ($pageRiwayat - 1) ?>">Prev</a>
+                <?php endif; ?>
+                <span class="active"><?= (int) $pageRiwayat ?> / <?= (int) $totalRiwayatPages ?></span>
+                <?php if ($pageRiwayat < $totalRiwayatPages): ?>
+                    <a href="?page=<?= (int) ($pageRiwayat + 1) ?>">Next</a>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 </body>

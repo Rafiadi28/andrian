@@ -79,9 +79,11 @@ function sort_link_riwayat($column, $label) {
     <?php include __DIR__ . '/../includes/navbar.php'; ?>
 
     <div class="container">
-        <div class="flex-between mb-4">
-            <h1>Riwayat Assesmen Kepatuhan</h1>
-        </div>
+        <?php
+        $page_title = 'Riwayat Assesmen Kepatuhan';
+        $page_subtitle = 'Daftar pengajuan yang telah dinilai kepatuhannya';
+        include __DIR__ . '/../includes/page_header.inc.php';
+        ?>
 
         <!-- Filter Section -->
         <div class="filter-section">
@@ -102,63 +104,60 @@ function sort_link_riwayat($column, $label) {
                     </div>
                     <div></div>
                     <div></div>
-                    <button type="submit" class="btn btn-primary">🔍 Cari</button>
-                    <a href="?" class="btn btn-secondary">↺ Reset</a>
+                    <button type="submit" class="btn btn-primary">Cari</button>
+                    <a href="?" class="btn btn-secondary">Reset</a>
                 </div>
             </form>
         </div>
 
         <div class="record-info">
-            📊 Menampilkan <strong><?= count($riwayat_assesmen) ?></strong> dari <strong><?= $total_records ?></strong> pengajuan 
-            <?php if (!empty($search)): ?><span class="search-highlight"> | Pencarian: "<?= htmlspecialchars($search) ?>"</span><?php endif; ?>
+            Menampilkan <strong><?= count($riwayat_assesmen) ?></strong> dari <strong><?= $total_records ?></strong> pengajuan
+            <?php if (!empty($search)): ?><span class="search-highlight"> — "<?= htmlspecialchars($search) ?>"</span><?php endif; ?>
         </div>
 
         <div class="card">
             <?php if(empty($riwayat_assesmen)): ?>
                 <div class="empty-state">
                     <?php if (!empty($search)): ?>
-                        <p>❌ Tidak ada hasil untuk pencarian "<?= htmlspecialchars($search) ?>". <a href="?">Lihat semua →</a></p>
+                        <p>Tidak ada hasil untuk pencarian tersebut. <a href="?">Lihat semua</a></p>
                     <?php else: ?>
-                        <p>📋 Belum ada riwayat assesmen kepatuhan.</p>
+                        <p>Belum ada riwayat assesmen kepatuhan.</p>
                     <?php endif; ?>
                 </div>
             <?php else: ?>
                 <div class="table-responsive">
-                    <table>
+                    <table class="table-stack">
                         <thead>
                             <tr>
                                 <th><?= sort_link_riwayat('tanggal_pengajuan', 'Tgl Pengajuan') ?></th>
                                 <th><?= sort_link_riwayat('nama_debitur', 'Nama Debitur') ?></th>
                                 <th>Pekerjaan</th>
-                                <th style="text-align: right;"><?= sort_link_riwayat('jumlah_kredit', 'Nominal') ?></th>
-                                <th style="text-align: center;">Status</th>
-                                <th style="text-align: center;">Aksi</th>
+                                <th class="text-right"><?= sort_link_riwayat('jumlah_kredit', 'Nominal') ?></th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach($riwayat_assesmen as $item): ?>
                             <tr>
-                                <td><?= date('d/M/Y', strtotime($item['tanggal_pengajuan'])) ?></td>
-                                <td style="font-weight: 500;"><?= htmlspecialchars($item['nama_debitur']) ?></td>
-                                <td class="text-sm text-muted"><?= htmlspecialchars($item['pekerjaan'] ?? '-') ?></td>
-                                <td style="text-align: right; font-weight: 500;"><?= formatRupiah($item['jumlah_kredit']) ?></td>
-                                <td style="text-align: center;">
-                                    <?php 
+                                <td data-label="Tgl"><?= date('d/M/Y', strtotime($item['tanggal_pengajuan'])) ?></td>
+                                <td data-label="Debitur" class="font-medium"><?= htmlspecialchars($item['nama_debitur']) ?></td>
+                                <td data-label="Pekerjaan" class="text-sm text-muted"><?= htmlspecialchars($item['pekerjaan'] ?? '-') ?></td>
+                                <td data-label="Nominal" class="text-right font-medium"><?= formatRupiah($item['jumlah_kredit']) ?></td>
+                                <td data-label="Status" class="text-center">
+                                    <?php
                                         $status = $item['status_pengajuan'];
-                                        if ($status === 'disetujui') {
-                                            $class = 'badge-approved';
-                                        } elseif ($status === 'ditolak') {
-                                            $class = 'badge-rejected';
-                                        } elseif ($status === 'revisi' || $status === 'kembalikan') {
-                                            $class = 'badge-revision';
-                                        } else {
-                                            $class = 'badge-pending';
-                                        }
+                                        $class = match(true) {
+                                            $status === 'disetujui' => 'badge-approved',
+                                            $status === 'ditolak' => 'badge-rejected',
+                                            in_array($status, ['revisi', 'kembalikan'], true) => 'badge-revision',
+                                            default => 'badge-pending'
+                                        };
                                     ?>
                                     <span class="badge <?= $class ?>"><?= ucwords(str_replace('_', ' ', $status)) ?></span>
                                 </td>
-                                <td style="text-align: center;">
-                                    <a href="../detail.php?id=<?= $item['id_pengajuan'] ?>" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">Detail</a>
+                                <td data-label="Aksi">
+                                    <a href="../detail.php?id=<?= $item['id_pengajuan'] ?>" class="btn btn-secondary btn-sm">Detail</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

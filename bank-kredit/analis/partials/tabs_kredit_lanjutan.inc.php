@@ -1,3 +1,11 @@
+<?php
+if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
+    require_once __DIR__ . '/../../helpers/credit_helper.php';
+    $rpcJenis = $jenis_pekerjaan ?? ($pegawai_tipe_save ?? 'umum');
+    $rpcPengajuanId = (int) ($EDIT_ID_PENGAJUAN ?? ($edit_id_pengajuan ?? 0));
+    extract(bootstrapRepaymentFormConfig($pdo, $rpcJenis, $rpcPengajuanId > 0 ? $rpcPengajuanId : null));
+}
+?>
 <!-- TAB 3: STRUKTUR KREDIT — Expanded -->
 <div id="tab-struktur" class="tab-content">
     <h3 class="tab-title">3. Struktur Kredit</h3>
@@ -1651,7 +1659,7 @@
         <div class="score-card">
             <p>Repayment Capacity</p>
             <div class="score-value" id="score_summary_rpc">Rp 0</div>
-            <small class="text-muted">(95% dari Net Cashflow)</small>
+            <small class="text-muted">(<?= number_format($RPC_PERSEN_MAKS, 0) ?>% × <?= htmlspecialchars($RPC_DASAR_LABEL) ?>)</small>
         </div>
     </div>
 

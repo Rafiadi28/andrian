@@ -139,6 +139,54 @@ function klasifikasi_6c($rata) {
     }
 }
 
+/* ===================================================================================================
+ * [BACKUP] VERSI SEBELUM REVISI (LOGIKA HARDCODE 75%)
+ * ===================================================================================================
+ * Fungsi-fungsi di bawah ini merupakan fungsi asli sebelum dilakukan revisi untuk mendukung 
+ * Repayment Capacity yang dapat di-custom dengan Model Approval Berjenjang.
+ * Rollback dapat dilakukan sewaktu-waktu dengan mengaktifkan blok ini.
+ *
+ * /**
+ *  * Calculate repayment capacity
+ *  * FORMULA: Repayment = Gaji - (Pengeluaran + Angsuran Lain)
+ *  * /
+ * function hitung_repayment_old($gaji, $pengeluaran, $angsuran = 0) {
+ *     $gaji = (float)($gaji ?? 0);
+ *     $pengeluaran = (float)($pengeluaran ?? 0);
+ *     $angsuran = (float)($angsuran ?? 0);
+ *     $repayment = $gaji - ($pengeluaran + $angsuran);
+ *     return $repayment;
+ * }
+ *
+ * /**
+ *  * Classify repayment capacity quality
+ *  * RULES: >= 95% Sangat Layak, >= 75% Layak, dst.
+ *  * /
+ * function klasifikasi_repayment_old($nilai, $gaji = null) {
+ *     $nilai = (float)$nilai;
+ *     if ($gaji !== null) {
+ *         $gaji = (float)$gaji;
+ *         if ($gaji <= 0) return "Tidak Layak";
+ *         $persen = ($nilai / $gaji) * 100;
+ *     } else {
+ *         $persen = $nilai;
+ *     }
+ *     if ($persen >= 95) return "Sangat Layak";
+ *     elseif ($persen >= 75) return "Layak";
+ *     elseif ($persen >= 50) return "Cukup";
+ *     else return "Tidak Layak";
+ * }
+ *
+ * /**
+ *  * Calculate Repayment Capacity with standard multiplier
+ *  * FORMULA: Repayment Capacity = Penghasilan Bersih × 0.75
+ *  * /
+ * function hitungRepayment_old($penghasilanBersih) {
+ *     $penghasilanBersih = (float)($penghasilanBersih ?? 0);
+ *     return $penghasilanBersih * 0.75;
+ * }
+ * =================================================================================================== */
+
 /**
  * Calculate repayment capacity
  * 
@@ -203,26 +251,443 @@ function klasifikasi_repayment($nilai, $gaji = null) {
 }
 
 /**
- * Calculate Repayment Capacity with standard multiplier
- * 
- * FORMULA: Repayment Capacity = Penghasilan Bersih × 0.75
- * 
- * This represents the maximum monthly payment capacity after deducting
- * fixed expenses and obligations. The 0.75 multiplier (75%) ensures
- * conservative lending with safety margin.
- * 
- * Used globally across:
- * - Form input (real-time calculation)
- * - Server-side validation
- * - Database storage
- * - Reports and exports
- * 
- * @param float $penghasilanBersih Net income (after all expenses)
+ * Label jenis kredit untuk master parameter repayment.
+ *
+ * @return array<string, string>
+ */
+function getJenisKreditRepaymentOptions() {
+    return [
+        'default' => 'Default (Semua Jenis)',
+        'umum' => 'Umum / Wiraswasta',
+        'pppk' => 'PPPK',
+        'perangkat_desa' => 'Perangkat Desa',
+        'perangkat' => 'Perangkat (alias untuk Perangkat Desa)',
+        'kpr' => 'KPR',
+        'kretamas' => 'Kredit Emas (Emas)',
+        'emas' => 'Emas (alias untuk Kredit Emas)',
+        'cashcolateral' => 'Cash Collateral (Cashcol)',
+        'cashcol' => 'Cashcol (alias untuk Cash Collateral)',
+    ];
+}
+
+/**
+ * Normalize user-provided jenis kredit keys to canonical internal keys.
+ * Accepts common aliases (perangkat, emas, cashcol) and returns
+ * the canonical key used in master_parameter_repayment.
+ *
+ * @param string|null $jenis
+ * @return string canonical jenis key
+ */
+function normalizeRepaymentJenisKey($jenis) {
+    $j = trim((string) ($jenis ?? ''));
+    $j = strtolower($j);
+    if ($j === '') return 'umum';
+
+    $map = [
+        'perangkat' => 'perangkat_desa',
+        'perangkat_desa' => 'perangkat_desa',
+        'desa' => 'perangkat_desa',
+        'kretamas' => 'kretamas',
+        'emas' => 'kretamas',
+        'cashcol' => 'cashcolateral',
+        'cashcolateral' => 'cashcolateral',
+        'pppk' => 'pppk',
+        'umum' => 'umum',
+        'default' => 'default',
+    ];
+
+    return $map[$j] ?? $j;
+}
+
+/**
+ * Label dasar perhitungan repayment.
+ *
+ * @return array<string, string>
+ */
+function getDasarPerhitunganRepaymentOptions() {
+    return [
+        'net_cashflow' => 'Cashflow (Net Cashflow)',
+        'gaji_bersih' => 'Gaji Bersih',
+        'gaji_bersih_pendapatan' => 'Gaji Bersih / Pendapatan',
+        'laba_bersih' => 'Laba Bersih',
+    ];
+}
+
+/**
+ * Kebijakan default repayment capacity (STEP 4).
+ *
+ * @return array<int, array{jenis:string,dasar:string,persen:float,ket:string}>
+ */
+function getRepaymentPolicyDefaults() {
+    return [
+        ['jenis' => 'umum', 'dasar' => 'net_cashflow', 'persen' => 75.00, 'ket' => 'Kebijakan default: Umum/Wiraswasta — Cashflow 75%.'],
+        ['jenis' => 'perangkat_desa', 'dasar' => 'gaji_bersih', 'persen' => 75.00, 'ket' => 'Kebijakan default: Perangkat Desa — Gaji Bersih 75%.'],
+        ['jenis' => 'pppk', 'dasar' => 'gaji_bersih', 'persen' => 95.00, 'ket' => 'Kebijakan default: PPPK — Gaji Bersih 95%.'],
+        ['jenis' => 'kretamas', 'dasar' => 'gaji_bersih_pendapatan', 'persen' => 95.00, 'ket' => 'Kebijakan default: Kredit Emas — Gaji Bersih/Pendapatan 95%.'],
+        ['jenis' => 'cashcolateral', 'dasar' => 'gaji_bersih_pendapatan', 'persen' => 95.00, 'ket' => 'Kebijakan default: Cash Collateral — Gaji Bersih/Pendapatan 95%.'],
+    ];
+}
+
+/**
+ * Fallback konfigurasi dari kebijakan default (bukan hardcode di formula).
+ *
+ * @param string|null $jenisKredit
+ * @return array{persen_maks_angsuran:float,dasar_perhitungan:string}
+ */
+function getRepaymentPolicyFallbackConfig($jenisKredit = null) {
+    $jenis = normalizeRepaymentJenisKey($jenisKredit ?? 'umum');
+    foreach (getRepaymentPolicyDefaults() as $policy) {
+        if ($policy['jenis'] === $jenis) {
+            return [
+                'persen_maks_angsuran' => (float) $policy['persen'],
+                'dasar_perhitungan' => (string) $policy['dasar'],
+            ];
+        }
+    }
+    foreach (getRepaymentPolicyDefaults() as $policy) {
+        if ($policy['jenis'] === 'umum') {
+            return [
+                'persen_maks_angsuran' => (float) $policy['persen'],
+                'dasar_perhitungan' => (string) $policy['dasar'],
+            ];
+        }
+    }
+    return ['persen_maks_angsuran' => 75.0, 'dasar_perhitungan' => 'net_cashflow'];
+}
+
+/**
+ * Status pengajuan yang masih boleh mengubah parameter repayment (belum final).
+ */
+function getRepaymentAnalisaEditableStatuses() {
+    return ['draft', 'revisi', 'ditolak', 'diajukan_ulang', 'revisi_diajukan'];
+}
+
+/**
+ * Normalisasi tanggal acuan parameter (Y-m-d).
+ */
+function normalizeRepaymentAsOfDate($date = null) {
+    if ($date === null || $date === '') {
+        return date('Y-m-d');
+    }
+    if ($date instanceof DateTimeInterface) {
+        return $date->format('Y-m-d');
+    }
+    $str = trim((string) $date);
+    if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $str, $m)) {
+        return $m[1];
+    }
+    $ts = strtotime($str);
+    return $ts ? date('Y-m-d', $ts) : date('Y-m-d');
+}
+
+/**
+ * Metadata pengajuan untuk pemilihan parameter repayment.
+ *
+ * @return array{id_parameter_repayment:?int,tanggal_analisa:?string,tanggal_pengajuan:?string,status_pengajuan:string}|null
+ */
+function getPengajuanRepaymentMeta(PDO $pdo, $idPengajuan) {
+    static $cache = [];
+    $id = (int) $idPengajuan;
+    if ($id <= 0) {
+        return null;
+    }
+    if (isset($cache[$id])) {
+        return $cache[$id];
+    }
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id_parameter_repayment, tanggal_analisa, tanggal_pengajuan, status_pengajuan
+            FROM pengajuan_kredit
+            WHERE id_pengajuan = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        $cache[$id] = $row;
+        return $row;
+    } catch (Throwable $e) {
+        error_log('getPengajuanRepaymentMeta: ' . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Tanggal analisa pengajuan — acuan pemilihan parameter repayment.
+ */
+function resolveRepaymentTanggalAnalisa(PDO $pdo, $idPengajuan = null) {
+    $id = (int) $idPengajuan;
+    if ($id > 0) {
+        $meta = getPengajuanRepaymentMeta($pdo, $id);
+        if ($meta) {
+            if (!empty($meta['tanggal_analisa'])) {
+                return normalizeRepaymentAsOfDate($meta['tanggal_analisa']);
+            }
+            if (!empty($meta['tanggal_pengajuan'])) {
+                return normalizeRepaymentAsOfDate($meta['tanggal_pengajuan']);
+            }
+        }
+    }
+    return normalizeRepaymentAsOfDate(null);
+}
+
+/**
+ * Pengajuan final memakai parameter yang sudah dikunci (tidak ikut kebijakan baru).
+ * UPDATE: Semua pengajuan yang sudah tersimpan (memiliki $meta) tidak akan
+ * diperhitungkan ulang menggunakan parameter terbaru demi sinkronisasi data historis.
+ */
+function isPengajuanRepaymentParameterLocked(array $meta) {
+    return true;
+}
+
+/**
+ * Konfigurasi parameter repayment dari ID tertentu.
+ */
+function getRepaymentParameterConfigById(PDO $pdo, $idParameter, $jenisFallback = null) {
+    $id = (int) $idParameter;
+    if ($id <= 0) {
+        return null;
+    }
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id_parameter, persen_maks_angsuran, dasar_perhitungan, tgl_berlaku_mulai
+            FROM master_parameter_repayment
+            WHERE id_parameter = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return null;
+        }
+        $persen = (float) $row['persen_maks_angsuran'];
+        if ($persen <= 0 || $persen > 100) {
+            $fallback = getRepaymentPolicyFallbackConfig($jenisFallback);
+            $persen = (float) $fallback['persen_maks_angsuran'];
+        }
+        return [
+            'id_parameter' => $id,
+            'persen_maks_angsuran' => $persen,
+            'dasar_perhitungan' => (string) $row['dasar_perhitungan'],
+            'tgl_efektif' => (string) ($row['tgl_berlaku_mulai'] ?? ''),
+            'as_of_date' => null,
+            'locked' => true,
+        ];
+    } catch (Throwable $e) {
+        error_log('getRepaymentParameterConfigById: ' . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Label tampilan dasar perhitungan.
+ */
+function getRepaymentDasarLabel($dasarPerhitungan) {
+    $opts = getDasarPerhitunganRepaymentOptions();
+    return $opts[$dasarPerhitungan] ?? (string) $dasarPerhitungan;
+}
+
+/**
+ * Muat konfigurasi master parameter untuk form analis (PHP + JS).
+ *
+ * @param PDO $pdo
+ * @param string|null $jenisPekerjaan
+ * @param int|null $idPengajuan
+ * @return array{RPC_CONFIG:array,RPC_PERSEN_MAKS:float,RPC_DASAR:string,RPC_DASAR_LABEL:string,RPC_AS_OF_DATE:string}
+ */
+function bootstrapRepaymentFormConfig(PDO $pdo, $jenisPekerjaan = null, $idPengajuan = null) {
+    $options = [];
+    $id = (int) ($idPengajuan ?? 0);
+    if ($id > 0) {
+        $options['idPengajuan'] = $id;
+    }
+    $config = getRepaymentParameterConfig($pdo, $jenisPekerjaan, $options);
+    return [
+        'RPC_CONFIG' => $config,
+        'RPC_PERSEN_MAKS' => (float) $config['persen_maks_angsuran'],
+        'RPC_DASAR' => (string) $config['dasar_perhitungan'],
+        'RPC_DASAR_LABEL' => getRepaymentDasarLabel($config['dasar_perhitungan']),
+        'RPC_AS_OF_DATE' => (string) ($config['as_of_date'] ?? normalizeRepaymentAsOfDate(null)),
+    ];
+}
+
+/**
+ * Ambil konfigurasi parameter repayment aktif per jenis kredit pada tanggal tertentu.
+ * Hanya parameter disetujui + aktif. Untuk pengajuan existing memakai tanggal analisa.
+ *
+ * @param PDO $pdo
+ * @param string|null $jenisKredit
+ * @param array{idPengajuan?:int,asOfDate?:string|null} $options
+ * @return array{persen_maks_angsuran:float,dasar_perhitungan:string,id_parameter:?int,tgl_efektif:?string,as_of_date:string,locked?:bool}
+ */
+function getRepaymentParameterConfig(PDO $pdo, $jenisKredit = null, array $options = []) {
+    static $cache = [];
+    $jenis = normalizeRepaymentJenisKey($jenisKredit ?? 'umum');
+
+    $idPengajuan = (int) ($options['idPengajuan'] ?? 0);
+    $asOfDate = isset($options['asOfDate']) && $options['asOfDate'] !== ''
+        ? normalizeRepaymentAsOfDate($options['asOfDate'])
+        : null;
+
+    if ($idPengajuan > 0 && $asOfDate === null) {
+        $meta = getPengajuanRepaymentMeta($pdo, $idPengajuan);
+        if ($meta && !empty($meta['id_parameter_repayment']) && isPengajuanRepaymentParameterLocked($meta)) {
+            $locked = getRepaymentParameterConfigById($pdo, (int) $meta['id_parameter_repayment'], $jenis);
+            if ($locked) {
+                $locked['as_of_date'] = resolveRepaymentTanggalAnalisa($pdo, $idPengajuan);
+                return $locked;
+            }
+        }
+        $asOfDate = resolveRepaymentTanggalAnalisa($pdo, $idPengajuan);
+    }
+    if ($asOfDate === null) {
+        $asOfDate = normalizeRepaymentAsOfDate(null);
+    }
+
+    $cacheKey = $jenis . '|' . $asOfDate . '|' . $idPengajuan;
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
+    }
+
+    $fallback = getRepaymentPolicyFallbackConfig($jenis);
+    $fallback['id_parameter'] = null;
+    $fallback['tgl_efektif'] = null;
+    $fallback['as_of_date'] = $asOfDate;
+
+    try {
+        $tableExists = $pdo->query("SHOW TABLES LIKE 'master_parameter_repayment'")->rowCount() > 0;
+        if (!$tableExists) {
+            $cache[$cacheKey] = $fallback;
+            return $fallback;
+        }
+
+        $fetch = function (string $targetJenis) use ($pdo, $asOfDate) {
+            $stmt = $pdo->prepare("
+                SELECT id_parameter, persen_maks_angsuran, dasar_perhitungan, tgl_berlaku_mulai
+                FROM master_parameter_repayment
+                WHERE status = 'aktif'
+                  AND status_approval = 'disetujui'
+                  AND jenis_kredit = ?
+                  AND tgl_berlaku_mulai <= ?
+                  AND (tgl_berlaku_sampai IS NULL OR tgl_berlaku_sampai >= ?)
+                ORDER BY tgl_berlaku_mulai DESC, id_parameter DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$targetJenis, $asOfDate, $asOfDate]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        };
+
+        $row = $fetch($jenis);
+        if (!$row && $jenis !== 'default') {
+            $row = $fetch('default');
+        }
+        if (!$row) {
+            $cache[$cacheKey] = $fallback;
+            return $fallback;
+        }
+
+        $persen = (float) $row['persen_maks_angsuran'];
+        if ($persen <= 0 || $persen > 100) {
+            $persen = (float) $fallback['persen_maks_angsuran'];
+        }
+        $config = [
+            'id_parameter' => (int) $row['id_parameter'],
+            'persen_maks_angsuran' => $persen,
+            'dasar_perhitungan' => (string) ($row['dasar_perhitungan'] ?? $fallback['dasar_perhitungan']),
+            'tgl_efektif' => (string) ($row['tgl_berlaku_mulai'] ?? ''),
+            'as_of_date' => $asOfDate,
+        ];
+        $cache[$cacheKey] = $config;
+        return $config;
+    } catch (Throwable $e) {
+        error_log('getRepaymentParameterConfig: ' . $e->getMessage());
+        $cache[$cacheKey] = $fallback;
+        return $fallback;
+    }
+}
+
+/**
+ * Hitung repayment + metadata parameter untuk disimpan ke pengajuan.
+ *
+ * @return array{rpc:float,id_parameter:?int,config:array}
+ */
+function hitungRepaymentUntukPengajuan(PDO $pdo, $jenisKredit, $idPengajuan, array $context) {
+    $config = getRepaymentParameterConfig($pdo, $jenisKredit, ['idPengajuan' => (int) $idPengajuan]);
+    $basis = resolveRepaymentBasisAmount($config['dasar_perhitungan'], $context);
+    $rpc = max(0, $basis * ((float) $config['persen_maks_angsuran'] / 100));
+    $idParameter = !empty($config['id_parameter']) ? (int) $config['id_parameter'] : null;
+    return [
+        'rpc' => $rpc,
+        'id_parameter' => $idParameter,
+        'config' => $config,
+    ];
+}
+
+/**
+ * Ambil persentase maksimal angsuran dari master parameter repayment.
+ *
+ * @param PDO $pdo
+ * @param string|null $jenisKredit
+ * @return float Persentase (contoh: 75.0)
+ */
+function getRepaymentPersenMaksimal(PDO $pdo, $jenisKredit = null, array $options = []) {
+    $config = getRepaymentParameterConfig($pdo, $jenisKredit, $options);
+    return (float) $config['persen_maks_angsuran'];
+}
+
+/**
+ * Resolve nilai dasar perhitungan dari konteks form.
+ *
+ * @param string $dasarPerhitungan
+ * @param array<string, float> $context
+ * @return float
+ */
+function resolveRepaymentBasisAmount($dasarPerhitungan, array $context) {
+    switch ($dasarPerhitungan) {
+        case 'gaji_bersih':
+            return (float) ($context['gaji_bersih'] ?? 0);
+        case 'gaji_bersih_pendapatan':
+            return (float) ($context['gaji_bersih'] ?? 0) + (float) ($context['pendapatan'] ?? 0);
+        case 'laba_bersih':
+            return (float) ($context['laba_bersih'] ?? 0);
+        case 'net_cashflow':
+        default:
+            return (float) ($context['net_cashflow'] ?? 0);
+    }
+}
+
+/**
+ * Hitung repayment capacity dari konteks form sesuai parameter master.
+ *
+ * @param string|null $jenisKredit
+ * @param array<string, float> $context
+ * @return float
+ */
+function hitungRepaymentDariKonteks($jenisKredit, array $context, array $options = []) {
+    global $pdo;
+    $config = ($pdo instanceof PDO)
+        ? getRepaymentParameterConfig($pdo, $jenisKredit, $options)
+        : getRepaymentPolicyFallbackConfig($jenisKredit);
+
+    $basis = resolveRepaymentBasisAmount($config['dasar_perhitungan'], $context);
+    return $basis * ((float) $config['persen_maks_angsuran'] / 100);
+}
+
+/**
+ * Calculate Repayment Capacity from master parameter (persen × dasar).
+ *
+ * @param float $nilaiDasar Nilai dasar perhitungan yang sudah sesuai parameter
+ * @param string|null $jenisKredit jenis_pekerjaan untuk lookup master
+ * @param array{idPengajuan?:int,asOfDate?:string|null} $options
  * @return float Repayment capacity (max monthly payment)
  */
-function hitungRepayment($penghasilanBersih) {
-    $penghasilanBersih = (float)($penghasilanBersih ?? 0);
-    return $penghasilanBersih * 0.75;
+function hitungRepayment($nilaiDasar, $jenisKredit = null, array $options = []) {
+    $nilaiDasar = (float) ($nilaiDasar ?? 0);
+    global $pdo;
+    $config = ($pdo instanceof PDO)
+        ? getRepaymentParameterConfig($pdo, $jenisKredit, $options)
+        : getRepaymentPolicyFallbackConfig($jenisKredit);
+
+    return $nilaiDasar * ((float) $config['persen_maks_angsuran'] / 100);
 }
 
 /**
@@ -637,11 +1102,18 @@ function fetch_data_analis_untuk_kepatuhan(PDO $pdo, $id_pengajuan) {
         $agunan_detail['foto_agunan'] = $stmt->fetchAll() ?: [];
 
         // 4. Calculate/fetch repayment capacity
+        if (!function_exists('getRepaymentOverrideInfo')) {
+            require_once __DIR__ . '/repayment_override.php';
+        }
+        $overrideInfo = getRepaymentOverrideInfo($pengajuan);
         $repayment = [
             'omzet_bulanan' => floatval($pengajuan['omset_per_bulan'] ?? 0),
             'pengeluaran' => floatval($pengajuan['total_biaya_bulanan'] ?? 0),
             'angsuran_lain' => floatval($pengajuan['angsuran_bank_lain'] ?? 0),
             'repayment_capacity' => floatval($pengajuan['repayment_capacity'] ?? 0),
+            'repayment_capacity_dihitung' => floatval($pengajuan['repayment_capacity_dihitung'] ?? $pengajuan['repayment_capacity'] ?? 0),
+            'repayment_override_aktif' => $overrideInfo['aktif'],
+            'repayment_override_alasan' => $overrideInfo['alasan'],
             'angsuran_diajukan' => floatval($pengajuan['angsuran_diajukan'] ?? 0),
             'margin_keamanan' => floatval($pengajuan['repayment_capacity'] ?? 0) - floatval($pengajuan['angsuran_diajukan'] ?? 0),
             'status_kelayakan_repayment' => (floatval($pengajuan['repayment_capacity'] ?? 0) >= floatval($pengajuan['angsuran_diajukan'] ?? 0)) ? 'LAYAK' : 'TIDAK LAYAK'

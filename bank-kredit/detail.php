@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/helpers/credit_helper.php';
+require_once __DIR__ . '/helpers/repayment_override.php';
 
 
 if (!isLoggedIn()) {
@@ -14,9 +15,18 @@ if (!$id) {
 }
 
 // Get Pengajuan
-$stmt = $pdo->prepare("SELECT p.*, u.nama as nama_input FROM pengajuan_kredit p JOIN users u ON p.input_by = u.id_user WHERE p.id_pengajuan = ?");
+$stmt = $pdo->prepare("
+    SELECT p.*, u.nama AS nama_input, uo.nama AS repayment_override_by_nama
+    FROM pengajuan_kredit p
+    JOIN users u ON p.input_by = u.id_user
+    LEFT JOIN users uo ON p.repayment_override_by = uo.id_user
+    WHERE p.id_pengajuan = ?
+");
 $stmt->execute([$id]);
 $data = $stmt->fetch();
+
+$repaymentOverride = $data ? getRepaymentOverrideInfo($data) : null;
+$canRepaymentOverride = $data && canOverrideRepaymentForPengajuan($data);
 
 if (!$data) {
     die("Data tidak ditemukan.");
@@ -134,6 +144,7 @@ $timeline = $stmt->fetchAll();
     <meta charset="UTF-8">
     <title>Detail Pengajuan Kredit</title>
     <link rel="stylesheet" href="assets/style.css">
+    <script>window.__CSRF_TOKEN__ = <?= json_encode(generateCsrfToken(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
 </head>
 
 <body>
@@ -278,13 +289,63 @@ $timeline = $stmt->fetchAll();
                         </tr>
                         <tr>
                             <td style="color:#64748B;">Repayment Cap.</td>
-                            <td>: <span
-                                    style="color:#D97706; font-weight:bold;"><?= formatRupiah($data['repayment_capacity'] ?? 0) ?></span>
+                            <td>:
+                                <span style="color:#D97706; font-weight:bold;"><?= formatRupiah($data['repayment_capacity'] ?? 0) ?></span>
+                                <?php if ($repaymentOverride && $repaymentOverride['aktif']): ?>
+                                    <span style="background:#fef3c7;color:#92400e;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:700;margin-left:0.35rem;">OVERRIDE DIREKSI</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
+                        <?php if ($repaymentOverride && $repaymentOverride['aktif']): ?>
+                        <tr>
+                            <td style="color:#64748B;">Nilai Dihitung</td>
+                            <td>: <?= formatRupiah($repaymentOverride['nilai_dihitung']) ?></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B;">Alasan Override</td>
+                            <td>: <?= nl2br(htmlspecialchars($repaymentOverride['alasan'])) ?></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B;">Override Oleh</td>
+                            <td>: <?= htmlspecialchars($repaymentOverride['override_by_nama'] ?? '-') ?>
+                                <?php if (!empty($repaymentOverride['override_at'])): ?>
+                                    <span style="color:#94a3b8;font-size:0.85rem;">(<?= date('d/m/Y H:i', strtotime($repaymentOverride['override_at'])) ?>)</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
                     </table>
                 </div>
             </div>
+
+            <?php if ($canRepaymentOverride): ?>
+            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:1.25rem;margin-bottom:2rem;">
+                <h3 style="color:#92400e;margin:0 0 0.75rem;font-size:1rem;">Override Repayment Capacity (Direksi)</h3>
+                <p style="color:#78350f;font-size:0.9rem;margin:0 0 1rem;">
+                    Override hanya berlaku untuk pengajuan ini dan <strong>tidak mengubah master parameter</strong>.
+                    Nilai dihitung sistem saat ini:
+                    <strong><?= formatRupiah($repaymentOverride['nilai_dihitung'] ?? ($data['repayment_capacity'] ?? 0)) ?></strong>
+                </p>
+                <div id="rpc-override-msg" style="display:none;padding:0.75rem;border-radius:6px;margin-bottom:0.75rem;font-size:0.9rem;"></div>
+                <?php if ($repaymentOverride && $repaymentOverride['aktif']): ?>
+                    <p style="margin:0 0 0.75rem;color:#166534;font-weight:600;">Override aktif: <?= formatRupiah($repaymentOverride['nilai_override']) ?></p>
+                    <button type="button" class="btn btn-secondary" id="btn-revoke-rpc-override">Cabut Override</button>
+                <?php else: ?>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:0.75rem;">
+                        <div>
+                            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.35rem;">Nilai Override (Rp)</label>
+                            <input type="text" id="rpc_override_nilai" class="form-control" placeholder="cth: 5000000"
+                                value="<?= htmlspecialchars(number_format((float)($data['repayment_capacity'] ?? 0), 0, '', '.'), ENT_QUOTES, 'UTF-8') ?>">
+                        </div>
+                        <div style="grid-column:1/-1;">
+                            <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.35rem;">Alasan Override <span style="color:#dc2626">*</span></label>
+                            <textarea id="rpc_override_alasan" rows="3" class="form-control" placeholder="Jelaskan alasan bisnis/risk exception (min. 10 karakter)"></textarea>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btn-apply-rpc-override">Terapkan Override</button>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
 
             <!-- IV. MULTI AGUNAN SECTION -->
             <div
@@ -1201,6 +1262,71 @@ $timeline = $stmt->fetchAll();
                 .catch(err => {
                     alert('Error: ' + err.message);
                 });
+        });
+
+        function showRpcOverrideMsg(text, ok) {
+            var el = document.getElementById('rpc-override-msg');
+            if (!el) return;
+            el.style.display = 'block';
+            el.style.background = ok ? '#dcfce7' : '#fee2e2';
+            el.style.color = ok ? '#166534' : '#991b1b';
+            el.textContent = text;
+        }
+
+        function postRpcOverride(formData) {
+            return fetch('<?= BASE_URL ?>/api/repayment_override.php', {
+                method: 'POST',
+                body: formData
+            }).then(function (r) { return r.json(); });
+        }
+
+        document.getElementById('btn-apply-rpc-override')?.addEventListener('click', function () {
+            var nilai = (document.getElementById('rpc_override_nilai')?.value || '').replace(/\D/g, '');
+            var alasan = (document.getElementById('rpc_override_alasan')?.value || '').trim();
+            if (!nilai || parseInt(nilai, 10) <= 0) {
+                showRpcOverrideMsg('Nilai override tidak valid.', false);
+                return;
+            }
+            if (alasan.length < 10) {
+                showRpcOverrideMsg('Alasan override wajib diisi minimal 10 karakter.', false);
+                return;
+            }
+            if (!confirm('Terapkan override repayment untuk pengajuan ini?')) return;
+
+            var fd = new FormData();
+            fd.append('csrf_token', window.__CSRF_TOKEN__ || '');
+            fd.append('id_pengajuan', '<?= (int) $id ?>');
+            fd.append('override_action', 'apply');
+            fd.append('nilai_override', nilai);
+            fd.append('alasan_override', alasan);
+
+            postRpcOverride(fd).then(function (data) {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showRpcOverrideMsg(data.message || 'Gagal menerapkan override.', false);
+                }
+            }).catch(function (err) {
+                showRpcOverrideMsg('Error: ' + err.message, false);
+            });
+        });
+
+        document.getElementById('btn-revoke-rpc-override')?.addEventListener('click', function () {
+            if (!confirm('Cabut override repayment dan kembalikan ke nilai hasil perhitungan sistem?')) return;
+            var fd = new FormData();
+            fd.append('csrf_token', window.__CSRF_TOKEN__ || '');
+            fd.append('id_pengajuan', '<?= (int) $id ?>');
+            fd.append('override_action', 'revoke');
+
+            postRpcOverride(fd).then(function (data) {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showRpcOverrideMsg(data.message || 'Gagal mencabut override.', false);
+                }
+            }).catch(function (err) {
+                showRpcOverrideMsg('Error: ' + err.message, false);
+            });
         });
     </script>
 </body>

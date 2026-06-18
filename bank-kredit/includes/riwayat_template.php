@@ -11,26 +11,25 @@ if (!isset($my_role)) {
 requireSameRole($my_role);
 
 $role_name_display = ucwords(str_replace('_', ' ', $my_role));
+$page_title = 'Riwayat Approval';
+$page_subtitle = 'Keputusan yang telah Anda berikan sebagai ' . $role_name_display;
 
-// Pagination
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $limit = 20;
 $offset = ($page - 1) * $limit;
 
-// Count total records
 $stmtCount = $pdo->prepare("
-    SELECT COUNT(*) 
-    FROM pengajuan_kredit p 
-    JOIN approval_kredit a ON p.id_pengajuan = a.id_pengajuan 
+    SELECT COUNT(*)
+    FROM pengajuan_kredit p
+    JOIN approval_kredit a ON p.id_pengajuan = a.id_pengajuan
     WHERE a.id_user = ? AND a.level_approval = ?
 ");
 $stmtCount->execute([$_SESSION['user_id'], $my_role]);
 $total_records = $stmtCount->fetchColumn();
 $total_pages = ceil($total_records / $limit);
 
-// Fetch History
 $stmt = $pdo->prepare("
-    SELECT p.id_pengajuan, p.nama_debitur, p.posisi_saat_ini, 
+    SELECT p.id_pengajuan, p.nama_debitur, p.posisi_saat_ini,
            a.keputusan as my_decision, a.tanggal_approval, a.catatan as my_note
     FROM pengajuan_kredit p
     JOIN approval_kredit a ON p.id_pengajuan = a.id_pengajuan
@@ -45,52 +44,50 @@ $history_items = $stmt->fetchAll();
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Approval - <?= htmlspecialchars($role_name_display) ?></title>
     <link rel="stylesheet" href="../assets/style.css">
-    <style>
-        .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; }
-        .pagination a, .pagination span { padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; text-decoration: none; color: #0f172a; }
-        .pagination a:hover { background: #f1f5f9; }
-        .pagination .active { background: #3b82f6; color: white; pointer-events: none; }
-    </style>
 </head>
 <body>
     <?php include __DIR__ . '/navbar.php'; ?>
 
     <div class="container">
-        <h1>Riwayat Approval Saya (<?= htmlspecialchars($role_name_display) ?>)</h1>
+        <?php include __DIR__ . '/page_header.inc.php'; ?>
+
         <div class="card">
             <div class="table-responsive">
-                <table>
+                <table class="table-stack">
                     <thead>
                         <tr>
                             <th>Tgl Approval</th>
                             <th>Debitur</th>
-                            <th>Keputusan Saya</th>
+                            <th>Keputusan</th>
                             <th>Catatan</th>
-                            <th>Posisi Surat Terkini</th>
+                            <th>Posisi Terkini</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if(empty($history_items)): ?>
-                            <tr><td colspan="6" style="text-align:center;">Belum ada riwayat approval.</td></tr>
+                            <tr><td colspan="6" class="text-center">Belum ada riwayat approval.</td></tr>
                         <?php else: ?>
-                            <?php foreach($history_items as $item): ?>
+                            <?php foreach($history_items as $item):
+                                $badge_class = match($item['my_decision']) {
+                                    'setuju' => 'badge-approved',
+                                    'tolak' => 'badge-rejected',
+                                    default => 'badge-revision'
+                                };
+                            ?>
                             <tr>
-                                <td><?= date('d/M/Y H:i', strtotime($item['tanggal_approval'])) ?></td>
-                                <td><?= htmlspecialchars($item['nama_debitur']) ?></td>
-                                <td>
-                                    <?php 
-                                        if($item['my_decision'] == 'setuju') echo '<span style="background: #d4edda; color: #155724; padding: 0.2rem 0.6rem; border-radius: 0.2rem; font-size: 0.85rem; font-weight:600;">DISETUJUI</span>';
-                                        elseif($item['my_decision'] == 'tolak') echo '<span style="background: #f8d7da; color: #721c24; padding: 0.2rem 0.6rem; border-radius: 0.2rem; font-size: 0.85rem; font-weight:600;">DITOLAK</span>';
-                                        else echo '<span style="background: #fff3cd; color: #856404; padding: 0.2rem 0.6rem; border-radius: 0.2rem; font-size: 0.85rem; font-weight:600;">REVISI</span>';
-                                    ?>
+                                <td data-label="Tgl"><?= date('d/M/Y H:i', strtotime($item['tanggal_approval'])) ?></td>
+                                <td data-label="Debitur" class="font-medium"><?= htmlspecialchars($item['nama_debitur']) ?></td>
+                                <td data-label="Keputusan">
+                                    <span class="badge <?= $badge_class ?>"><?= strtoupper($item['my_decision']) ?></span>
                                 </td>
-                                <td><?= htmlspecialchars($item['my_note']) ?></td>
-                                <td><span class="badge badge-process"><?= strtoupper(str_replace('_', ' ', $item['posisi_saat_ini'])) ?></span></td>
-                                <td>
-                                    <a href="../detail.php?id=<?= $item['id_pengajuan'] ?>" class="btn btn-secondary" style="font-size:0.8rem; padding:0.4rem 0.8rem;">Detail</a>
+                                <td data-label="Catatan"><?= htmlspecialchars($item['my_note']) ?></td>
+                                <td data-label="Posisi"><span class="badge badge-process"><?= strtoupper(str_replace('_', ' ', $item['posisi_saat_ini'])) ?></span></td>
+                                <td data-label="Aksi">
+                                    <a href="../detail.php?id=<?= $item['id_pengajuan'] ?>" class="btn btn-secondary btn-sm">Detail</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -99,12 +96,11 @@ $history_items = $stmt->fetchAll();
                 </table>
             </div>
 
-            <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
             <div class="pagination">
                 <?php if ($page > 1): ?>
-                    <a href="?page=1">« Awal</a>
-                    <a href="?page=<?= $page - 1 ?>">‹ Prev</a>
+                    <a href="?page=1">Awal</a>
+                    <a href="?page=<?= $page - 1 ?>">Prev</a>
                 <?php endif; ?>
 
                 <?php
@@ -119,8 +115,8 @@ $history_items = $stmt->fetchAll();
                 <?php endfor; ?>
 
                 <?php if ($page < $total_pages): ?>
-                    <a href="?page=<?= $page + 1 ?>">Next ›</a>
-                    <a href="?page=<?= $total_pages ?>">Akhir »</a>
+                    <a href="?page=<?= $page + 1 ?>">Next</a>
+                    <a href="?page=<?= $total_pages ?>">Akhir</a>
                 <?php endif; ?>
             </div>
             <?php endif; ?>

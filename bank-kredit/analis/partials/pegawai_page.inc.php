@@ -12,6 +12,10 @@ $CATATAN_REVISI_UI = $catatan_revisi_display ?? '';
 $EDIT_ID_PENGAJUAN = isset($edit_id_pengajuan) ? (int) $edit_id_pengajuan : 0;
 $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 
+/** @var array $RPC_CONFIG */
+/** @var float $RPC_PERSEN_MAKS */
+/** @var string $RPC_DASAR_LABEL */
+/** @var string $RPC_AS_OF_DATE */
 include __DIR__ . '/pegawai_head_raw.inc.php';
 ?>
 
@@ -36,6 +40,16 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 style="margin-top:1rem;padding:1rem 1.15rem;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;color:#78350f;font-size:0.92rem;line-height:1.5;">
                 <strong>Catatan revisi / penolakan dari atasan:</strong><br>
                 <?= nl2br(htmlspecialchars($CATATAN_REVISI_UI)) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (empty($RPC_CONFIG['id_parameter'])): ?>
+            <div style="margin-top:1rem;padding:0.85rem 1.1rem;background:#fefce8;border:1px solid #fef08a;border-radius:10px;color:#854d0e;font-size:0.95rem;">
+                <strong>&#9888; Peringatan Parameter Belum Ada/Aktif:</strong> Sistem menggunakan logika fallback standar (<?= $RPC_PERSEN_MAKS ?>% × <?= $RPC_DASAR_LABEL ?>) karena parameter pengajuan <strong><?= htmlspecialchars($jenis_pekerjaan ?? $pegawai_tipe_save) ?></strong> ini belum dikonfigurasi / disetujui.
+            </div>
+        <?php else: ?>
+            <div style="margin-top:1rem;padding:0.85rem 1.1rem;background:#f0fdfa;border:1px solid #5eead4;border-radius:10px;color:#134e4a;font-size:0.95rem;">
+                <strong>&#10004; Repayment Parameter Tersinkronisasi:</strong> Menggunakan dasar <strong><?= $RPC_PERSEN_MAKS ?>% × <?= $RPC_DASAR_LABEL ?></strong> (As-of: <?= htmlspecialchars($RPC_AS_OF_DATE) ?>). <?= !empty($RPC_CONFIG['locked']) ? '<strong>[TERKUNCI]</strong>' : '' ?>
             </div>
         <?php endif; ?>
 

@@ -7,9 +7,16 @@
 if (!isset($jenis_pekerjaan)) {
     $jenis_pekerjaan = 'umum';
 }
+require_once __DIR__ . '/../helpers/credit_helper.php';
+$EDIT_ID_PENGAJUAN = isset($edit_id_pengajuan) ? (int) $edit_id_pengajuan : 0;
+$rpcConfigData = bootstrapRepaymentFormConfig($pdo, $jenis_pekerjaan, $EDIT_ID_PENGAJUAN > 0 ? $EDIT_ID_PENGAJUAN : null);
+$RPC_CONFIG = $rpcConfigData['RPC_CONFIG'];
+$RPC_PERSEN_MAKS = $rpcConfigData['RPC_PERSEN_MAKS'];
+$RPC_DASAR = $rpcConfigData['RPC_DASAR'];
+$RPC_DASAR_LABEL = $rpcConfigData['RPC_DASAR_LABEL'];
+$RPC_AS_OF_DATE = $rpcConfigData['RPC_AS_OF_DATE'];
 $FORM_BANNER = $form_banner_title ?? '';
 $CATATAN_REVISI_UI = $catatan_revisi_display ?? '';
-$EDIT_ID_PENGAJUAN = isset($edit_id_pengajuan) ? (int) $edit_id_pengajuan : 0;
 $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 ?>
 <!DOCTYPE html>
@@ -326,14 +333,15 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
             return parseInt(String(str).replace(/[^0-9]/g, ''), 10) || 0;
         }
 
-        /**
-         * Calculate Repayment Capacity with standard multiplier
-         * @param {number} penghasilanBersih Net income (after all expenses)
-         * @returns {number} Repayment capacity (max monthly payment)
-         */
-        function hitungRepayment(penghasilanBersih) {
-            return penghasilanBersih * 0.75;
-        }
+        /* =========================================================================
+         * [BACKUP JS] VERSI SEBELUM REVISI (LOGIKA HARDCODE 75%)
+         * =========================================================================
+         * function hitungRepayment_old(penghasilanBersih) {
+         *     return penghasilanBersih * 0.75;
+         * }
+         * ========================================================================= */
+
+        <?php include __DIR__ . '/partials/repayment_master_js.inc.php'; ?>
 
         function initRupiahField(el) {
             if (!el || el.dataset.rpInit) return;
@@ -588,8 +596,9 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
             var gtxt = res6c.grade || res6c.msg || '';
             document.getElementById('score_summary_5c').textContent = res6c.total.toFixed(2) + " / 5.0 (" + gtxt + ")";
 
-            // Get Repayment Capacity (75% of Net Cashflow)
+            // Get Repayment Capacity from master parameter
             let omzet = parseRupiahInput(document.querySelector('[name=omset_per_bulan]').value);
+            let pendapatanLain = parseRupiahInput(document.querySelector('[name=pendapatan_lain]')?.value || '0');
 
             let bBaku = parseRupiahInput(document.querySelector('[name=biaya_bahan_baku]').value);
             let bGaji = parseRupiahInput(document.querySelector('[name=biaya_gaji]').value);
@@ -607,24 +616,110 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
             let totalPengeluaran = biayaHidup + cicilanLain;
 
             let netCashflow = laba - totalPengeluaran;
-            let rpc = hitungRepayment(netCashflow);
+            let rpc = hitungRepaymentFromContext({
+                netCashflow: netCashflow,
+                gajiBersih: 0,
+                pendapatan: omzet + pendapatanLain,
+                labaBersih: laba
+            });
 
-            document.getElementById('score_summary_rpc').textContent = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(rpc);
+            let isOverride = false;
+            if (window.__ANALIS_PREFILL__ && window.__ANALIS_PREFILL__.pengajuan) {
+                if (parseInt(window.__ANALIS_PREFILL__.pengajuan.repayment_override_aktif, 10) === 1) {
+                    rpc = parseFloat(window.__ANALIS_PREFILL__.pengajuan.repayment_capacity) || rpc;
+                    isOverride = true;
+                }
+            }
+            let overrideBadge = isOverride ? ' <span style="background:#fef3c7; color:#d97706; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.75rem; vertical-align:middle; margin-left:0.5rem; font-weight:bold;">OVERRIDE DIREKSI</span>' : '';
+
+            document.getElementById('score_summary_rpc').innerHTML = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(rpc) + overrideBadge;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
             toggleJaminan();
             // initialise 6C calculations on load
             calc6C();
+
+            // 1. Placeholder, Required Indicator & Real-Time Validation
+            document.querySelectorAll('.custom-form-group').forEach(function(group) {
+                let label = group.querySelector('label');
+                let input = group.querySelector('input, textarea, select');
+                if (label && input) {
+                    // Inject Required asterisk
+                    if (input.hasAttribute('required') && !label.innerHTML.includes('*')) {
+                        label.innerHTML += ' <span style="color:red">*</span>';
+                    }
+                    // Inject Placeholder
+                    if (!input.getAttribute('placeholder') && input.tagName !== 'SELECT' && input.type !== 'file' && input.type !== 'date') {
+                        input.setAttribute('placeholder', 'Masukkan ' + label.textContent.replace('*','').trim() + '...');
+                    }
+                    // Real-time validation visually
+                    if (input.hasAttribute('required')) {
+                        input.addEventListener('blur', function() {
+                            if (!this.value.trim()) {
+                                this.style.borderColor = '#ef4444';
+                                this.style.backgroundColor = '#fef2f2';
+                                // Add error message
+                                let err = group.querySelector('.err-msg');
+                                if (!err) {
+                                    err = document.createElement('small');
+                                    err.className = 'err-msg';
+                                    err.style.color = '#ef4444';
+                                    err.style.display = 'block';
+                                    err.style.marginTop = '0.25rem';
+                                    err.textContent = 'Bagian ini wajib diisi!';
+                                    group.appendChild(err);
+                                }
+                            } else {
+                                this.style.borderColor = '#cbd5e1';
+                                this.style.backgroundColor = '#f8fafc';
+                                let err = group.querySelector('.err-msg');
+                                if (err) err.remove();
+                            }
+                        });
+                    }
+                }
+            });
+
+            // 2. Auto-save Draft
+            let autoSaveTimer = null;
+            let autoSaveIndicator = document.createElement('div');
+            autoSaveIndicator.id = 'autosave-indicator';
+            autoSaveIndicator.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#fff; padding:8px 16px; border-radius:30px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); font-weight:600; font-size:0.85rem; z-index:9999; opacity:0; transition:opacity 0.3s ease; border:1px solid #e2e8f0; pointer-events:none;';
+            document.body.appendChild(autoSaveIndicator);
+
+            document.addEventListener('input', function(e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                    // Do not auto-save file uploads logic
+                    if (e.target.type === 'file') return;
+
+                    clearTimeout(autoSaveTimer);
+                    autoSaveTimer = setTimeout(function() {
+                        let activeTab = document.querySelector('.tab-content.active');
+                        if (activeTab && activeTab.id) {
+                            let secMap = {
+                                'tab-pemohon': 'pemohon',
+                                'tab-usaha': 'usaha',
+                                'tab-struktur': 'struktur',
+                                'tab-neraca': 'neraca',
+                                'tab-6c': '6c'
+                            };
+                            let sec = secMap[activeTab.id];
+                            if (sec) saveSection(sec, true);
+                        }
+                    }, 4000); // 4 seconds delay
+                }
+            });
         });
 
         // ========== AJAX SAVE PER SECTION ==========
-        function saveSection(section) {
+        function saveSection(section, isAutoSave) {
+            isAutoSave = isAutoSave || false;
             let idPengajuan = document.getElementById('id_pengajuan').value || '0';
 
             // For non-pemohon sections, require id_pengajuan
             if (section !== 'pemohon' && (!idPengajuan || idPengajuan === '0')) {
-                showToast(section, false, 'Simpan Data Pemohon terlebih dahulu!');
+                if (!isAutoSave) showToast(section, false, 'Simpan Data Pemohon terlebih dahulu!');
                 return;
             }
 
@@ -648,12 +743,12 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                 // Submit — no extra fields needed
             } else if (tabMap[section]) {
                 let tab = document.querySelector(tabMap[section]);
-
+                if (!tab) return;
                 let inputs = tab.querySelectorAll('input, select, textarea');
                 inputs.forEach(function (el) {
                     if (el.name) {
                         if (el.type === 'file') {
-                            if (el.files.length > 0) formData.append(el.name, el.files[0]);
+                            if (el.files.length > 0 && !isAutoSave) formData.append(el.name, el.files[0]);
                         } else if (el.classList.contains('rp-input')) {
                             // Strip Rupiah formatting before sending
                             formData.append(el.name, String(el.value).replace(/[^0-9]/g, '') || '0');
@@ -666,7 +761,14 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 
             // Button UX
             let btn = document.getElementById('btn-save-' + section);
-            if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+            if (btn && !isAutoSave) { btn.classList.add('loading'); btn.disabled = true; }
+
+            let autoSaveIndicator = document.getElementById('autosave-indicator');
+            if (isAutoSave && autoSaveIndicator) {
+                autoSaveIndicator.textContent = 'Menyimpan draft...';
+                autoSaveIndicator.style.opacity = '1';
+                autoSaveIndicator.style.color = '#d97706';
+            }
 
             fetch('save_section.php', {
                 method: 'POST',
@@ -674,11 +776,24 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
             })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-                    showToast(section, data.success, data.message);
+                    if (btn && !isAutoSave) { btn.classList.remove('loading'); btn.disabled = false; }
+                    
+                    if (!isAutoSave) {
+                        showToast(section, data.success, data.message);
+                    } else if (autoSaveIndicator) {
+                        if (data.success) {
+                            autoSaveIndicator.textContent = '✔ Draft tersimpan.';
+                            autoSaveIndicator.style.color = '#059669';
+                            setTimeout(function() { autoSaveIndicator.style.opacity = '0'; }, 3000);
+                        } else {
+                            autoSaveIndicator.textContent = '❌ Gagal menyimpan.';
+                            autoSaveIndicator.style.color = '#ef4444';
+                        }
+                    }
 
                     if (data.success && data.id_pengajuan) {
-                        document.getElementById('id_pengajuan').value = data.id_pengajuan;
+                        let elId = document.getElementById('id_pengajuan');
+                        if (elId.value === '0' || !elId.value) elId.value = data.id_pengajuan;
                     }
                     if (data.success && section === 'submit') {
                         // Redirect after successful submit
@@ -686,8 +801,14 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                     }
                 })
                 .catch(function (err) {
-                    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-                    showToast(section, false, 'Terjadi kesalahan koneksi.');
+                    if (btn && !isAutoSave) { btn.classList.remove('loading'); btn.disabled = false; }
+                    if (!isAutoSave) {
+                        showToast(section, false, 'Terjadi kesalahan koneksi.');
+                    } else if (autoSaveIndicator) {
+                        autoSaveIndicator.textContent = 'Koneksi lambat.';
+                        autoSaveIndicator.style.color = '#ef4444';
+                        setTimeout(function() { autoSaveIndicator.style.opacity = '0'; }, 3000);
+                    }
                 });
         }
 
@@ -729,14 +850,23 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
             </div>
         <?php endif; ?>
 
+        <?php if (empty($RPC_CONFIG['id_parameter'])): ?>
+            <div style="margin-top:1rem;padding:0.85rem 1.1rem;background:#fefce8;border:1px solid #fef08a;border-radius:10px;color:#854d0e;font-size:0.95rem;">
+                <strong>&#9888; Peringatan Parameter Belum Ada/Aktif:</strong> Sistem menggunakan logika fallback standar (<?= $RPC_PERSEN_MAKS ?>% × <?= $RPC_DASAR_LABEL ?>) karena parameter pengajuan <strong><?= htmlspecialchars($jenis_pekerjaan) ?></strong> ini belum dikonfigurasi / disetujui.
+            </div>
+        <?php else: ?>
+            <div style="margin-top:1rem;padding:0.85rem 1.1rem;background:#f0fdfa;border:1px solid #5eead4;border-radius:10px;color:#134e4a;font-size:0.95rem;">
+                <strong>&#10004; Repayment Parameter Tersinkronisasi:</strong> Menggunakan dasar <strong><?= $RPC_PERSEN_MAKS ?>% × <?= $RPC_DASAR_LABEL ?></strong> (As-of: <?= htmlspecialchars($RPC_AS_OF_DATE) ?>). <?= !empty($RPC_CONFIG['locked']) ? '<strong>[TERKUNCI]</strong>' : '' ?>
+            </div>
+        <?php endif; ?>
+
         <div class="form-stepper">
-            <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pemohon</a>
-            <a href="#tab-usaha" class="nav-link-step" data-target="tab-usaha">2. Data Usaha</a>
-            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">3. Struktur Kredit</a>
-            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">4. Data Agunan</a>
-            <a href="#tab-neraca" class="nav-link-step" data-target="tab-neraca">5. Neraca</a>
-            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">6. Analisa 6C</a>
-            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">7. Review & Submit</a>
+            <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">Data Debitur</a>
+            <a href="#tab-usaha" class="nav-link-step" data-target="tab-usaha">Data Pekerjaan</a>
+            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">Data Kredit</a>
+            <a href="#tab-neraca" class="nav-link-step" data-target="tab-neraca">Analisa Keuangan</a>
+            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">Analisa 6C</a>
+            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">Kesimpulan</a>
         </div>
 
         <form method="POST" enctype="multipart/form-data" onsubmit="return false;">
@@ -1086,7 +1216,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         <div style="text-align:center;">
                             <div
                                 style="font-size:0.85rem; opacity:0.7; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.25rem;">
-                                95% × Net Cashflow</div>
+                                <?= number_format($RPC_PERSEN_MAKS, 0) ?>% × <?= htmlspecialchars($RPC_DASAR_LABEL) ?></div>
                             <div style="font-size:2.25rem; font-weight:800;" id="disp_repayment_capacity">Rp 0</div>
                             <div style="font-size:0.8rem; opacity:0.6; margin-top:0.25rem;">Kemampuan bayar maksimal per
                                 bulan (konservatif)</div>
@@ -1352,9 +1482,26 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         document.getElementById('disp_pengeluaran_for_net').textContent = formatRupiah(totalPengeluaran);
                         document.getElementById('disp_net_cashflow').textContent = formatRupiah(netCashflow);
 
-                        // G. Repayment Capacity (75%)
-                        let rc = hitungRepayment(netCashflow);
-                        document.getElementById('disp_repayment_capacity').textContent = formatRupiah(rc);
+                        // G. Repayment Capacity
+                        let rc_asli = hitungRepaymentFromContext({
+                            netCashflow: netCashflow,
+                            gajiBersih: 0,
+                            pendapatan: omzet + pendapatanLain,
+                            labaBersih: labaUsaha
+                        });
+                        let rc = rc_asli;
+                        let isOverride = false;
+                        let _alasanOverride = '';
+                        if (window.__ANALIS_PREFILL__ && window.__ANALIS_PREFILL__.pengajuan) {
+                            if (parseInt(window.__ANALIS_PREFILL__.pengajuan.repayment_override_aktif, 10) === 1) {
+                                rc = parseFloat(window.__ANALIS_PREFILL__.pengajuan.repayment_capacity) || rc_asli;
+                                isOverride = true;
+                                _alasanOverride = window.__ANALIS_PREFILL__.pengajuan.repayment_override_alasan || '';
+                            }
+                        }
+
+                        let overrideBadge = isOverride ? ' <span style="background:#fef3c7; color:#d97706; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.75rem; vertical-align:middle; margin-left:0.5rem; font-weight:bold;">OVERRIDE DIREKSI</span>' : '';
+                        document.getElementById('disp_repayment_capacity').innerHTML = formatRupiah(rc) + overrideBadge;
 
                         // H. Uji Kelayakan
                         document.getElementById('disp_rc_for_uji').textContent = formatRupiah(rc);
@@ -1362,6 +1509,8 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 
                         let boxStatus = document.getElementById('box_status_kelayakan');
                         let boxKesimpulan = document.getElementById('box_kesimpulan');
+                        let teksRpBasis = isOverride ? 'Berdasarkan <strong>Override Direksi</strong> ('+ _alasanOverride +')' : 'Dengan rasio perhitungan maksimal ' + RPC_PERSEN_MAKS + '%';
+                        
                         if (omzet <= 0 && angsuranDiajukan <= 0) {
                             boxStatus.style.background = '#f1f5f9';
                             boxStatus.style.color = '#64748b';
@@ -1370,13 +1519,13 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         } else if (rc >= angsuranDiajukan && angsuranDiajukan > 0) {
                             boxStatus.style.background = '#dcfce7';
                             boxStatus.style.color = '#166534';
-                            boxStatus.innerHTML = '✅ LAYAK — Repayment Capacity (' + formatRupiah(rc) + ') ≥ Angsuran (' + formatRupiah(angsuranDiajukan) + ')';
-                            boxKesimpulan.innerHTML = 'Berdasarkan hasil analisa keuangan, debitur memiliki <strong>Laba Usaha (Bersih)</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(labaUsaha) + '</span>. Setelah dikurangi pengeluaran tetap, didapat <strong>Net Cashflow</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(netCashflow) + '</span>. Dengan rasio perhitungan maksimal 75%, <strong>Repayment Capacity</strong> debitur adalah <span style="color:#059669; font-weight:bold;">' + formatRupiah(rc) + '</span>. Karena kemampuan mengangsur ini <strong>LEBIH BESAR</strong> dari angsuran yang diajukan yaitu ' + formatRupiah(angsuranDiajukan) + ', maka permohonan kredit dinyatakan <strong style="color:#166534; font-size:1.1rem;">LAYAK</strong>.'
+                            boxStatus.innerHTML = '✅ LAYAK — Repayment Capacity (' + formatRupiah(rc) + ') ≥ Angsuran (' + formatRupiah(angsuranDiajukan) + ')' + (isOverride ? ' [OVERRIDE]' : '');
+                            boxKesimpulan.innerHTML = 'Berdasarkan hasil analisa keuangan, debitur memiliki <strong>Laba Usaha (Bersih)</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(labaUsaha) + '</span>. Setelah dikurangi pengeluaran tetap, didapat <strong>Net Cashflow</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(netCashflow) + '</span>. '+ teksRpBasis + ', <strong>Repayment Capacity</strong> debitur ditetapkan sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(rc) + '</span>. Karena kemampuan mengangsur ini <strong>LEBIH BESAR</strong> dari angsuran yang diajukan yaitu ' + formatRupiah(angsuranDiajukan) + ', maka permohonan kredit dinyatakan <strong style="color:#166534; font-size:1.1rem;">LAYAK</strong>.';
                         } else {
                             boxStatus.style.background = '#fee2e2';
                             boxStatus.style.color = '#991b1b';
-                            boxStatus.innerHTML = '❌ TIDAK LAYAK — Repayment Capacity (' + formatRupiah(rc) + ') < Angsuran (' + formatRupiah(angsuranDiajukan) + ')';
-                            boxKesimpulan.innerHTML = 'Berdasarkan hasil analisa keuangan, debitur memiliki <strong>Laba Usaha (Bersih)</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(labaUsaha) + '</span>. Setelah dikurangi pengeluaran tetap, didapat <strong>Net Cashflow</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(netCashflow) + '</span>. Dengan rasio perhitungan maksimal 75%, <strong>Repayment Capacity</strong> debitur hanya sebesar <span style="color:#dc2626; font-weight:bold;">' + formatRupiah(rc) + '</span>. Karena kemampuan mengangsur ini <strong>LEBIH KECIL</strong> dari angsuran yang diajukan yaitu ' + formatRupiah(angsuranDiajukan) + ', maka permohonan kredit dinyatakan <strong style="color:#991b1b; font-size:1.1rem;">TIDAK LAYAK</strong>.';
+                            boxStatus.innerHTML = '❌ TIDAK LAYAK — Repayment Capacity (' + formatRupiah(rc) + ') < Angsuran (' + formatRupiah(angsuranDiajukan) + ')' + (isOverride ? ' [OVERRIDE]' : '');
+                            boxKesimpulan.innerHTML = 'Berdasarkan hasil analisa keuangan, debitur memiliki <strong>Laba Usaha (Bersih)</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(labaUsaha) + '</span>. Setelah dikurangi pengeluaran tetap, didapat <strong>Net Cashflow</strong> sebesar <span style="color:#059669; font-weight:bold;">' + formatRupiah(netCashflow) + '</span>. '+ teksRpBasis + ', <strong>Repayment Capacity</strong> debitur hanya sebesar <span style="color:#dc2626; font-weight:bold;">' + formatRupiah(rc) + '</span>. Karena kemampuan mengangsur ini <strong>LEBIH KECIL</strong> dari angsuran yang diajukan yaitu ' + formatRupiah(angsuranDiajukan) + ', maka permohonan kredit dinyatakan <strong style="color:#991b1b; font-size:1.1rem;">TIDAK LAYAK</strong>.';
                         }
 
                         // J. Kesimpulan Analisa
@@ -1400,7 +1549,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         html += '<li>Laba Usaha: <strong style="color:#059669;">' + formatRupiah(labaUsaha) + '</strong> (' + marginPersen + '%)</li>';
                         html += '<li>Total Pengeluaran Tetap: <strong>' + formatRupiah(totalPengeluaran) + '</strong></li>';
                         html += '<li>Net Cashflow: <strong style="color:#7c3aed;">' + formatRupiah(netCashflow) + '</strong></li>';
-                        html += '<li>Repayment Capacity (75%): <strong style="color:#2563eb; font-size:1.05rem;">' + formatRupiah(rc) + '</strong></li>';
+                        html += '<li>Repayment Capacity ' + (isOverride ? '<strong style="color:#d97706;">[OVERRIDE]</strong>' : '(' + RPC_PERSEN_MAKS + '%)') + ': <strong style="color:#2563eb; font-size:1.05rem;">' + formatRupiah(rc) + '</strong></li>';
                         if (angsuranDiajukan > 0) {
                             html += '<li>Angsuran Diajukan: <strong>' + formatRupiah(angsuranDiajukan) + '</strong></li>';
                             let selisihColor = selisih >= 0 ? '#059669' : '#dc2626';
@@ -1714,11 +1863,11 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         }
                     }
                 </script>
-
-                <!-- TAB 4: AGUNAN MULTI (DYNAMIC REPEATABLE) -->
+                <!-- DATA AGUNAN MULTI (DYNAMIC REPEATABLE) -->
                 <?php if (($jenis_pekerjaan ?? 'umum') !== 'pppk' && ($jenis_pekerjaan ?? 'umum') !== 'perangkat_desa'): ?>
-                <div id="tab-agunan" class="tab-content">
-                    <h3 class="tab-title">4. Data Agunan</h3>
+                <div id="agunan_section">
+                    <hr style="border:0; border-top:1px dashed #cbd5e1; margin: 2rem 0;">
+                    <div class="section-header">D. DATA AGUNAN</div>
 
                     <div
                         style="background:linear-gradient(135deg,#eff6ff,#f0fdf4); padding:1rem 1.25rem; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:1.5rem;">
@@ -2371,6 +2520,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                     });
                 </script>
                 <?php endif; ?>
+                </div>
 
                 <!-- TAB 5: NERACA -->
                 <div id="tab-neraca" class="tab-content">
@@ -3308,7 +3458,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         <div class="score-card">
                             <p>Repayment Capacity</p>
                             <div class="score-value" id="score_summary_rpc">Rp 0</div>
-                            <small class="text-muted">(95% dari Net Cashflow)</small>
+                            <small class="text-muted">(<?= number_format($RPC_PERSEN_MAKS, 0) ?>% × <?= htmlspecialchars($RPC_DASAR_LABEL) ?>)</small>
                         </div>
                     </div>
 

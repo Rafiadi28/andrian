@@ -84,11 +84,79 @@ $invalid6c = hitung_6c(['character' => 6, 'capacity' => 5, 'capital' => 4, 'coll
 test_result('9. Scoring 5C', 'Validasi skor di luar 1-5 ditolak', isset($invalid6c['error']));
 
 // ── 3. Repayment ─────────────────────────────────────────────
-$rpc = hitungRepayment(100000000);
-test_result('8. Repayment', 'hitungRepayment(100M) = 75M', abs($rpc - 75000000) < 0.01, 'hasil=' . $rpc);
+$umumRpcCfg = getRepaymentParameterConfig($pdo, 'umum');
+$expectedUmum = 100000000 * ((float) $umumRpcCfg['persen_maks_angsuran'] / 100);
+$rpc = hitungRepayment(100000000, 'umum');
+test_result(
+    '8. Repayment',
+    'hitungRepayment(100M) sesuai master umum (' . $umumRpcCfg['persen_maks_angsuran'] . '%)',
+    abs($rpc - $expectedUmum) < 0.01,
+    'hasil=' . $rpc
+);
+$pppkRpcCfg = getRepaymentParameterConfig($pdo, 'pppk');
+$expectedPppk = 10000000 * ((float) $pppkRpcCfg['persen_maks_angsuran'] / 100);
+$rpcPppk = hitungRepaymentDariKonteks('pppk', [
+    'gaji_bersih' => 10000000,
+    'net_cashflow' => 5000000,
+]);
+test_result(
+    '8. Repayment',
+    'PPPK dasar=' . $pppkRpcCfg['dasar_perhitungan'] . ' dari master (' . $pppkRpcCfg['persen_maks_angsuran'] . '%)',
+    abs($rpcPppk - $expectedPppk) < 0.01,
+    'hasil=' . $rpcPppk
+);
+$cfgAnalisaLama = getRepaymentParameterConfig($pdo, 'umum', ['asOfDate' => '2020-06-01']);
+$cfgAnalisaHariIni = getRepaymentParameterConfig($pdo, 'umum', ['asOfDate' => date('Y-m-d')]);
+test_result(
+    '8. Repayment',
+    'Parameter umum dipilih berdasarkan tanggal analisa',
+    !empty($cfgAnalisaLama['as_of_date']) && $cfgAnalisaLama['as_of_date'] === '2020-06-01',
+    'as_of=' . ($cfgAnalisaLama['as_of_date'] ?? 'N/A')
+);
+test_result(
+    '8. Repayment',
+    'Parameter hari ini memiliki as_of_date',
+    ($cfgAnalisaHariIni['as_of_date'] ?? '') === date('Y-m-d'),
+    'as_of=' . ($cfgAnalisaHariIni['as_of_date'] ?? 'N/A')
+);
+$tglAnalisaFn = function_exists('normalizeRepaymentAsOfDate') && normalizeRepaymentAsOfDate('2024-03-15') === '2024-03-15';
+test_result('8. Repayment', 'normalizeRepaymentAsOfDate() valid', $tglAnalisaFn);
 $rep = hitung_repayment(5000000, 2000000, 500000);
 test_result('8. Repayment', 'hitung_repayment(5M, 2M, 0.5M) = 2.5M', abs($rep - 2500000) < 0.01);
 test_result('8. Repayment', 'klasifikasi_repayment(80%, gaji) = Layak', klasifikasi_repayment(4000000, 5000000) === 'Layak');
+
+require_once __DIR__ . '/helpers/repayment_override.php';
+$overrideNoAlasan = applyRepaymentOverride($pdo, 0, 1, 5000000, '');
+test_result('8. Repayment', 'Override tanpa alasan ditolak', !($overrideNoAlasan['success'] ?? false));
+$overridePendek = applyRepaymentOverride($pdo, 0, 1, 5000000, 'terlalu pendek');
+test_result('8. Repayment', 'Override alasan < 10 karakter ditolak', !($overridePendek['success'] ?? false));
+$mockOverride = getRepaymentOverrideInfo([
+    'repayment_override_aktif' => 1,
+    'repayment_override_nilai' => 8000000,
+    'repayment_capacity_dihitung' => 5000000,
+    'repayment_capacity' => 8000000,
+    'repayment_override_alasan' => 'Kondisi khusus debitur prioritas.',
+]);
+test_result(
+    '8. Repayment',
+    'getRepaymentOverrideInfo() override aktif',
+    $mockOverride['aktif'] && $mockOverride['nilai_efektif'] == 8000000
+);
+
+require_once __DIR__ . '/helpers/repayment_parameter_audit.php';
+bankKreditEnsureRepaymentParameterAuditSchema($pdo);
+$tableAudit = $pdo->query("SHOW TABLES LIKE 'repayment_parameter_audit_log'")->rowCount() > 0;
+test_result('10. Repayment Audit', 'Tabel repayment_parameter_audit_log ada', $tableAudit);
+$snap = repaymentParameterAuditSnapshot([
+    'id_parameter' => 1,
+    'jenis_kredit' => 'umum',
+    'dasar_perhitungan' => 'net_cashflow',
+    'persen_maks_angsuran' => 75,
+    'status_approval' => 'draft',
+]);
+test_result('10. Repayment Audit', 'repaymentParameterAuditSnapshot() valid', ($snap['jenis_kredit'] ?? '') === 'umum');
+$fmt = formatRepaymentParameterAuditSnapshot($snap);
+test_result('10. Repayment Audit', 'formatRepaymentParameterAuditSnapshot() tidak kosong', $fmt !== '-' && strpos($fmt, 'umum') !== false);
 
 // ── 4. Approval Hierarchy & Threshold ─────────────────────────
 $hierarchy = getHierarchy();
@@ -105,6 +173,7 @@ $requiredTables = [
     'users', 'pengajuan_kredit', 'analisa_5c', 'analisa_neraca',
     'jaminan_tanah_bangunan', 'jaminan_kendaraan', 'agunan_foto',
     'approval_kredit', 'assessment_kepatuhan', 'master_pejabat', 'audit_log',
+    'master_parameter_repayment', 'repayment_parameter_audit_log',
 ];
 foreach ($requiredTables as $tbl) {
     $exists = $pdo->query("SHOW TABLES LIKE " . $pdo->quote($tbl))->rowCount() > 0;

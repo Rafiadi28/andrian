@@ -3,6 +3,17 @@
 if (!isset($pegawai_tipe_save)) {
     $pegawai_tipe_save = 'pppk';
 }
+if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR) || !isset($RPC_DASAR_LABEL)) {
+    require_once __DIR__ . '/../../helpers/credit_helper.php';
+    $rpcJenis = $pegawai_tipe_save ?? ($jenis_pekerjaan ?? 'pppk');
+    $rpcPengajuanId = (int) ($EDIT_ID_PENGAJUAN ?? ($edit_id_pengajuan ?? 0));
+    $rpcConfigData = bootstrapRepaymentFormConfig($pdo, $rpcJenis, $rpcPengajuanId > 0 ? $rpcPengajuanId : null);
+    $RPC_CONFIG = $rpcConfigData['RPC_CONFIG'];
+    $RPC_PERSEN_MAKS = $rpcConfigData['RPC_PERSEN_MAKS'];
+    $RPC_DASAR = $rpcConfigData['RPC_DASAR'];
+    $RPC_DASAR_LABEL = $rpcConfigData['RPC_DASAR_LABEL'];
+    $RPC_AS_OF_DATE = $rpcConfigData['RPC_AS_OF_DATE'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -257,14 +268,15 @@ if (!isset($pegawai_tipe_save)) {
         }
     </style>
     <script>
-        /**
-         * Calculate Repayment Capacity with standard multiplier
-         * @param {number} penghasilanBersih Net income (after all expenses)
-         * @returns {number} Repayment capacity (max monthly payment)
-         */
-        function hitungRepayment(penghasilanBersih) {
-            return penghasilanBersih * 0.75;
-        }
+        /* =========================================================================
+         * [BACKUP JS] VERSI SEBELUM REVISI (LOGIKA HARDCODE 75%)
+         * =========================================================================
+         * function hitungRepayment_old(penghasilanBersih) {
+         *     return penghasilanBersih * 0.75;
+         * }
+         * ========================================================================= */
+
+        <?php include __DIR__ . '/repayment_master_js.inc.php'; ?>
 
         function normalizeDigits(raw) {
             return String(raw || '').replace(/\D/g, '');
@@ -550,7 +562,12 @@ if (!isset($pegawai_tipe_save)) {
                 if (cicTotalElem) cic = parseFloat(cicTotalElem.value) || 0;
                 else if (cicLainElem) cic = parseFloat(cicLainElem.value) || 0;
                 let net = gaji - biayaHidup - cic;
-                rpc = hitungRepayment(net);
+                rpc = hitungRepaymentFromContext({
+                    gajiBersih: gaji,
+                    pendapatan: gaji,
+                    netCashflow: net,
+                    labaBersih: gaji
+                });
             } else if (document.getElementById('desk_penghasilan_tetap')) {
                 let a = parseFloat(document.getElementById('desk_penghasilan_tetap').value) || 0;
                 let b = parseFloat(document.getElementById('desk_tambahan_penghasilan').value) || 0;
@@ -561,7 +578,12 @@ if (!isset($pegawai_tipe_save)) {
                 if (cicDesaElem) cic = parseFloat(cicDesaElem.value) || 0;
                 else if (cicLainDesaElem) cic = parseFloat(cicLainDesaElem.value) || 0;
                 let net = (a + b) - biayaHidup - cic;
-                rpc = hitungRepayment(net);
+                rpc = hitungRepaymentFromContext({
+                    gajiBersih: a + b,
+                    pendapatan: a + b,
+                    netCashflow: net,
+                    labaBersih: a + b
+                });
             } else {
                 var omEl = document.querySelector('[name=omset_per_bulan]');
                 let omzet = omEl ? (parseFloat(omEl.value) || 0) : 0;
@@ -577,10 +599,24 @@ if (!isset($pegawai_tipe_save)) {
                 let biayaHidup = parseFloat(document.querySelector('[name=biaya_hidup]')?.value) || 0;
                 let cicilanLain = parseFloat(document.querySelector('[name=cicilan_lain]')?.value) || 0;
                 let netCashflow = laba - biayaHidup - cicilanLain;
-                rpc = hitungRepayment(netCashflow);
+                rpc = hitungRepaymentFromContext({
+                    netCashflow: netCashflow,
+                    gajiBersih: 0,
+                    pendapatan: omzet,
+                    labaBersih: laba
+                });
             }
 
-            document.getElementById('score_summary_rpc').textContent = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(rpc);
+            let isOverride = false;
+            if (window.__ANALIS_PREFILL__ && window.__ANALIS_PREFILL__.pengajuan) {
+                if (parseInt(window.__ANALIS_PREFILL__.pengajuan.repayment_override_aktif, 10) === 1) {
+                    rpc = parseFloat(window.__ANALIS_PREFILL__.pengajuan.repayment_capacity) || rpc;
+                    isOverride = true;
+                }
+            }
+            let overrideBadge = isOverride ? ' <span style="background:#fef3c7; color:#d97706; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.75rem; vertical-align:middle; margin-left:0.5rem; font-weight:bold;">OVERRIDE DIREKSI</span>' : '';
+
+            document.getElementById('score_summary_rpc').innerHTML = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(rpc) + overrideBadge;
         }
 
         document.addEventListener('DOMContentLoaded', function () {

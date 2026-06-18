@@ -19,7 +19,7 @@ $user = 'root';          // ← HOSTINGER: ganti dengan DB User dari hPanel
 $pass = '';              // ← HOSTINGER: ganti dengan DB Password Anda
 $db   = 'bank_kredit_db'; // ← HOSTINGER: ganti dengan DB Name dari hPanel
 
-define('BASE_URL', '/andrian/bank-kredit'); // ← HOSTINGER: '' (root) atau '/subfolder'
+define('BASE_URL', '/andrian/bank-kredit'); // ← Lokal: '/andrian/bank-kredit' | VPS: '/bank-kredit'
 
 /**
  * Produksi: unggahan ditolak jika PHP tidak punya ext fileinfo; MIME wajib dicek saat finfo tersedia.
