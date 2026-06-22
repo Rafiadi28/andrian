@@ -278,6 +278,7 @@ try {
                     echo json_encode(['success' => false, 'message' => 'Gagal menyimpan file pendukung. Error: ' . json_encode($errInfo) . ' | uploadDir: ' . $uploadDir]);
                     exit;
                 }
+                $file_pendukung = $newFileName;
                 } elseif ($_FILES['file_pendukung']['error'] != UPLOAD_ERR_NO_FILE) {
                     $upload_errors = [
                         UPLOAD_ERR_INI_SIZE => 'Ukuran file melebihi batas upload_max_filesize di php.ini',
