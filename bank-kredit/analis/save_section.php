@@ -256,7 +256,10 @@ try {
             // Handle file upload
             $file_pendukung = '';
             if (isset($_FILES['file_pendukung']) && $_FILES['file_pendukung']['error'] == UPLOAD_ERR_OK) {
-                $uploadDir = __DIR__ . '/../assets/uploads/';
+                $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
                 $ext = strtolower(pathinfo($_FILES['file_pendukung']['name'], PATHINFO_EXTENSION));
                 $allowedPendukung = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
                 if (!in_array($ext, $allowedPendukung, true)) {
@@ -270,7 +273,8 @@ try {
                 }
                 $newFileName = uniqid('file_pendukung_') . '.' . $ext;
                 if (!move_uploaded_file($_FILES['file_pendukung']['tmp_name'], $uploadDir . $newFileName)) {
-                    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan file pendukung.']);
+                    $errInfo = error_get_last();
+                    echo json_encode(['success' => false, 'message' => 'Gagal menyimpan file pendukung. Error: ' . json_encode($errInfo) . ' | uploadDir: ' . $uploadDir]);
                     exit;
                 }
                 $file_pendukung = $newFileName;
@@ -1126,7 +1130,7 @@ try {
                 exit;
             }
 
-            $uploadDir = __DIR__ . '/../assets/uploads/';
+            $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
@@ -1434,7 +1438,7 @@ try {
 
                 // ===== Handle Multiple Agunan Foto Upload (New Feature) =====
                 if (isset($_FILES['agunan_foto']) && is_array($_FILES['agunan_foto']['name'])) {
-                    $uploadDir = __DIR__ . '/../assets/uploads/';
+                    $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
                     if (!is_dir($uploadDir)) {
                         mkdir($uploadDir, 0755, true);
                     }
