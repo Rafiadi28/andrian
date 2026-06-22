@@ -255,11 +255,12 @@ try {
 
             // Handle file upload
             $file_pendukung = '';
-            if (isset($_FILES['file_pendukung']) && $_FILES['file_pendukung']['error'] == UPLOAD_ERR_OK) {
-                $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
-                }
+            if (isset($_FILES['file_pendukung'])) {
+                if ($_FILES['file_pendukung']['error'] == UPLOAD_ERR_OK) {
+                    $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
                 $ext = strtolower(pathinfo($_FILES['file_pendukung']['name'], PATHINFO_EXTENSION));
                 $allowedPendukung = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
                 if (!in_array($ext, $allowedPendukung, true)) {
@@ -277,7 +278,20 @@ try {
                     echo json_encode(['success' => false, 'message' => 'Gagal menyimpan file pendukung. Error: ' . json_encode($errInfo) . ' | uploadDir: ' . $uploadDir]);
                     exit;
                 }
-                $file_pendukung = $newFileName;
+                } elseif ($_FILES['file_pendukung']['error'] != UPLOAD_ERR_NO_FILE) {
+                    $upload_errors = [
+                        UPLOAD_ERR_INI_SIZE => 'Ukuran file melebihi batas upload_max_filesize di php.ini',
+                        UPLOAD_ERR_FORM_SIZE => 'Ukuran file melebihi batas MAX_FILE_SIZE di form HTML',
+                        UPLOAD_ERR_PARTIAL => 'File hanya terupload sebagian',
+                        UPLOAD_ERR_NO_TMP_DIR => 'Folder temporary tidak ditemukan (missing a temporary folder)',
+                        UPLOAD_ERR_CANT_WRITE => 'Gagal menulis file ke disk',
+                        UPLOAD_ERR_EXTENSION => 'Upload dihentikan oleh extension PHP'
+                    ];
+                    $errCode = $_FILES['file_pendukung']['error'];
+                    $errMsg = $upload_errors[$errCode] ?? 'Unknown upload error code: ' . $errCode;
+                    echo json_encode(['success' => false, 'message' => 'Gagal upload file pendukung: ' . $errMsg]);
+                    exit;
+                }
             }
 
             try {
