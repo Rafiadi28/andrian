@@ -420,7 +420,7 @@ if (isset($_POST['submit_agunan'])) {
                 </div>
             <?php endif; ?>
 
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                 <?php if ($jenis_jaminan == 'tanah_bangunan'): ?>
                     <h3 style="margin-bottom:1.5rem; border-bottom:1px solid #eee; padding-bottom:0.5rem;">Legalitas & Fisik
@@ -529,11 +529,11 @@ if (isset($_POST['submit_agunan'])) {
                     <div class="form-group"><label>Nama Pemilik di BPKB</label><input type="text" name="bpkb_nama" required>
                     </div>
 
-                    <!-- STNK Fields - For BPKB Jaminan -->
+                    <!-- BPKB Fields - Nomor BPKB Jaminan -->
                     <div class="grid-2">
-                        <div class="form-group"><label>Nomor STNK</label><input type="text" name="no_stnk" placeholder="Contoh: 1234 AB 5678">
+                        <div class="form-group"><label>Nomor BPKB</label><input type="text" name="no_stnk" placeholder="Contoh: A-12345678">
                         </div>
-                        <div class="form-group"><label>Masa Berlaku STNK</label><input type="date" name="masa_berlaku_stnk">
+                        <div class="form-group"><label>Masa Berlaku BPKB</label><input type="date" name="masa_berlaku_stnk">
                         </div>
                     </div>
 

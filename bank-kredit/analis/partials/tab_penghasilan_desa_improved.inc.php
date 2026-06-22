@@ -959,6 +959,37 @@ document.addEventListener('DOMContentLoaded', function () {
         // Optionally add default angsuran item
     }
 
+    // Sync Tanggal Lahir dari form Pemohon
+    const sourceTglLahir = document.querySelector('input[name="tanggal_lahir"]');
+    if (sourceTglLahir) {
+        const syncTglLahir = function() {
+            const val = sourceTglLahir.value;
+            const tglLahirElem = document.getElementById('desk_tgl_lahir');
+            const displayElem = document.getElementById('desk_tgl_lahir_display');
+            if (tglLahirElem && displayElem) {
+                tglLahirElem.value = val;
+                
+                // Format tgl untuk display
+                if(val) {
+                    const dateObj = new Date(val);
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    displayElem.textContent = dateObj.toLocaleDateString('id-ID', options);
+                } else {
+                    displayElem.textContent = '-';
+                }
+                
+                validateDesaField('desk_tgl_lahir', 'date');
+                calculateSisaMasaJabatan();
+            }
+        };
+        // Sync pada saat value form Pemohon berubah
+        sourceTglLahir.addEventListener('change', syncTglLahir);
+        sourceTglLahir.addEventListener('blur', syncTglLahir);
+        
+        // Initial sync saat halaman dimuat
+        setTimeout(syncTglLahir, 500);
+    }
+
     // Initialize jabatan fields based on current selection
     toggleDesaJabatanFields();
 });

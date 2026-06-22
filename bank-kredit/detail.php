@@ -518,12 +518,12 @@ $timeline = $stmt->fetchAll();
                                 </tr>
                                 <?php if (isset($jk['no_stnk']) && !is_null($jk['no_stnk']) && $jk['no_stnk'] !== ''): ?>
                                 <tr style="background:#f0f9ff; border-top:1px solid #bfdbfe;">
-                                    <td style="color:#0369a1; font-weight:600;">No STNK</td>
+                                    <td style="color:#0369a1; font-weight:600;">No BPKB</td>
                                     <td>: <?= htmlspecialchars($jk['no_stnk']) ?></td>
                                 </tr>
                                 <?php if (isset($jk['masa_berlaku_stnk']) && !is_null($jk['masa_berlaku_stnk']) && $jk['masa_berlaku_stnk'] !== ''): ?>
                                 <tr style="background:#f0f9ff;">
-                                    <td style="color:#0369a1; font-weight:600;">Berlaku STNK</td>
+                                    <td style="color:#0369a1; font-weight:600;">Masa Berlaku BPKB</td>
                                     <td>: <?= date('d F Y', strtotime($jk['masa_berlaku_stnk'])) ?></td>
                                 </tr>
                                 <?php endif; ?>
@@ -825,51 +825,81 @@ $timeline = $stmt->fetchAll();
 
             <div
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                <!-- Data Pendukung -->
+                <!-- Data Pendukung & KTP -->
                 <div class="card" style="padding: 1rem;">
-                    <strong style="display:block; margin-bottom:0.5rem;">Data Pendukung Usaha</strong>
+                    <strong style="display:block; margin-bottom:0.5rem;">Data Pendukung Usaha (KTP/SK/Dll)</strong>
                     <?php if (!empty($data['file_pendukung'])): ?>
-                        <a href="assets/uploads/<?= $data['file_pendukung'] ?>" target="_blank" class="btn btn-secondary"
-                            style="font-size:0.8rem;">Lihat Dokumen</a>
+                        <?php 
+                        $files = explode('|', $data['file_pendukung']);
+                        foreach($files as $file): 
+                            $f = trim($file);
+                            if(empty($f)) continue;
+                            $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+                        ?>
+                            <?php if (in_array($ext, ['jpg','jpeg','png','webp'])): ?>
+                                <img src="assets/uploads/<?= htmlspecialchars($f) ?>" style="width:100%; height:150px; object-fit:cover; border-radius:0.5rem; margin-top:0.5rem;">
+                            <?php endif; ?>
+                            <a href="assets/uploads/<?= htmlspecialchars($f) ?>" target="_blank" class="btn btn-secondary" style="font-size:0.8rem; display:block; text-align:center; margin-top:0.5rem; margin-bottom:1rem;">Lihat Dokumen</a>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <span class="text-muted" style="font-size:0.8rem;">Tidak ada dokumen pendukung.</span>
                     <?php endif; ?>
                 </div>
 
+                <!-- Dokumen Pendukung Lain (Opsional) -->
+                <?php if (!empty($data['foto_data_pendukung'])): ?>
+                <div class="card" style="padding: 1rem;">
+                    <strong style="display:block; margin-bottom:0.5rem;">Dokumen Agunan/Lainnya</strong>
+                    <?php 
+                    $fdocs = explode('|', $data['foto_data_pendukung']);
+                    foreach($fdocs as $doc):
+                        $d = trim($doc);
+                        if(empty($d)) continue;
+                        $ext = strtolower(pathinfo($d, PATHINFO_EXTENSION));
+                    ?>
+                        <?php if (in_array($ext, ['jpg','jpeg','png','webp'])): ?>
+                            <img src="assets/uploads/<?= htmlspecialchars($d) ?>" style="width:100%; height:150px; object-fit:cover; border-radius:0.5rem; margin-top:0.5rem;">
+                        <?php endif; ?>
+                        <a href="assets/uploads/<?= htmlspecialchars($d) ?>" target="_blank" class="btn btn-secondary" style="font-size:0.8rem; display:block; text-align:center; margin-top:0.5rem; margin-bottom:1rem;">Lihat Laporan/Dokumen</a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
                 <!-- Jaminan (Scan) -->
                 <div class="card" style="padding: 1rem;">
                     <strong style="display:block; margin-bottom:0.5rem;">Dokumen Jaminan (Scan)</strong>
-                    <?php if ($data['file_jaminan']): ?>
-                        <a href="assets/uploads/<?= $data['file_jaminan'] ?>" target="_blank" class="btn btn-secondary"
-                            style="font-size:0.8rem;">Lihat Dokumen</a>
+                    <?php if (!empty($data['file_jaminan'])): ?>
+                        <?php foreach (explode('|', $data['file_jaminan']) as $fj): if(empty(trim($fj))) continue; ?>
+                            <a href="assets/uploads/<?= htmlspecialchars(trim($fj)) ?>" target="_blank" class="btn btn-secondary" style="font-size:0.8rem; display:block; margin-bottom:0.5rem;">Lihat Dokumen</a>
+                        <?php endforeach; ?>
                     <?php else: ?>
-                        <span class="text-danger">Tidak ada</span>
+                        <span class="text-danger" style="font-size:0.8rem;">Tidak ada</span>
                     <?php endif; ?>
                 </div>
 
                 <!-- Foto Rumah -->
                 <div class="card" style="padding: 1rem;">
                     <strong style="display:block; margin-bottom:0.5rem;">Foto Rumah / Agunan</strong>
-                    <?php if ($data['foto_rumah']): ?>
-                        <img src="assets/uploads/<?= $data['foto_rumah'] ?>"
-                            style="width:100%; height:150px; object-fit:cover; border-radius:0.5rem; margin-top:0.5rem;">
-                        <a href="assets/uploads/<?= $data['foto_rumah'] ?>" target="_blank" class="text-primary"
-                            style="font-size:0.8rem; display:block; margin-top:0.5rem;">Lihat Full Size</a>
+                    <?php if (!empty($data['foto_rumah'])): ?>
+                        <?php foreach (explode('|', $data['foto_rumah']) as $fr): if(empty(trim($fr))) continue; ?>
+                            <img src="assets/uploads/<?= htmlspecialchars(trim($fr)) ?>" style="width:100%; height:150px; object-fit:cover; border-radius:0.5rem; margin-top:0.5rem;">
+                            <a href="assets/uploads/<?= htmlspecialchars(trim($fr)) ?>" target="_blank" class="text-primary" style="font-size:0.8rem; display:block; text-align:center; margin-bottom:1rem;">Lihat Full Size</a>
+                        <?php endforeach; ?>
                     <?php else: ?>
-                        <span class="text-danger">Tidak ada</span>
+                        <span class="text-danger" style="font-size:0.8rem;">Tidak ada</span>
                     <?php endif; ?>
                 </div>
 
                 <!-- Foto Usaha -->
                 <div class="card" style="padding: 1rem;">
                     <strong style="display:block; margin-bottom:0.5rem;">Foto Usaha</strong>
-                    <?php if ($data['foto_usaha']): ?>
-                        <img src="assets/uploads/<?= $data['foto_usaha'] ?>"
-                            style="width:100%; height:150px; object-fit:cover; border-radius:0.5rem; margin-top:0.5rem;">
-                        <a href="assets/uploads/<?= $data['foto_usaha'] ?>" target="_blank" class="text-primary"
-                            style="font-size:0.8rem; display:block; margin-top:0.5rem;">Lihat Full Size</a>
+                    <?php if (!empty($data['foto_usaha'])): ?>
+                        <?php foreach (explode('|', $data['foto_usaha']) as $fu): if(empty(trim($fu))) continue; ?>
+                            <img src="assets/uploads/<?= htmlspecialchars(trim($fu)) ?>" style="width:100%; height:150px; object-fit:cover; border-radius:0.5rem; margin-top:0.5rem;">
+                            <a href="assets/uploads/<?= htmlspecialchars(trim($fu)) ?>" target="_blank" class="text-primary" style="font-size:0.8rem; display:block; text-align:center; margin-bottom:1rem;">Lihat Full Size</a>
+                        <?php endforeach; ?>
                     <?php else: ?>
-                        <span class="text-danger">Tidak ada</span>
+                        <span class="text-danger" style="font-size:0.8rem;">Tidak ada</span>
                     <?php endif; ?>
                 </div>
 

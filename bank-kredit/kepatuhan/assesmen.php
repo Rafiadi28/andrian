@@ -229,6 +229,19 @@ $action = $_GET['action'] ?? 'list';
                 $tanggal = $a['tanggal_assessment'];
             }
 
+            // Fetch Agunan to display
+            $stmt_tanah = $pdo->prepare("SELECT * FROM jaminan_tanah_bangunan WHERE id_pengajuan = ?");
+            $stmt_tanah->execute([$id]);
+            $jt = $stmt_tanah->fetchAll(PDO::FETCH_ASSOC);
+            
+            $stmt_knd = $pdo->prepare("SELECT * FROM jaminan_kendaraan WHERE id_pengajuan = ?");
+            $stmt_knd->execute([$id]);
+            $jk = $stmt_knd->fetchAll(PDO::FETCH_ASSOC);
+            
+            $stmt_emas = $pdo->prepare("SELECT * FROM jaminan_emas WHERE id_pengajuan = ?");
+            $stmt_emas->execute([$id]);
+            $je = $stmt_emas->fetchAll(PDO::FETCH_ASSOC);
+
             function cVal($checklist, $key, $choice, $default = false) {
                 if (isset($checklist[$key]['val'])) {
                     return $checklist[$key]['val'] === $choice ? 'checked' : '';
@@ -331,6 +344,19 @@ $action = $_GET['action'] ?? 'list';
                     <tr>
                         <td>Plafon (Rp)</td>
                         <td><input type="text" value="<?= formatRupiah($p['jumlah_kredit']) ?>" readonly></td>
+                    </tr>
+                    <tr>
+                        <td>Agunan (Taksasi)</td>
+                        <td>
+                            <?php 
+                            $ag_list = [];
+                            foreach($jt as $t) $ag_list[] = "Tanah/Bangunan: " . formatRupiah($t['nilai_taksasi']);
+                            foreach($jk as $k) $ag_list[] = "Kendaraan: " . formatRupiah($k['nilai_taksasi']);
+                            foreach($je as $e) $ag_list[] = "Emas: " . formatRupiah($e['nilai_taksasi']);
+                            if(empty($ag_list)) echo "<input type='text' value='Tidak ada agunan' readonly>";
+                            else echo "<textarea rows='".count($ag_list)."' readonly>" . htmlspecialchars(implode("\n", $ag_list)) . "</textarea>";
+                            ?>
+                        </td>
                     </tr>
                     <tr>
                         <td>Tujuan</td>
