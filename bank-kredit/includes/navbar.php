@@ -98,7 +98,7 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
             $analisNavQ = isset($ANALIS_INPUT_NAV_QUERY) ? $ANALIS_INPUT_NAV_QUERY : '';
             $pegawaiInputNav = isset($jenis_pekerjaan) && in_array($jenis_pekerjaan, ['pppk', 'perangkat_desa'], true);
             $analisStep2Target = $pegawaiInputNav ? 'tab-penghasilan' : 'tab-usaha';
-            $analisStep2Label = 'Data Pekerjaan';
+            $analisStep2Label = 'Analisa Usaha';
             ?>
             <div id="submenu-input" class="submenu <?= $open_class ?>">
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-pemohon" class="nav-link-step" data-target="tab-pemohon">Data Debitur</a>
@@ -112,7 +112,7 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
                 <?php endif; ?>
                 <?php if (!$pegawaiInputNav): ?>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-neraca" class="nav-link-step"
-                    data-target="tab-neraca">Analisa Keuangan</a>
+                    data-target="tab-neraca">Analisa Jaminan</a>
                 <?php endif; ?>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-6c" class="nav-link-step" data-target="tab-6c">Analisa 6C</a>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-scoring" class="nav-link-step"
@@ -209,22 +209,7 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
             </a>
             <?php include __DIR__ . '/navbar_repayment_link.php'; ?>
 
-        <?php elseif ($current_role == 'kepatuhan'): ?>
-            <!-- ═══════════════════════════════════════════════
-                 KEPATUHAN
-                 ═══════════════════════════════════════════════ -->
-            <a href="<?= BASE_URL ?>/kepatuhan/dashboard.php">
-                <?= $ico_dashboard ?> Dashboard
-            </a>
-            <a href="<?= BASE_URL ?>/kepatuhan/proses.php">
-                <?= $ico_approve ?> Antrian Assessment
-            </a>
-            <a href="<?= BASE_URL ?>/kepatuhan/assesmen.php">
-                <?= $ico_shield ?> Assesmen Kepatuhan
-            </a>
-            <a href="<?= BASE_URL ?>/kepatuhan/riwayat.php">
-                <?= $ico_history ?> Riwayat Assesmen
-            </a>
+
 
         <?php elseif ($current_role == 'Superadmin'): ?>
             <!-- ═══════════════════════════════════════════════

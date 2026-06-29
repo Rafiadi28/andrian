@@ -52,7 +52,7 @@ function requireRepaymentParameterAccess()
  */
 function isRepaymentParameterViewOnly()
 {
-    return in_array(getRepaymentRbacRole(), ['analis', 'kasubag_analis', 'kabag_analis', 'Superadmin'], true);
+    return in_array(getRepaymentRbacRole(), ['analis', 'kasubag_analis', 'kabag_analis'], true);
 }
 
 function canViewRepaymentParameters()
@@ -62,15 +62,15 @@ function canViewRepaymentParameters()
 
 function canCreateRepaymentDraft()
 {
-    return getRepaymentRbacRole() === 'kabag_kredit';
+    return in_array(getRepaymentRbacRole(), ['kabag_kredit', 'Superadmin'], true);
 }
 
 function canEditRepaymentDraft(array $row)
 {
-    if (getRepaymentRbacRole() !== 'kabag_kredit') {
+    if (!in_array(getRepaymentRbacRole(), ['kabag_kredit', 'Superadmin'], true)) {
         return false;
     }
-    return in_array($row['status_approval'] ?? '', ['draft', 'ditolak'], true);
+    return in_array($row['status_approval'] ?? '', ['draft', 'ditolak'], true) || getRepaymentRbacRole() === 'Superadmin';
 }
 
 function canSubmitRepaymentProposal(array $row)
@@ -81,6 +81,9 @@ function canSubmitRepaymentProposal(array $row)
 
 function canDeleteRepaymentDraft(array $row)
 {
+    if (getRepaymentRbacRole() === 'Superadmin') {
+        return true;
+    }
     return getRepaymentRbacRole() === 'kabag_kredit'
         && ($row['status_approval'] ?? '') === 'draft'
         && empty($row['catatan_kadiv']);

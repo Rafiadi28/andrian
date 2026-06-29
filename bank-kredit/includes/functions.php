@@ -385,7 +385,7 @@ function getHierarchy()
     // Approval hierarchy chain - must align with posisi_saat_ini column values
     // NOTE: 'selesai' is added by the system when chain ends
     // UPDATED: Kepatuhan now INTEGRATED into approval chain (not parallel)
-    return ['analis', 'kepatuhan', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
+    return ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
 }
 
 /**
@@ -422,7 +422,7 @@ function canEditPengajuan(array $pengajuanRow)
     $chainSansAnalis = array_values(array_filter(getHierarchy(), static function ($r) {
         return $r !== 'analis';
     }));
-    $allowed = array_merge($chainSansAnalis, ['kadiv_bisnis', 'kasubag_analis', 'kepatuhan']);
+    $allowed = array_merge($chainSansAnalis, ['kadiv_bisnis', 'kasubag_analis']);
     return in_array($role, $allowed, true);
 }
 
@@ -549,7 +549,7 @@ function formatRupiah($angka)
 function statusPengajuanForPipelinePosition($role_posisi)
 {
     $map = [
-        'kepatuhan' => 'kepatuhan',
+        // 'kepatuhan' removed from pipeline — no longer an approval step
         'kasubag_analis' => 'kasubag',
         'kabag_kredit' => 'kabag',
         'kadiv_bisnis' => 'kadiv',
@@ -564,7 +564,8 @@ function statusPengajuanForPipelinePosition($role_posisi)
  */
 function pengajuanStatusesActivePipeline()
 {
-    return ['proses', 'diajukan', 'kepatuhan', 'kasubag', 'kabag', 'kadiv', 'direksi'];
+    // 'kepatuhan' removed from pipeline — no longer blocks approval routing
+    return ['proses', 'diajukan', 'kasubag', 'kabag', 'kadiv', 'direksi'];
 }
 
 /** Untuk disisipkan aman ke SQL IN (...) — nilai berasal dari kode, bukan input pengguna. */
@@ -646,29 +647,10 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
         }
 
         // ============================================================
-        // COMPLIANCE ASSESSMENT VALIDATION
-        // Block approval if compliance hasn't completed the assessment
-        // Applies to: kasubag_analis, kabag_kredit, kadiv_bisnis, direktur_utama
+        // COMPLIANCE ASSESSMENT VALIDATION — DISABLED
+        // Kepatuhan removed from approval chain per workflow update.
+        // Existing assessment_kepatuhan data preserved for audit.
         // ============================================================
-        $compliance_required_roles = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
-        $is_compliance_required_role = in_array($role, $compliance_required_roles);
-        
-        // Normalize keputusan early for this check
-        $k_check = strtolower(trim($keputusan));
-        
-        // Only enforce compliance check on 'setuju' (approval) decisions
-        if ($is_compliance_required_role && $k_check === 'setuju') {
-            $compliance_status = checkComplianceAssessmentStatus($pdo, $id_pengajuan);
-            
-            if (!$compliance_status['is_complete']) {
-                $pdo->rollBack();
-                return [
-                    'success' => false,
-                    'message' => '🔐 Tidak dapat melanjutkan approval: ' . $compliance_status['message'] . 
-                                '\n\nSilakan minta Dept. Kepatuhan untuk menyelesaikan assessment terlebih dahulu.'
-                ];
-            }
-        }
 
         // Normalize keputusan
         $k = strtolower(trim($keputusan));

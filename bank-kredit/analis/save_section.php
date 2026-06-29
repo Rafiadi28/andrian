@@ -1177,10 +1177,19 @@ try {
             try {
                 $pdo->beginTransaction();
 
-                // Delete old jaminan data (will be re-inserted from form)
-                $pdo->prepare("DELETE FROM jaminan_tanah_bangunan WHERE id_pengajuan=?")->execute([$id_pengajuan]);
-                $pdo->prepare("DELETE FROM jaminan_kendaraan WHERE id_pengajuan=?")->execute([$id_pengajuan]);
-                $pdo->prepare("DELETE FROM jaminan_emas WHERE id_pengajuan=?")->execute([$id_pengajuan]);
+                // --- Draft-Based Multiple Agunan Update Logic ---
+                // Dapatkan ID agunan yang sudah ada (untuk di-update daripada delete semua)
+                $existing_tanah = $pdo->prepare("SELECT id_jaminan FROM jaminan_tanah_bangunan WHERE id_pengajuan=? ORDER BY id_jaminan ASC");
+                $existing_tanah->execute([$id_pengajuan]);
+                $existing_tanah_arr = $existing_tanah->fetchAll(PDO::FETCH_COLUMN);
+
+                $existing_kend = $pdo->prepare("SELECT id_jaminan FROM jaminan_kendaraan WHERE id_pengajuan=? ORDER BY id_jaminan ASC");
+                $existing_kend->execute([$id_pengajuan]);
+                $existing_kend_arr = $existing_kend->fetchAll(PDO::FETCH_COLUMN);
+
+                $existing_emas = $pdo->prepare("SELECT id_jaminan FROM jaminan_emas WHERE id_pengajuan=? ORDER BY id_jaminan ASC");
+                $existing_emas->execute([$id_pengajuan]);
+                $existing_emas_arr = $existing_emas->fetchAll(PDO::FETCH_COLUMN);
 
                 // Get array of jenis_jaminan per agunan
                 $jenis_jaminan_arr = $_POST['jenis_jaminan'] ?? [];
@@ -1253,47 +1262,57 @@ try {
                         // Handle manual taksasi override
                         $tipe_valuasi_tanah = $_POST['tipe_valuasi_tanah'][$i] ?? 'otomatis';
                         $nilai_taksasi_manual_tanah = null;
+                        $persen_taksasi_tanah = null;
                         if ($tipe_valuasi_tanah === 'manual') {
                             $nilai_taksasi_manual_tanah = floatval($_POST['nilai_taksasi_manual_tanah'][$i] ?? 0);
+                            if (isset($_POST['persen_taksasi_tanah'][$i]) && $_POST['persen_taksasi_tanah'][$i] !== '') {
+                                $persen_taksasi_tanah = floatval($_POST['persen_taksasi_tanah'][$i]);
+                            }
                             if ($nilai_taksasi_manual_tanah > 0) {
+                                // Use manually computed taksasi value (from persen_taksasi_tanah input)
                                 $nilai_taksasi_total = $nilai_taksasi_manual_tanah;
                                 $nilai_likuidasi_total = $nilai_taksasi_manual_tanah * 0.70;
+                            } else {
+                                // Percentage field was left blank — treat as auto (already calculated above)
+                                $tipe_valuasi_tanah = 'otomatis';
+                                $nilai_taksasi_manual_tanah = null;
+                                $persen_taksasi_tanah = null;
                             }
                         }
 
-                        $stmt = $pdo->prepare("INSERT INTO jaminan_tanah_bangunan 
-                            (id_pengajuan, alamat_agunan, jenis_surat, masa_covernote, nomor_surat, atas_nama, kategori_agunan, 
-                             luas_tanah, luas_tanah_sppt, harga_tanah_sppt, nilai_wajar_sppt, nilai_taksasi_sppt, nilai_likuidasi_sppt,
-                             harga_tanah_pasar, luas_bangunan, luas_bangunan_2, harga_bangunan_m2, 
-                             nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                // Get the last inserted jaminan ID for current agunan
-                        $id_jaminan = $pdo->lastInsertId();
+                        $current_id = array_shift($existing_tanah_arr);
                         
-                        $stmt->execute([
-                            $id_pengajuan,
-                            $alamat,
-                            $jenis_surat,
-                            $masa_covernote,
-                            $nomor_surat,
-                            $atas_nama,
-                            $kategori,
-                            $luas_tanah,
-                            $luas_tanah_sppt,
-                            $harga_tanah_sppt,
-                            $nilai_wajar_sppt,
-                            $nilai_taksasi_sppt,
-                            $nilai_likuidasi_sppt,
-                            $harga_tanah_pasar,
-                            $luas_bangunan_1,
-                            $luas_bangunan_2,
-                            $harga_bangunan,
-                            $nilai_pasar_total,
-                            $nilai_taksasi_total,
-                            $nilai_likuidasi_total,
-                            $tipe_valuasi_tanah,
-                            $nilai_taksasi_manual_tanah
-                        ]);
+                        if ($current_id) {
+                            $stmt = $pdo->prepare("UPDATE jaminan_tanah_bangunan SET 
+                                alamat_agunan=?, jenis_surat=?, masa_covernote=?, nomor_surat=?, atas_nama=?, kategori_agunan=?, 
+                                luas_tanah=?, luas_tanah_sppt=?, harga_tanah_sppt=?, nilai_wajar_sppt=?, nilai_taksasi_sppt=?, nilai_likuidasi_sppt=?,
+                                harga_tanah_pasar=?, luas_bangunan=?, luas_bangunan_2=?, harga_bangunan_m2=?, 
+                                nilai_pasar=?, nilai_taksasi=?, nilai_likuidasi=?, tipe_valuasi=?, nilai_taksasi_manual=?, persentase_taksasi=?
+                                WHERE id_jaminan=?");
+                            $stmt->execute([
+                                $alamat, $jenis_surat, $masa_covernote, $nomor_surat, $atas_nama, $kategori,
+                                $luas_tanah, $luas_tanah_sppt, $harga_tanah_sppt, $nilai_wajar_sppt, $nilai_taksasi_sppt, $nilai_likuidasi_sppt,
+                                $harga_tanah_pasar, $luas_bangunan_1, $luas_bangunan_2, $harga_bangunan,
+                                $nilai_pasar_total, $nilai_taksasi_total, $nilai_likuidasi_total, $tipe_valuasi_tanah, $nilai_taksasi_manual_tanah, $persen_taksasi_tanah,
+                                $current_id
+                            ]);
+                            $id_jaminan = $current_id;
+                        } else {
+                            $stmt = $pdo->prepare("INSERT INTO jaminan_tanah_bangunan 
+                                (id_pengajuan, alamat_agunan, jenis_surat, masa_covernote, nomor_surat, atas_nama, kategori_agunan, 
+                                 luas_tanah, luas_tanah_sppt, harga_tanah_sppt, nilai_wajar_sppt, nilai_taksasi_sppt, nilai_likuidasi_sppt,
+                                 harga_tanah_pasar, luas_bangunan, luas_bangunan_2, harga_bangunan_m2, 
+                                 nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual, persentase_taksasi) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                            $stmt->execute([
+                                $id_pengajuan, $alamat, $jenis_surat, $masa_covernote, $nomor_surat, $atas_nama, $kategori,
+                                $luas_tanah, $luas_tanah_sppt, $harga_tanah_sppt, $nilai_wajar_sppt, $nilai_taksasi_sppt, $nilai_likuidasi_sppt,
+                                $harga_tanah_pasar, $luas_bangunan_1, $luas_bangunan_2, $harga_bangunan,
+                                $nilai_pasar_total, $nilai_taksasi_total, $nilai_likuidasi_total, $tipe_valuasi_tanah, $nilai_taksasi_manual_tanah, $persen_taksasi_tanah
+                            ]);
+                            $id_jaminan = $pdo->lastInsertId();
+                        }
+                        
                         $count_saved++;
 
                     }
@@ -1330,11 +1349,21 @@ try {
                         // Handle manual taksasi override
                         $tipe_valuasi_kendaraan = $_POST['tipe_valuasi_kendaraan'][$i] ?? 'otomatis';
                         $nilai_taksasi_manual_kendaraan = null;
+                        $persen_taksasi_kendaraan = null;
                         if ($tipe_valuasi_kendaraan === 'manual') {
                             $nilai_taksasi_manual_kendaraan = floatval($_POST['nilai_taksasi_manual_kendaraan'][$i] ?? 0);
+                            if (isset($_POST['persen_taksasi_kendaraan'][$i]) && $_POST['persen_taksasi_kendaraan'][$i] !== '') {
+                                $persen_taksasi_kendaraan = floatval($_POST['persen_taksasi_kendaraan'][$i]);
+                            }
                             if ($nilai_taksasi_manual_kendaraan > 0) {
+                                // Use manually computed taksasi value (from persen_taksasi_kendaraan input)
                                 $nilai_taksasi = $nilai_taksasi_manual_kendaraan;
                                 $nilai_likuidasi = $nilai_taksasi * 0.70;
+                            } else {
+                                // Percentage field was left blank — treat as auto (already calculated above)
+                                $tipe_valuasi_kendaraan = 'otomatis';
+                                $nilai_taksasi_manual_kendaraan = null;
+                                $persen_taksasi_kendaraan = null;
                             }
                         }
 
@@ -1351,27 +1380,31 @@ try {
                             }
                         }
 
-                        $stmt = $pdo->prepare("INSERT INTO jaminan_kendaraan 
-                            (id_pengajuan, merk, tipe, tahun_pembuatan, no_polisi, no_rangka, no_mesin, nama_pemilik, 
-                             nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual, no_stnk, masa_berlaku_stnk) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                        $stmt->execute([
-                            $id_pengajuan,
-                            $merk,
-                            $tipe_kend,
-                            $tahun,
-                            $nopol,
-                            $norangka,
-                            $nomesin,
-                            $bpkb_nama,
-                            $nilai_pasar,
-                            $nilai_taksasi,
-                            $nilai_likuidasi,
-                            $tipe_valuasi_kendaraan,
-                            $nilai_taksasi_manual_kendaraan,
-                            $no_stnk ?: null,
-                            $masa_berlaku_stnk ?: null
-                        ]);
+                        $current_id = array_shift($existing_kend_arr);
+                        
+                        if ($current_id) {
+                            $stmt = $pdo->prepare("UPDATE jaminan_kendaraan SET 
+                                merk=?, tipe=?, tahun_pembuatan=?, no_polisi=?, no_rangka=?, no_mesin=?, nama_pemilik=?, 
+                                nilai_pasar=?, nilai_taksasi=?, nilai_likuidasi=?, tipe_valuasi=?, nilai_taksasi_manual=?, persentase_taksasi=?, no_stnk=?, masa_berlaku_stnk=?
+                                WHERE id_jaminan=?");
+                            $stmt->execute([
+                                $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
+                                $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
+                                $no_stnk ?: null, $masa_berlaku_stnk ?: null, $current_id
+                            ]);
+                            $id_jaminan = $current_id;
+                        } else {
+                            $stmt = $pdo->prepare("INSERT INTO jaminan_kendaraan 
+                                (id_pengajuan, merk, tipe, tahun_pembuatan, no_polisi, no_rangka, no_mesin, nama_pemilik, 
+                                 nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual, persentase_taksasi, no_stnk, masa_berlaku_stnk) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                            $stmt->execute([
+                                $id_pengajuan, $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
+                                $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
+                                $no_stnk ?: null, $masa_berlaku_stnk ?: null
+                            ]);
+                            $id_jaminan = $pdo->lastInsertId();
+                        }
                         $count_saved++;
                     }
                     else if ($jenis === 'emas') {
@@ -1389,20 +1422,39 @@ try {
                         $nilai_taksasi_emas = $nilai_pasar_emas * 0.95;
                         $nilai_likuidasi_emas = $nilai_taksasi_emas;
 
-                        $stmt = $pdo->prepare("INSERT INTO jaminan_emas 
-                            (id_pengajuan, harga_per_gram, berat, nilai_pasar, nilai_taksasi, nilai_likuidasi) 
-                            VALUES (?, ?, ?, ?, ?, ?)");
-                        $stmt->execute([
-                            $id_pengajuan,
-                            $harga_per_gram,
-                            $berat,
-                            $nilai_pasar_emas,
-                            $nilai_taksasi_emas,
-                            $nilai_likuidasi_emas
-                        ]);
+                        $current_id = array_shift($existing_emas_arr);
+                        
+                        if ($current_id) {
+                            $stmt = $pdo->prepare("UPDATE jaminan_emas SET 
+                                harga_per_gram=?, berat=?, nilai_pasar=?, nilai_taksasi=?, nilai_likuidasi=? 
+                                WHERE id_jaminan=?");
+                            $stmt->execute([
+                                $harga_per_gram, $berat, $nilai_pasar_emas, $nilai_taksasi_emas, $nilai_likuidasi_emas, $current_id
+                            ]);
+                            $id_jaminan = $current_id;
+                        } else {
+                            $stmt = $pdo->prepare("INSERT INTO jaminan_emas 
+                                (id_pengajuan, harga_per_gram, berat, nilai_pasar, nilai_taksasi, nilai_likuidasi) 
+                                VALUES (?, ?, ?, ?, ?, ?)");
+                            $stmt->execute([
+                                $id_pengajuan, $harga_per_gram, $berat, $nilai_pasar_emas, $nilai_taksasi_emas, $nilai_likuidasi_emas
+                            ]);
+                            $id_jaminan = $pdo->lastInsertId();
+                        }
                         $count_saved++;
                     }
                 // Unknown jenis → skip silently (defensive)
+                }
+
+                // Hapus agunan lama yang tidak ada di antrean update user (jika user menghapus agunan di baris form)
+                foreach ($existing_tanah_arr as $del_id) {
+                    $pdo->prepare("DELETE FROM jaminan_tanah_bangunan WHERE id_jaminan=?")->execute([$del_id]);
+                }
+                foreach ($existing_kend_arr as $del_id) {
+                    $pdo->prepare("DELETE FROM jaminan_kendaraan WHERE id_jaminan=?")->execute([$del_id]);
+                }
+                foreach ($existing_emas_arr as $del_id) {
+                    $pdo->prepare("DELETE FROM jaminan_emas WHERE id_jaminan=?")->execute([$del_id]);
                 }
 
                 // Handle per-agunan file uploads safely

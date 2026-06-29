@@ -5,8 +5,8 @@
  */
 
 session_start();
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../helpers/functions.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Check authorization
 if (empty($_SESSION['user_id']) || !in_array($_SESSION['role'] ?? '', ['admin', 'direksi', 'kadiv_kredit'])) {

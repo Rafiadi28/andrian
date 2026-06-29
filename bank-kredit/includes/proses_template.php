@@ -72,23 +72,27 @@ $stmt = $pdo->prepare("SELECT $select_cols FROM pengajuan_kredit WHERE $where_cl
 $stmt->execute($params);
 $pending_items = $stmt->fetchAll();
 
-// Load compliance assessment status for each item (for UI indicators)
+// Load compliance assessment status for each item (informational only — no longer blocks approval)
 $compliance_status_cache = [];
 if (!empty($pending_items)) {
     $ids_list = implode(',', array_map(function($item) { return intval($item['id_pengajuan']); }, $pending_items));
-    $stmt_compliance = $pdo->prepare("SELECT id_pengajuan, 
-        CASE 
-            WHEN id_assessment IS NOT NULL AND checklist_data IS NOT NULL AND kesimpulan IS NOT NULL 
-            THEN 'lengkap'
-            WHEN id_assessment IS NOT NULL 
-            THEN 'partial'
-            ELSE 'tidak_ada'
-        END as status
-        FROM assessment_kepatuhan 
-        WHERE id_pengajuan IN ($ids_list)");
-    $stmt_compliance->execute();
-    foreach ($stmt_compliance->fetchAll(PDO::FETCH_ASSOC) as $comp) {
-        $compliance_status_cache[$comp['id_pengajuan']] = $comp['status'];
+    try {
+        $stmt_compliance = $pdo->prepare("SELECT id_pengajuan, 
+            CASE 
+                WHEN id_assessment IS NOT NULL AND checklist_data IS NOT NULL AND kesimpulan IS NOT NULL 
+                THEN 'lengkap'
+                WHEN id_assessment IS NOT NULL 
+                THEN 'partial'
+                ELSE 'tidak_ada'
+            END as status
+            FROM assessment_kepatuhan 
+            WHERE id_pengajuan IN ($ids_list)");
+        $stmt_compliance->execute();
+        foreach ($stmt_compliance->fetchAll(PDO::FETCH_ASSOC) as $comp) {
+            $compliance_status_cache[$comp['id_pengajuan']] = $comp['status'];
+        }
+    } catch (Exception $e) {
+        // assessment_kepatuhan may not exist — ignore gracefully
     }
 }
 
@@ -196,16 +200,12 @@ function sort_link_proses($column, $label) {
                                 <th><?= sort_link_proses('nama_debitur', 'Debitur') ?></th>
                                 <th><?= sort_link_proses('jumlah_kredit', 'Nominal') ?></th>
                                 <th>Jenis</th>
-                                <th>Compliance</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach($pending_items as $item):
-                                $comp_status = $compliance_status_cache[$item['id_pengajuan']] ?? 'tidak_ada';
-                                $is_compliance_blocked = ($comp_status !== 'lengkap') && in_array($my_role, ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama']);
-                            ?>
-                            <tr<?= $is_compliance_blocked ? ' class="row-blocked"' : '' ?>>
+                            <?php foreach($pending_items as $item): ?>
+                            <tr>
                                 <td data-label="Tgl"><?= date('d/M/Y', strtotime($item['tanggal_pengajuan'])) ?></td>
                                 <td data-label="Debitur">
                                     <strong><?= htmlspecialchars($item['nama_debitur']) ?></strong><br>
@@ -213,20 +213,10 @@ function sort_link_proses($column, $label) {
                                 </td>
                                 <td data-label="Nominal"><?= formatRupiah($item['jumlah_kredit']) ?></td>
                                 <td data-label="Jenis"><span class="badge badge-process"><?= htmlspecialchars($item['jenis_kredit'] ?? '-') ?></span></td>
-                                <td data-label="Compliance">
-                                    <?= getComplianceStatusBadge($item['id_pengajuan']) ?>
-                                    <?php if ($is_compliance_blocked): ?>
-                                        <br><small class="text-sm" style="color:var(--danger);">Blokir approval</small>
-                                    <?php endif; ?>
-                                </td>
                                 <td data-label="Aksi">
                                     <div class="table-actions">
                                         <a href="../detail.php?id=<?= $item['id_pengajuan'] ?>" class="btn btn-secondary btn-sm">Detail</a>
-                                        <?php if ($is_compliance_blocked): ?>
-                                            <button class="btn btn-secondary btn-sm" disabled title="Menunggu assessment kepatuhan" onclick="alert('Pengajuan ini tidak bisa diproses sampai Dept. Kepatuhan menyelesaikan assessment.');">Blokir</button>
-                                        <?php else: ?>
-                                            <button onclick="openModal('<?= $item['id_pengajuan'] ?>', '<?= htmlspecialchars($item['nama_debitur'], ENT_QUOTES) ?>', '<?= formatRupiah($item['jumlah_kredit']) ?>')" class="btn btn-primary btn-sm">Proses</button>
-                                        <?php endif; ?>
+                                        <button onclick="openModal('<?= $item['id_pengajuan'] ?>', '<?= htmlspecialchars($item['nama_debitur'], ENT_QUOTES) ?>', '<?= formatRupiah($item['jumlah_kredit']) ?>')" class="btn btn-primary btn-sm">Proses</button>
                                     </div>
                                 </td>
                             </tr>

@@ -251,7 +251,7 @@ $timeline = $stmt->fetchAll();
                     </table>
                 </div>
                 <div>
-                    <h3>II. Data Usaha & Keuangan</h3>
+                    <h3>II. Analisa Usaha</h3>
                     <table style="width:100%; font-size:0.9rem;">
                         <tr>
                             <td style="width:120px; color:#64748B;">Nama Usaha</td>
@@ -265,6 +265,20 @@ $timeline = $stmt->fetchAll();
                             <td style="color:#64748B;">Lama Usaha</td>
                             <td>: <?= htmlspecialchars($data['lama_usaha'] ?? '-') ?></td>
                         </tr>
+                        <?php if (!empty($data['foto_usaha'])): ?>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">Foto Usaha</td>
+                            <td>
+                                <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.25rem;">
+                                    <?php foreach (explode('|', $data['foto_usaha']) as $fu): if (empty(trim($fu))) continue; ?>
+                                    <a href="assets/uploads/<?= htmlspecialchars(trim($fu)) ?>" target="_blank">
+                                        <img src="assets/uploads/<?= htmlspecialchars(trim($fu)) ?>" alt="Foto Usaha" style="max-width:180px; max-height:130px; border-radius:4px; border:1px solid #e2e8f0; object-fit:cover;">
+                                    </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
                         <tr>
                             <td colspan="2">
                                 <hr>
@@ -350,7 +364,7 @@ $timeline = $stmt->fetchAll();
             <!-- IV. MULTI AGUNAN SECTION -->
             <div
                 style="background: #F0FDFA; padding: 1.5rem; border-left: 4px solid #0D9488; margin-bottom: 2rem; border-radius:0 0.5rem 0.5rem 0;">
-                <h3 style="color:#0F766E; margin-bottom:1rem;">IV. Analisa Agunan (<?= $total_agunan_count ?> Jaminan)
+                <h3 style="color:#0F766E; margin-bottom:1rem;">IV. Analisa Jaminan (<?= $total_agunan_count ?> Jaminan)
                 </h3>
 
                 <?php if ($total_agunan_count == 0): ?>
@@ -449,7 +463,7 @@ $timeline = $stmt->fetchAll();
                             </div>
                             <div style="text-align:center;">
                                 <span style="display:block; font-size:0.75rem; color:#be185d;">
-                                    Nilai Taksasi <?php if (($jt['tipe_valuasi'] ?? 'otomatis') === 'manual'): ?><span style="color:#dc2626; font-weight:bold;">(MANUAL)</span><?php else: ?>(<?= ($jt['kategori_agunan'] == 'sawah_tegal') ? '70%' : '75%' ?>)<?php endif; ?>
+                                    Nilai Taksasi <?php if (($jt['tipe_valuasi'] ?? 'otomatis') === 'manual'): ?><span style="color:#dc2626; font-weight:bold;">(MANUAL <?= floatval($jt['persentase_taksasi'] ?? 0) ?>%)</span><?php else: ?>(<?= ($jt['kategori_agunan'] == 'sawah_tegal') ? '70%' : '75%' ?>)<?php endif; ?>
                                 </span>
                                 <span
                                     style="font-size:1.25rem; font-weight:bold; color:#9d174d;"><?= formatRupiah($jt['nilai_taksasi'] ?? 0) ?></span>
@@ -538,7 +552,7 @@ $timeline = $stmt->fetchAll();
                             </div>
                             <div style="text-align:center;">
                                 <span style="display:block; font-size:0.75rem; color:#64748B;">
-                                    Taksasi <?php if (($jk['tipe_valuasi'] ?? 'otomatis') === 'manual'): ?><span style="color:#dc2626; font-weight:bold;">(MANUAL)</span><?php else: ?>(60%)<?php endif; ?>
+                                    Taksasi <?php if (($jk['tipe_valuasi'] ?? 'otomatis') === 'manual'): ?><span style="color:#dc2626; font-weight:bold;">(MANUAL <?= floatval($jk['persentase_taksasi'] ?? 0) ?>%)</span><?php else: ?>(60%)<?php endif; ?>
                                 </span>
                                 <span
                                     style="font-size:1.1rem; font-weight:bold; color:#059669;"><?= formatRupiah($jk['nilai_taksasi'] ?? 0) ?></span>
@@ -626,6 +640,41 @@ $timeline = $stmt->fetchAll();
                             </div>
                         </div>
                     </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!empty($agunan_foto_all) || !empty($data['foto_rumah']) || !empty($data['file_jaminan'])): ?>
+                <div style="background:#fff; border-radius:8px; padding:1.25rem; margin-top:1.5rem; border:1px solid #e2e8f0;">
+                    <h4 style="margin:0 0 1rem 0; color:#0F766E;">📸 Dokumentasi Jaminan</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:1rem;">
+                        <?php if (!empty($data['foto_rumah'])): ?>
+                            <div style="border:1px solid #cbd5e1; padding:0.5rem; border-radius:6px; background:#f8fafc; text-align:center;">
+                                <a href="assets/uploads/<?= htmlspecialchars($data['foto_rumah']) ?>" target="_blank">
+                                    <img src="assets/uploads/<?= htmlspecialchars($data['foto_rumah']) ?>" alt="Foto Rumah" style="width:150px; height:100px; object-fit:cover; border-radius:4px; display:block; margin-bottom:0.5rem;">
+                                </a>
+                                <span style="font-size:0.75rem; color:#475569;">[Legacy] Foto Rumah</span>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($data['file_jaminan'])): ?>
+                            <div style="border:1px solid #cbd5e1; padding:0.5rem; border-radius:6px; background:#f8fafc; text-align:center;">
+                                <a href="assets/uploads/<?= htmlspecialchars($data['file_jaminan']) ?>" target="_blank">
+                                    <img src="assets/uploads/<?= htmlspecialchars($data['file_jaminan']) ?>" alt="File Jaminan" style="width:150px; height:100px; object-fit:cover; border-radius:4px; display:block; margin-bottom:0.5rem;">
+                                </a>
+                                <span style="font-size:0.75rem; color:#475569;">[Legacy] File Jaminan</span>
+                            </div>
+                        <?php endif; ?>
+                        <?php foreach ($agunan_foto_all as $af): ?>
+                            <div style="border:1px solid #cbd5e1; padding:0.5rem; border-radius:6px; background:#f8fafc; text-align:center; max-width:160px;">
+                                <a href="assets/uploads/<?= htmlspecialchars($af['nama_file']) ?>" target="_blank">
+                                    <img src="assets/uploads/<?= htmlspecialchars($af['nama_file']) ?>" alt="Foto" style="width:150px; height:100px; object-fit:cover; border-radius:4px; display:block; margin-bottom:0.5rem;">
+                                </a>
+                                <span style="font-size:0.75rem; color:#475569; display:block; line-height:1.2; word-break:break-all;">
+                                    <?= htmlspecialchars($af['agunan_desc'] ?: strtoupper($af['tipe_jaminan'])) ?>
+                                </span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
                 <?php endif; ?>
             </div>
 

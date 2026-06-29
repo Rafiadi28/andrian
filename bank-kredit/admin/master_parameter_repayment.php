@@ -56,13 +56,18 @@ if ($csrf_ok && isset($_POST['save_parameter'])) {
                 $error = 'Jenis kredit tidak valid.';
             } elseif (!isset($dasarOptions[$dasar])) {
                 $error = 'Dasar perhitungan tidak valid.';
-            } elseif ($persen <= 0 || $persen > 100) {
-                $error = 'Persentase maksimal angsuran harus antara 0.01 dan 100.';
+            } elseif ($persen < 1 || $persen > 100) {
+                $error = 'Persentase maksimal angsuran harus antara 1 dan 100.';
             } elseif ($tglMulai === null) {
                 $error = 'Tanggal efektif wajib diisi (format YYYY-MM-DD).';
             } elseif ($tglSampai !== null && $tglSampai < $tglMulai) {
                 $error = 'Tanggal berakhir tidak boleh lebih awal dari tanggal efektif.';
             } else {
+                $checkOverlap = $pdo->prepare("SELECT COUNT(*) FROM master_parameter_repayment WHERE jenis_kredit = ? AND status = 'aktif' AND status_approval IN ('disetujui', 'draft', 'menunggu', 'disetujui_kadiv') AND id_parameter != ? AND (tgl_berlaku_sampai IS NULL OR tgl_berlaku_sampai >= ?)");
+                $checkOverlap->execute([$jenis, $id, $tglMulai]);
+                if ($status === 'aktif' && $checkOverlap->fetchColumn() > 0) {
+                    $error = 'Tidak boleh ada parameter aktif ganda untuk jenis kredit yang sama pada rentang waktu yang beririsan.';
+                } else {
                 try {
                     if ($id > 0) {
                         $existing = fetchRepaymentParameterById($pdo, $id);
@@ -133,6 +138,7 @@ if ($csrf_ok && isset($_POST['save_parameter'])) {
                     logError('master_parameter_repayment save', ['err' => $e->getMessage()]);
                     $error = 'Gagal menyimpan parameter. Silakan coba lagi.';
                 }
+                } // ends the new else block
             }
         }
     }
@@ -352,19 +358,37 @@ $csrfToken = generateCsrfToken();
             </p>
         </div>
 
+        <div class="card" style="margin-bottom:1.5rem; display:grid; grid-template-columns: minmax(200px, 2fr) 1fr 1fr; gap:1rem; padding:1.25rem 1.5rem; align-items:center; background-color:#ffffff;">
+            <input type="text" id="searchInput" placeholder="Cari parameter..." style="width:100%; padding:0.6rem 1rem; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; transition:border-color 0.2s; outline:none;" onkeyup="filterParameterTable()" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
+            <select id="filterProduk" style="width:100%; padding:0.6rem 2.5rem 0.6rem 1rem; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; cursor:pointer; outline:none; transition:border-color 0.2s;" onchange="filterParameterTable()" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
+                <option value="">Semua Produk</option>
+                <?php foreach ($jenisOptions as $val => $label): ?>
+                    <?php if ($val === 'default') continue; ?>
+                    <option value="<?= htmlspecialchars($label) ?>"><?= htmlspecialchars($label) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select id="filterStatus" style="width:100%; padding:0.6rem 2.5rem 0.6rem 1rem; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; cursor:pointer; outline:none; transition:border-color 0.2s;" onchange="filterParameterTable()" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
+                <option value="">Semua Status</option>
+                <option value="Berlaku">Berlaku</option>
+                <option value="Menunggu Efektif">Menunggu Efektif</option>
+                <option value="Nonaktif">Nonaktif</option>
+                <option value="Draft">Draft</option>
+                <option value="Menunggu">Menunggu Review</option>
+                <option value="Disetujui">Disetujui</option>
+                <option value="Ditolak">Ditolak</option>
+            </select>
+        </div>
+
         <div class="card table-responsive">
-            <table>
+            <table id="parameterTable">
                 <thead>
                     <tr>
-                        <th>Jenis Kredit</th>
-                        <th>Dasar Perhitungan</th>
-                        <th>Persentase</th>
-                        <th>Tanggal Berlaku</th>
-                        <th>Status Approval</th>
-                        <th>Pembuat Draft</th>
-                        <th>Reviewer</th>
-                        <th>Approver</th>
-                        <?php if (!$viewOnly): ?><th>Aksi</th><?php endif; ?>
+                        <th style="width:20%; padding:1rem 1.25rem; font-weight:600; color:#334155;">Jenis Kredit</th>
+                        <th style="width:20%; padding:1rem 1.25rem; font-weight:600; color:#334155; text-align:center;">Dasar</th>
+                        <th style="width:10%; padding:1rem 1.25rem; font-weight:600; color:#334155; text-align:center;">Maks %</th>
+                        <th style="width:15%; padding:1rem 1.25rem; font-weight:600; color:#334155; text-align:center;">Status</th>
+                        <th style="width:15%; padding:1rem 1.25rem; font-weight:600; color:#334155; text-align:center;">Masa Berlaku</th>
+                        <th style="width:20%; padding:1rem 1.25rem; font-weight:600; color:#334155; text-align:center;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -393,95 +417,81 @@ $csrfToken = generateCsrfToken();
                                 $badgeClass = 'badge-process';
                             }
                             ?>
-                            <tr>
-                                <td>
-                                    <strong><?= htmlspecialchars($jenisOptions[$p['jenis_kredit']] ?? $p['jenis_kredit']) ?></strong>
-                                    <?php if ($isActiveNow): ?>
-                                        <span class="badge" style="background:#dcfce7;color:#166534;margin-left:0.35rem;">Berlaku</span>
-                                    <?php elseif ($isFutureEffective): ?>
-                                        <span class="badge" style="background:#fef3c7;color:#92400e;margin-left:0.35rem;">Menunggu Efektif</span>
-                                    <?php elseif ($p['status'] === 'nonaktif'): ?>
-                                        <span class="badge" style="background:#f1f5f9;color:#64748b;margin-left:0.35rem;">Nonaktif</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= htmlspecialchars($dasarOptions[$p['dasar_perhitungan']] ?? $p['dasar_perhitungan']) ?></td>
-                                <td><strong><?= number_format((float) $p['persen_maks_angsuran'], 2, ',', '.') ?>%</strong></td>
-                                <td style="font-size:0.88rem;">
-                                    <?= htmlspecialchars($p['tgl_berlaku_mulai']) ?>
-                                    <?php if (!empty($p['tgl_berlaku_sampai'])): ?>
-                                        <br>s/d <?= htmlspecialchars($p['tgl_berlaku_sampai']) ?>
-                                    <?php else: ?>
-                                        <br><span style="color:#64748b;">(tanpa batas)</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="badge <?= $badgeClass ?>">
-                                        <?= htmlspecialchars(getRepaymentWorkflowDisplayStatus($p), ENT_QUOTES, 'UTF-8') ?>
-                                    </span>
-                                    <?php if (!empty($p['catatan_kadiv']) && ($p['status_approval'] ?? '') === 'draft'): ?>
-                                        <div style="font-size:0.75rem; color:#b45309; margin-top:0.35rem;">Catatan Kadiv: <?= htmlspecialchars($p['catatan_kadiv']) ?></div>
-                                    <?php endif; ?>
-                                    <?php if (!empty($p['catatan_direksi']) && ($p['status_approval'] ?? '') === 'ditolak'): ?>
-                                        <div style="font-size:0.75rem; color:#dc2626; margin-top:0.35rem;">Catatan Direksi: <?= htmlspecialchars($p['catatan_direksi']) ?></div>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span style="font-size:0.88rem; color:#475569;">
-                                        <?= htmlspecialchars($p['created_by_nama'] ?? '-') ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span style="font-size:0.88rem; color:#475569;">
-                                        <?= htmlspecialchars($p['approved_kadiv_by_nama'] ?? '-') ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span style="font-size:0.88rem; color:#475569;">
-                                        <?= htmlspecialchars($p['approved_by_nama'] ?? '-') ?>
-                                    </span>
-                                </td>
-                                <?php if (!$viewOnly): ?>
-                                <td>
-                                    <div style="display:flex; flex-wrap:wrap; gap:0.35rem;">
-                                        <?php if (canEditRepaymentDraft($p)): ?>
-                                            <button type="button" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem;"
-                                                onclick='editParameter(<?= json_encode($p, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>Edit Draft</button>
-                                        <?php endif; ?>
-                                        <?php if (canSubmitRepaymentProposal($p)): ?>
-                                            <form method="POST" style="display:inline;" onsubmit="return confirm('Ajukan usulan ini ke Kadiv?');">
-                                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                                                <input type="hidden" name="id_parameter" value="<?= (int) $p['id_parameter'] ?>">
-                                                <button type="submit" name="submit_parameter" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.8rem;">
-                                                    <?= ($p['status_approval'] ?? '') === 'ditolak' ? 'Ajukan Ulang' : 'Ajukan Usulan' ?>
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
-                                        <?php if (canApproveRepaymentKadiv($p)): ?>
-                                            <button type="button" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.8rem;"
-                                                onclick="openKadivModal(<?= (int) $p['id_parameter'] ?>)">Setujui Kadiv</button>
-                                        <?php endif; ?>
-                                        <?php if (canApproveRepaymentFinal($p)): ?>
-                                            <button type="button" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.8rem;"
-                                                onclick="openDireksiModal(<?= (int) $p['id_parameter'] ?>)">Aktifkan</button>
-                                        <?php endif; ?>
-                                        <?php if (canRejectRepaymentKadiv($p)): ?>
-                                            <button type="button" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem; color:#dc2626;"
-                                                onclick="openRejectKadivModal(<?= (int) $p['id_parameter'] ?>)">Kembalikan ke Kabag</button>
-                                        <?php endif; ?>
-                                        <?php if (canRejectRepaymentDireksi($p)): ?>
-                                            <button type="button" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem; color:#dc2626;"
-                                                onclick="openRejectDireksiModal(<?= (int) $p['id_parameter'] ?>)">Tolak</button>
-                                        <?php endif; ?>
-                                        <?php if (canDeleteRepaymentDraft($p)): ?>
-                                            <form method="POST" style="display:inline;" onsubmit="return confirm('Hapus draft ini?');">
-                                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                                                <input type="hidden" name="id_parameter" value="<?= (int) $p['id_parameter'] ?>">
-                                                <button type="submit" name="delete_parameter" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem; color:#dc2626;">Hapus</button>
-                                            </form>
+                            <tr class="item-row" style="border-bottom:1px solid #f1f5f9; transition:background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8fafc'" onmouseout="this.style.backgroundColor='transparent'">
+                                <td class="col-jenis" style="padding:1rem 1.25rem;">
+                                    <div style="display:flex; flex-direction:column; gap:0.4rem; align-items:flex-start;">
+                                        <strong style="color:#0f172a; font-size:0.95rem;"><?= htmlspecialchars($jenisOptions[$p['jenis_kredit']] ?? $p['jenis_kredit']) ?></strong>
+                                        <?php if ($isActiveNow): ?>
+                                            <span class="badge badge-status" style="background:#dcfce7;color:#166534; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:999px; font-weight:500;">Berlaku</span>
+                                        <?php elseif ($isFutureEffective): ?>
+                                            <span class="badge badge-status" style="background:#fef3c7;color:#92400e; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:999px; font-weight:500;">Menunggu Efektif</span>
+                                        <?php elseif ($p['status'] === 'nonaktif'): ?>
+                                            <span class="badge badge-status" style="background:#f1f5f9;color:#64748b; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:999px; font-weight:500;">Nonaktif</span>
                                         <?php endif; ?>
                                     </div>
                                 </td>
-                                <?php endif; ?>
+                                <td style="padding:1rem 1.25rem; text-align:center; color:#475569; font-size:0.9rem;"><?= htmlspecialchars($dasarOptions[$p['dasar_perhitungan']] ?? $p['dasar_perhitungan']) ?></td>
+                                <td style="padding:1rem 1.25rem; text-align:center;">
+                                    <strong style="color:#0f172a; font-size:0.95rem; background:#f8fafc; padding:0.35rem 0.7rem; border-radius:8px; border:1px solid #e2e8f0;"><?= number_format((float) $p['persen_maks_angsuran'], 2, ',', '.') ?>%</strong>
+                                </td>
+                                <td class="col-status-approval" style="padding:1rem 1.25rem; text-align:center;">
+                                    <div style="display:flex; flex-direction:column; align-items:center; gap:0.3rem;">
+                                        <span class="badge <?= $badgeClass ?>" style="padding:0.3rem 0.7rem; font-size:0.8rem; border-radius:6px; font-weight:500;">
+                                            <?= htmlspecialchars(getRepaymentWorkflowDisplayStatus($p), ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                        <div style="font-size:0.75rem; color:#64748b;">
+                                            Pembuat: <span style="font-weight:500; color:#475569;"><?= htmlspecialchars($p['created_by_nama'] ?? '-') ?></span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="padding:1rem 1.25rem; text-align:center; font-size:0.88rem; color:#475569; line-height:1.5;">
+                                    <?= htmlspecialchars($p['tgl_berlaku_mulai']) ?>
+                                    <?php if (!empty($p['tgl_berlaku_sampai'])): ?>
+                                        <br><span style="color:#94a3b8; font-size:0.8rem;">s/d</span> <?= htmlspecialchars($p['tgl_berlaku_sampai']) ?>
+                                    <?php else: ?>
+                                        <br><span style="color:#94a3b8; font-size:0.8rem; font-style:italic;">(tanpa batas)</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding:1rem 1.25rem;">
+                                    <div style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:center;">
+                                        <button type="button" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem;"
+                                            onclick="showDetailParameter(<?= htmlspecialchars(json_encode($p), ENT_QUOTES, 'UTF-8') ?>, <?= htmlspecialchars(json_encode($jenisOptions[$p['jenis_kredit']] ?? $p['jenis_kredit']), ENT_QUOTES, 'UTF-8') ?>, <?= htmlspecialchars(json_encode($dasarOptions[$p['dasar_perhitungan']] ?? $p['dasar_perhitungan']), ENT_QUOTES, 'UTF-8') ?>)">Detail</button>
+                                        <?php if (!$viewOnly || $_SESSION['role'] === 'Superadmin'): ?>
+                                            <?php if (canEditRepaymentDraft($p) || $_SESSION['role'] === 'Superadmin'): ?>
+                                                <button type="button" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.8rem;"
+                                                    onclick='editParameter(<?= json_encode($p, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>Edit</button>
+                                            <?php endif; ?>
+                                            <?php if (canSubmitRepaymentProposal($p)): ?>
+                                                <form method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin mengajukan usulan ini?');">
+                                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                                    <input type="hidden" name="id_parameter" value="<?= (int) $p['id_parameter'] ?>">
+                                                    <button type="submit" name="submit_parameter" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem;">
+                                                        <?= ($p['status_approval'] ?? '') === 'ditolak' ? 'Ajukan Ulang' : 'Ajukan Usulan' ?>
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                            <?php if (canApproveRepaymentKadiv($p)): ?>
+                                                <button type="button" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.8rem;"
+                                                    onclick="openKadivModal(<?= (int) $p['id_parameter'] ?>)">Setujui</button>
+                                                <button type="button" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem; color:#dc2626;"
+                                                    onclick="openRejectKadivModal(<?= (int) $p['id_parameter'] ?>)">Kembalikan</button>
+                                            <?php endif; ?>
+                                            <?php if (canApproveRepaymentFinal($p)): ?>
+                                                <button type="button" class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.8rem;"
+                                                    onclick="openDireksiModal(<?= (int) $p['id_parameter'] ?>)">Aktifkan</button>
+                                                <button type="button" class="btn btn-secondary" style="padding:0.35rem 0.65rem; font-size:0.8rem; color:#dc2626;"
+                                                    onclick="openRejectDireksiModal(<?= (int) $p['id_parameter'] ?>)">Tolak</button>
+                                            <?php endif; ?>
+                                            <?php if (canDeleteRepaymentDraft($p) || $_SESSION['role'] === 'Superadmin'): ?>
+                                                <form method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini secara permanen?');">
+                                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                                    <input type="hidden" name="id_parameter" value="<?= (int) $p['id_parameter'] ?>">
+                                                    <button type="submit" name="delete_parameter" class="btn btn-danger" style="padding:0.35rem 0.65rem; font-size:0.8rem;">Hapus</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -491,69 +501,72 @@ $csrfToken = generateCsrfToken();
     </div>
 
     <?php if (canCreateRepaymentDraft()): ?>
-    <div id="modal-parameter" class="modal" style="display:none;">
+    <div id="modal-parameter" class="modal-overlay" style="display:none;">
         <div class="modal-content" style="max-width:640px;">
-            <span class="close" onclick="closeModal('modal-parameter')">&times;</span>
-            <h2 id="modal-title">Buat Draft Parameter</h2>
-            <form method="POST" id="form-parameter">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="id_parameter" id="id_parameter" value="0">
+            <div class="modal-header">
+                <h3 id="modal-title">Buat Draft Parameter</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-parameter')">&times;</button>
+            </div>
+            <form method="POST" id="form-parameter" style="display:flex; flex-direction:column; max-height:80vh;">
+                <div class="modal-body" style="overflow-y:auto; padding-right:1rem;">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="id_parameter" id="id_parameter" value="0">
 
-                <div class="custom-form-group">
-                    <label>Jenis Kredit</label>
-                    <select name="jenis_kredit" id="jenis_kredit" required>
-                        <?php foreach ($jenisOptions as $val => $label): ?>
-                            <?php if ($val === 'default') continue; ?>
-                            <option value="<?= htmlspecialchars($val) ?>"><?= htmlspecialchars($label) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="custom-form-group">
-                    <label>Dasar Perhitungan</label>
-                    <select name="dasar_perhitungan" id="dasar_perhitungan" required>
-                        <?php foreach ($dasarOptions as $val => $label): ?>
-                            <option value="<?= htmlspecialchars($val) ?>"><?= htmlspecialchars($label) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="grid-2">
                     <div class="custom-form-group">
-                        <label>Persentase Maksimal Angsuran (%)</label>
-                        <input type="number" name="persen_maks_angsuran" id="persen_maks_angsuran" min="0.01" max="100" step="0.01" value="75" required>
-                    </div>
-                    <div class="custom-form-group">
-                        <label>Status (saat diaktifkan Direksi)</label>
-                        <select name="status" id="status">
-                            <option value="aktif">Aktif</option>
-                            <option value="nonaktif">Nonaktif</option>
+                        <label>Jenis Kredit</label>
+                        <select name="jenis_kredit" id="jenis_kredit" required>
+                            <?php foreach ($jenisOptions as $val => $label): ?>
+                                <?php if ($val === 'default') continue; ?>
+                                <option value="<?= htmlspecialchars($val) ?>"><?= htmlspecialchars($label) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-                </div>
 
-                <div class="grid-2">
                     <div class="custom-form-group">
-                        <label>Tanggal Efektif <span style="color:#dc2626;">*</span></label>
-                        <input type="date" name="tgl_berlaku_mulai" id="tgl_berlaku_mulai" required>
-                        <small style="color:#64748b;">Kebijakan berlaku untuk pengajuan dengan tanggal analisa pada atau setelah tanggal ini.</small>
+                        <label>Dasar Perhitungan</label>
+                        <select name="dasar_perhitungan" id="dasar_perhitungan" required>
+                            <?php foreach ($dasarOptions as $val => $label): ?>
+                                <option value="<?= htmlspecialchars($val) ?>"><?= htmlspecialchars($label) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
+
+                    <div class="grid-2">
+                        <div class="custom-form-group">
+                            <label>Persentase Maksimal Angsuran (%)</label>
+                            <input type="number" name="persen_maks_angsuran" id="persen_maks_angsuran" min="1" max="100" step="0.01" value="75" required oninput="if(this.value < 1) this.value=1; if(this.value > 100) this.value=100;">
+                        </div>
+                        <div class="custom-form-group">
+                            <label>Status (saat diaktifkan Direksi)</label>
+                            <select name="status" id="status">
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="custom-form-group">
+                            <label>Tanggal Efektif <span class="required">*</span></label>
+                            <input type="date" name="tgl_berlaku_mulai" id="tgl_berlaku_mulai" required>
+                            <small class="form-hint">Kebijakan berlaku untuk pengajuan dengan tanggal analisa pada atau setelah tanggal ini.</small>
+                        </div>
+                        <div class="custom-form-group">
+                            <label>Tanggal Berakhir <span class="optional">(opsional)</span></label>
+                            <input type="date" name="tgl_berlaku_sampai" id="tgl_berlaku_sampai">
+                        </div>
+                    </div>
+
                     <div class="custom-form-group">
-                        <label>Tanggal Berakhir <span style="color:#94a3b8;">(opsional)</span></label>
-                        <input type="date" name="tgl_berlaku_sampai" id="tgl_berlaku_sampai">
+                        <label>Keterangan Kebijakan</label>
+                        <textarea name="keterangan_kebijakan" id="keterangan_kebijakan" rows="3" placeholder="Alasan dan rujukan kebijakan perubahan parameter"></textarea>
                     </div>
                 </div>
 
-                <div class="custom-form-group">
-                    <label>Keterangan Kebijakan</label>
-                    <textarea name="keterangan_kebijakan" id="keterangan_kebijakan" rows="3" placeholder="Alasan dan rujukan kebijakan perubahan parameter"></textarea>
-                </div>
-
-                <p style="font-size:0.85rem; color:#64748b;">Draft disimpan dengan status <strong>Draft</strong>. Ajukan ke Kadiv setelah selesai.</p>
-
-                <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
-                    <button type="submit" name="save_parameter" class="btn btn-primary">Simpan Draft</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-parameter')">Batal</button>
+                <div class="modal-footer" style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;">
+                    <p style="font-size:0.85rem; color:#64748b; margin-right:auto; margin-bottom:0;">Draft disimpan dengan status <strong>Draft</strong>. Ajukan ke Kadiv setelah selesai.</p>
+                    <button type="submit" name="save_parameter" class="btn btn-primary" style="padding: 0.5rem 1rem; flex: 0 0 auto; height: auto;">Simpan Draft</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-parameter')" style="padding: 0.5rem 1rem; flex: 0 0 auto; height: auto;">Batal</button>
                 </div>
             </form>
         </div>
@@ -561,72 +574,162 @@ $csrfToken = generateCsrfToken();
     <?php endif; ?>
 
     <?php if (!$viewOnly): ?>
-    <div id="modal-kadiv" class="modal" style="display:none;">
+    <div id="modal-kadiv" class="modal-overlay" style="display:none;">
         <div class="modal-content" style="max-width:480px;">
-            <span class="close" onclick="closeModal('modal-kadiv')">&times;</span>
-            <h2>Persetujuan Tahap Pertama (Kadiv)</h2>
+            <div class="modal-header">
+                <h3>Persetujuan Tahap Pertama (Kadiv)</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-kadiv')">&times;</button>
+            </div>
             <form method="POST">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="id_parameter" id="kadiv_id_parameter" value="0">
-                <div class="custom-form-group">
-                    <label>Catatan Review</label>
-                    <textarea name="catatan_kadiv" rows="3" placeholder="Opsional"></textarea>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="id_parameter" id="kadiv_id_parameter" value="0">
+                    <div class="custom-form-group">
+                        <label>Catatan Review</label>
+                        <textarea name="catatan_kadiv" rows="3" placeholder="Opsional"></textarea>
+                    </div>
                 </div>
-                <button type="submit" name="approve_kadiv" class="btn btn-primary">Setujui & Teruskan ke Direksi</button>
+                <div class="modal-footer">
+                    <button type="submit" name="approve_kadiv" class="btn btn-primary">Setujui & Teruskan</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-kadiv')">Batal</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <div id="modal-direksi" class="modal" style="display:none;">
+    <div id="modal-direksi" class="modal-overlay" style="display:none;">
         <div class="modal-content" style="max-width:480px;">
-            <span class="close" onclick="closeModal('modal-direksi')">&times;</span>
-            <h2>Persetujuan Akhir (Direksi)</h2>
+            <div class="modal-header">
+                <h3>Persetujuan Akhir (Direksi)</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-direksi')">&times;</button>
+            </div>
             <form method="POST">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="id_parameter" id="direksi_id_parameter" value="0">
-                <div class="custom-form-group">
-                    <label>Catatan Direksi</label>
-                    <textarea name="catatan_direksi" rows="3" placeholder="Opsional"></textarea>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="id_parameter" id="direksi_id_parameter" value="0">
+                    <div class="custom-form-group">
+                        <label>Catatan Direksi</label>
+                        <textarea name="catatan_direksi" rows="3" placeholder="Opsional"></textarea>
+                    </div>
                 </div>
-                <button type="submit" name="approve_final" class="btn btn-primary">Setujui & Aktifkan Parameter</button>
+                <div class="modal-footer">
+                    <button type="submit" name="approve_final" class="btn btn-primary">Setujui & Aktifkan Parameter</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-direksi')">Batal</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <div id="modal-reject-kadiv" class="modal" style="display:none;">
+    <div id="modal-reject-kadiv" class="modal-overlay" style="display:none;">
         <div class="modal-content" style="max-width:480px;">
-            <span class="close" onclick="closeModal('modal-reject-kadiv')">&times;</span>
-            <h2>Kembalikan ke Kabag Kredit</h2>
-            <p style="font-size:0.9rem; color:#64748b;">Usulan akan dikembalikan ke Kabag Kredit untuk revisi (status draft).</p>
+            <div class="modal-header">
+                <h3>Kembalikan ke Kabag</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-reject-kadiv')">&times;</button>
+            </div>
             <form method="POST">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="id_parameter" id="reject_kadiv_id" value="0">
-                <div class="custom-form-group">
-                    <label>Catatan / Alasan</label>
-                    <textarea name="catatan_penolakan" rows="3" required placeholder="Jelaskan perbaikan yang diperlukan"></textarea>
+                <div class="modal-body">
+                    <div class="modal-info">
+                        <p>Usulan akan dikembalikan ke Kabag Kredit untuk revisi (status draft).</p>
+                    </div>
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="id_parameter" id="reject_kadiv_id" value="0">
+                    <div class="custom-form-group">
+                        <label>Catatan / Alasan</label>
+                        <textarea name="catatan_penolakan" rows="3" required placeholder="Jelaskan perbaikan yang diperlukan"></textarea>
+                    </div>
                 </div>
-                <button type="submit" name="reject_kadiv" class="btn btn-secondary" style="color:#dc2626;">Kembalikan ke Kabag</button>
+                <div class="modal-footer">
+                    <button type="submit" name="reject_kadiv" class="btn btn-secondary">Kembalikan ke Kabag</button>
+                </div>
             </form>
         </div>
     </div>
 
-    <div id="modal-reject-direksi" class="modal" style="display:none;">
+    <div id="modal-reject-direksi" class="modal-overlay" style="display:none;">
         <div class="modal-content" style="max-width:480px;">
-            <span class="close" onclick="closeModal('modal-reject-direksi')">&times;</span>
-            <h2>Tolak Parameter (Direksi)</h2>
-            <p style="font-size:0.9rem; color:#64748b;">Status menjadi <strong>ditolak</strong>. Kabag Kredit dapat memperbaiki dan mengajukan ulang.</p>
+            <div class="modal-header">
+                <h3>Tolak Parameter</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-reject-direksi')">&times;</button>
+            </div>
             <form method="POST">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="id_parameter" id="reject_direksi_id" value="0">
-                <div class="custom-form-group">
-                    <label>Alasan Penolakan</label>
-                    <textarea name="catatan_penolakan" rows="3" required></textarea>
+                <div class="modal-body">
+                    <div class="modal-info">
+                        <p>Status menjadi <strong>ditolak</strong>. Kabag Kredit dapat memperbaiki dan mengajukan ulang.</p>
+                    </div>
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="id_parameter" id="reject_direksi_id" value="0">
+                    <div class="custom-form-group">
+                        <label>Alasan Penolakan</label>
+                        <textarea name="catatan_penolakan" rows="3" required></textarea>
+                    </div>
                 </div>
-                <button type="submit" name="reject_direksi" class="btn btn-secondary" style="color:#dc2626;">Tolak Usulan</button>
+                <div class="modal-footer">
+                    <button type="submit" name="reject_direksi" class="btn btn-secondary">Tolak Usulan</button>
+                </div>
             </form>
         </div>
     </div>
     <?php endif; ?>
+
+    <div id="modal-detail" class="modal-overlay" style="display:none;">
+        <div class="modal-content" style="max-width:640px;">
+            <div class="modal-header">
+                <h3>Detail Parameter</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-detail')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="grid-2">
+                    <div class="custom-form-group">
+                        <label>Jenis Kredit</label>
+                        <input type="text" id="detail_jenis_kredit" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Dasar Perhitungan</label>
+                        <input type="text" id="detail_dasar_perhitungan" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Persentase</label>
+                        <input type="text" id="detail_persen" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Status</label>
+                        <input type="text" id="detail_status" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Berlaku Mulai</label>
+                        <input type="text" id="detail_tgl_mulai" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Berlaku Sampai</label>
+                        <input type="text" id="detail_tgl_sampai" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Pembuat</label>
+                        <input type="text" id="detail_dibuat_oleh" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Dibuat Pada</label>
+                        <input type="text" id="detail_dibuat_tanggal" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Diubah Oleh</label>
+                        <input type="text" id="detail_diubah_oleh" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                    <div class="custom-form-group">
+                        <label>Diubah Pada</label>
+                        <input type="text" id="detail_diubah_tanggal" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                    </div>
+                </div>
+                <div class="custom-form-group" style="padding-bottom:1rem;">
+                    <label>Keterangan</label>
+                    <textarea id="detail_keterangan" rows="3" readonly style="background:#f1f5f9; cursor:not-allowed;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-detail')">Tutup</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         function closeModal(id) {
@@ -645,7 +748,7 @@ $csrfToken = generateCsrfToken();
             document.getElementById('tgl_berlaku_mulai').value = new Date().toISOString().slice(0, 10);
             document.getElementById('tgl_berlaku_sampai').value = '';
             document.getElementById('keterangan_kebijakan').value = '';
-            document.getElementById('modal-parameter').style.display = 'block';
+            document.getElementById('modal-parameter').style.display = 'flex';
         }
 
         function editParameter(row) {
@@ -658,34 +761,80 @@ $csrfToken = generateCsrfToken();
             document.getElementById('tgl_berlaku_mulai').value = row.tgl_berlaku_mulai;
             document.getElementById('tgl_berlaku_sampai').value = row.tgl_berlaku_sampai || '';
             document.getElementById('keterangan_kebijakan').value = row.keterangan_kebijakan || '';
-            document.getElementById('modal-parameter').style.display = 'block';
+            document.getElementById('modal-parameter').style.display = 'flex';
         }
         <?php endif; ?>
 
         <?php if (!$viewOnly): ?>
         function openKadivModal(id) {
             document.getElementById('kadiv_id_parameter').value = id;
-            document.getElementById('modal-kadiv').style.display = 'block';
+            document.getElementById('modal-kadiv').style.display = 'flex';
         }
 
         function openDireksiModal(id) {
             document.getElementById('direksi_id_parameter').value = id;
-            document.getElementById('modal-direksi').style.display = 'block';
+            document.getElementById('modal-direksi').style.display = 'flex';
         }
 
         function openRejectKadivModal(id) {
             document.getElementById('reject_kadiv_id').value = id;
-            document.getElementById('modal-reject-kadiv').style.display = 'block';
+            document.getElementById('modal-reject-kadiv').style.display = 'flex';
         }
 
         function openRejectDireksiModal(id) {
             document.getElementById('reject_direksi_id').value = id;
-            document.getElementById('modal-reject-direksi').style.display = 'block';
+            document.getElementById('modal-reject-direksi').style.display = 'flex';
         }
         <?php endif; ?>
 
+
+        function showDetailParameter(row, jenisLabel, dasarLabel) {
+            document.getElementById('detail_jenis_kredit').value = jenisLabel;
+            document.getElementById('detail_dasar_perhitungan').value = dasarLabel;
+            document.getElementById('detail_persen').value = Number(row.persen_maks_angsuran).toFixed(2) + ' %';
+            document.getElementById('detail_status').value = row.status === 'aktif' ? 'Aktif' : 'Nonaktif';
+            document.getElementById('detail_tgl_mulai').value = row.tgl_berlaku_mulai || '-';
+            document.getElementById('detail_tgl_sampai').value = row.tgl_berlaku_sampai || '(Tanpa Batas)';
+            document.getElementById('detail_dibuat_oleh').value = row.created_by_nama || '-';
+            document.getElementById('detail_dibuat_tanggal').value = row.created_at || '-';
+            document.getElementById('detail_diubah_oleh').value = row.submitted_by_nama || row.approved_kadiv_by_nama || '-';
+            document.getElementById('detail_diubah_tanggal').value = row.updated_at || '-';
+            document.getElementById('detail_keterangan').value = row.keterangan_kebijakan || '-';
+            document.getElementById('modal-detail').style.display = 'flex';
+        }
+
+        function filterParameterTable() {
+            var input, filterProduk, filterStatus, table, tr, i;
+            input = document.getElementById("searchInput").value.toUpperCase();
+            filterProduk = document.getElementById("filterProduk").value.toUpperCase();
+            filterStatus = document.getElementById("filterStatus").value.toUpperCase();
+            table = document.getElementById("parameterTable");
+            tr = table.getElementsByClassName("item-row");
+
+            for (i = 0; i < tr.length; i++) {
+                var tdJenis = tr[i].getElementsByClassName("col-jenis")[0];
+                var tdStatus = tr[i].getElementsByClassName("col-status-approval")[0];
+                var tdAll = tr[i].innerText.toUpperCase();
+                
+                if (tdJenis && tdStatus) {
+                    var txtJenis = tdJenis.innerText.toUpperCase();
+                    var txtStatus = tdStatus.innerText.toUpperCase();
+                    
+                    var matchSearch = tdAll.indexOf(input) > -1;
+                    var matchProduk = filterProduk === "" || txtJenis.indexOf(filterProduk) > -1;
+                    var matchStatus = filterStatus === "" || txtStatus.indexOf(filterStatus) > -1 || tdJenis.innerText.toUpperCase().indexOf(filterStatus) > -1;
+
+                    if (matchSearch && matchProduk && matchStatus) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
         window.onclick = function (event) {
-            ['modal-parameter', 'modal-kadiv', 'modal-direksi', 'modal-reject-kadiv', 'modal-reject-direksi'].forEach(function (id) {
+            ['modal-parameter', 'modal-kadiv', 'modal-direksi', 'modal-reject-kadiv', 'modal-reject-direksi', 'modal-detail'].forEach(function (id) {
                 var modal = document.getElementById(id);
                 if (modal && event.target === modal) {
                     modal.style.display = 'none';

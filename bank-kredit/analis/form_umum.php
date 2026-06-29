@@ -862,9 +862,10 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 
         <div class="form-stepper">
             <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">Data Debitur</a>
-            <a href="#tab-usaha" class="nav-link-step" data-target="tab-usaha">Data Pekerjaan</a>
+            <a href="#tab-usaha" class="nav-link-step" data-target="tab-usaha">Analisa Usaha</a>
             <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">Data Kredit</a>
-            <a href="#tab-neraca" class="nav-link-step" data-target="tab-neraca">Analisa Keuangan</a>
+            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">Analisa Jaminan</a>
+            <a href="#tab-neraca" class="nav-link-step" data-target="tab-neraca">Data Keuangan</a>
             <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">Analisa 6C</a>
             <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">Kesimpulan</a>
         </div>
@@ -1044,7 +1045,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 
                 <!-- TAB 2: USAHA — Analisa Usaha & Repayment Capacity -->
                 <div id="tab-usaha" class="tab-content">
-                    <h3 class="tab-title">2. Data Usaha & Analisa Kemampuan Bayar</h3>
+                    <h3 class="tab-title">2. Analisa Usaha & Kemampuan Bayar</h3>
 
                     <!-- A. DATA USAHA -->
                     <div class="section-header">A. DATA USAHA</div>
@@ -1865,7 +1866,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                 </script>
                 <!-- DATA AGUNAN MULTI (DYNAMIC REPEATABLE) -->
                 <?php if (($jenis_pekerjaan ?? 'umum') !== 'pppk' && ($jenis_pekerjaan ?? 'umum') !== 'perangkat_desa'): ?>
-                <div id="agunan_section">
+                <div id="tab-agunan" class="tab-content">
                     <hr style="border:0; border-top:1px dashed #cbd5e1; margin: 2rem 0;">
                     <div class="section-header">D. DATA AGUNAN</div>
 
@@ -2181,6 +2182,16 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         html += '  <div class="custom-form-group"><label>Luas Bangunan 2 (m²)</label><input type="number" name="luas_bangunan_2[]" oninput="calcAgunanTanah(' + idx + ')"></div>';
                         html += '</div>';
                         html += '<div class="custom-form-group"><label>Harga Bangunan / m²</label><input type="number" name="harga_bangunan_m2[]" oninput="calcAgunanTanah(' + idx + ')"></div>';
+                        // Valuasi & Likuidasi
+                        html += '<div class="section-header">VALUASI & PENETAPAN NILAI AGUNAN</div>';
+                        html += '<div class="grid-2">';
+                        html += '  <div class="custom-form-group">';
+                        html += '    <label>Persentase Nilai Jaminan (%) <span style="color:red">*</span></label>';
+                        html += '    <input type="number" step="0.01" min="1" max="100" id="persen_taksasi_tanah_' + idx + '" name="persen_taksasi_tanah[]" oninput="calcAgunanTanah(' + idx + ')" placeholder="1-100" style="font-weight:bold; color:#059669;">';
+                        html += '    <input type="hidden" name="nilai_taksasi_manual_tanah[]" id="hidden_taksasi_manual_tanah_' + idx + '">';
+                        html += '    <input type="hidden" name="tipe_valuasi_tanah[]" id="hidden_tipe_valuasi_tanah_' + idx + '" value="manual">';
+                        html += '  </div>';
+                        html += '</div>';
                         // Total pasar
                         html += '<div style="background:#e0e7ff; padding:0.75rem 1rem; border-radius:8px; margin:1rem 0;">';
                         html += '  <div class="grid-2" style="margin:0;">';
@@ -2213,23 +2224,35 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         html += '  <div class="custom-form-group"><label>Tipe</label><input type="text" name="tipe[]"></div>';
                         html += '</div>';
                         html += '<div class="grid-2">';
-                        html += '  <div class="custom-form-group"><label>Tahun</label><input type="number" name="tahun[]" oninput="calcAgunanKendaraan(' + idx + ')"></div>';
-                        html += '  <div class="custom-form-group"><label>No Polisi</label><input type="text" name="nopol[]"></div>';
+                        html += '  <div class="custom-form-group"><label>Nilai Pasar Kendaraan</label><input type="number" name="nilai_pasar[]" oninput="calcAgunanKendaraan(' + idx + ')"></div>';
+                        html += '</div>';
+                        // Valuasi Kendaraan
+                        html += '<div class="section-header">VALUASI KENDARAAN</div>';
+                        html += '<div class="grid-2">';
+                        html += '  <div class="custom-form-group">';
+                        html += '    <label>Persentase Nilai Jaminan Kendaraan (%) <span style="color:red">*</span></label>';
+                        html += '    <input type="number" step="0.01" min="1" max="100" id="persen_taksasi_kendaraan_' + idx + '" name="persen_taksasi_kendaraan[]" oninput="calcAgunanKendaraan(' + idx + ')" placeholder="1-100" style="font-weight:bold; color:#059669;">';
+                        html += '    <input type="hidden" name="nilai_taksasi_manual_kendaraan[]" id="hidden_taksasi_manual_kendaraan_' + idx + '">';
+                        html += '  </div>';
                         html += '</div>';
                         html += '<div class="grid-2">';
-                        html += '  <div class="custom-form-group"><label>No Rangka</label><input type="text" name="norangka[]"></div>';
-                        html += '  <div class="custom-form-group"><label>No Mesin</label><input type="text" name="nomesin[]"></div>';
+                        html += '  <div class="custom-form-group"><label>Taksasi (Safety)</label><div class="calc-display" id="disp_kend_taksasi_' + idx + '" style="color:#059669;">Rp 0</div></div>';
+                        html += '  <div class="custom-form-group"><label>Tahun</label><input type="number" name="tahun[]" oninput="calcAgunanKendaraan(' + idx + ')"></div>';
                         html += '</div>';
-                        html += '<div class="custom-form-group"><label>Pemilik BPKB</label><input type="text" name="bpkb_nama[]"></div>';
+                        html += '<div class="grid-2">';
+                        html += '  <div class="custom-form-group"><label>No Polisi</label><input type="text" name="nopol[]"></div>';
+                        html += '  <div class="custom-form-group"><label>No Rangka</label><input type="text" name="norangka[]"></div>';
+                        html += '</div>';
+                        html += '<div class="grid-2">';
+                        html += '  <div class="custom-form-group"><label>No Mesin</label><input type="text" name="nomesin[]"></div>';
+                        html += '  <div class="custom-form-group"><label>Pemilik BPKB</label><input type="text" name="bpkb_nama[]"></div>';
+                        html += '</div>';
                         html += '<div class="grid-2">';
                         html += '  <div class="custom-form-group"><label>Nomor STNK</label><input type="text" name="no_stnk[]" placeholder="Contoh: 1234 AB 5678"></div>';
                         html += '  <div class="custom-form-group"><label>Masa Berlaku STNK</label><input type="date" name="masa_berlaku_stnk[]"></div>';
                         html += '</div>';
-                        html += '<div class="custom-form-group"><label>Nilai Pasar (Rp)</label><input type="number" name="nilai_pasar[]" oninput="calcAgunanKendaraan(' + idx + ')"></div>';
-                        // Kendaraan valuasi
                         html += '<div style="background:#e0e7ff; padding:0.75rem 1rem; border-radius:8px; margin:1rem 0;">';
                         html += '  <div class="grid-2" style="margin:0;">';
-                        html += '    <div><small style="color:#6b7280;">Taksasi Kendaraan</small><div style="font-weight:700; color:#059669;" id="disp_kend_taksasi_' + idx + '">Rp 0</div></div>';
                         html += '    <div><small style="color:#6b7280;">Likuidasi (70%)</small><div style="font-weight:700; color:#d97706;" id="disp_kend_likuidasi_' + idx + '">Rp 0</div></div>';
                         html += '  </div>';
                         html += '</div>';
@@ -2342,18 +2365,14 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         var katSel = card.querySelector('[name="kategori_agunan[]"]');
                         var surSel = card.querySelector('[name="jenis_surat[]"]');
 
-                        var persen = 0.50; // default for unknown
-                        var kat = katSel ? katSel.value : '';
-                        var sur = surSel ? surSel.value : '';
-
-                        if (kat === 'sawah_tegal') {
-                            persen = 0.70;
+                        var inputMan = document.getElementById('persen_taksasi_tanah_' + idx);
+                        var persen = 0;
+                        if (inputMan && inputMan.value !== '') {
+                            persen = parseFloat(inputMan.value) / 100;
                         } else {
-                            if (sur === 'SHM' || sur === 'SHGB') {
-                                persen = 0.75;
-                            } else {
-                                persen = 0.50; // AJB / Letter C fallback
-                            }
+                            if (katSel.value === 'sawah_tegal') persen = 0.70;
+                            else persen = (surSel.value === 'SHM' || surSel.value === 'SHGB') ? 0.75 : 0.50;
+                            if (inputMan) inputMan.value = (persen * 100).toFixed(2);
                         }
 
                         // SPPT
@@ -2375,6 +2394,11 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         var taksasiPasar = totalPasar * persen;
                         var likuidasiPasar = taksasiPasar * 0.70;
 
+                        var hiddenManVal = document.getElementById('hidden_taksasi_manual_tanah_' + idx);
+                        if (hiddenManVal) {
+                            hiddenManVal.value = taksasiPasar;
+                        }
+
                         document.getElementById('disp_pasar_total_' + idx).textContent = formatRupiah(totalPasar);
                         document.getElementById('disp_pasar_taksasi_' + idx).textContent = formatRupiah(taksasiPasar);
                         document.getElementById('disp_pasar_likuidasi_' + idx).textContent = formatRupiah(likuidasiPasar);
@@ -2394,15 +2418,27 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                             umur = new Date().getFullYear() - tahun;
                         }
 
+                        var inputManKend = document.getElementById('persen_taksasi_kendaraan_' + idx);
                         var persen = 0;
-                        if (tahun > 0 && nilaiPasar > 0) {
-                            if (umur <= 5) persen = 0.85;
-                            else if (umur <= 10) persen = 0.75;
-                            else persen = 0.65;
+                        
+                        if (inputManKend && inputManKend.value !== '') {
+                            persen = parseFloat(inputManKend.value) / 100;
+                        } else {
+                            if (tahun > 0 && nilaiPasar > 0) {
+                                if (umur <= 5) persen = 0.85;
+                                else if (umur <= 10) persen = 0.75;
+                                else persen = 0.65;
+                            }
+                            if (inputManKend) inputManKend.value = (persen * 100).toFixed(2);
                         }
 
                         var taksasi = nilaiPasar * persen;
                         var likuidasi = taksasi * 0.70;
+
+                        var hiddenManValKend = document.getElementById('hidden_taksasi_manual_kendaraan_' + idx);
+                        if (hiddenManValKend) {
+                            hiddenManValKend.value = taksasi;
+                        }
 
                         document.getElementById('disp_kend_taksasi_' + idx).textContent = formatRupiah(taksasi);
                         document.getElementById('disp_kend_likuidasi_' + idx).textContent = formatRupiah(likuidasi);
@@ -2452,17 +2488,18 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                                 var katSel = card.querySelector('[name="kategori_agunan[]"]');
                                 var surSel = card.querySelector('[name="jenis_surat[]"]');
 
-                                var persen = 0.50;
                                 var kat = katSel ? katSel.value : '';
                                 var sur = surSel ? surSel.value : '';
-
-                                if (kat === 'sawah_tegal') {
-                                    persen = 0.70;
+                                
+                                var pctEl = document.getElementById('persen_taksasi_tanah_' + (count - 1));
+                                var persen = 0;
+                                if (pctEl && pctEl.value !== '') {
+                                    persen = (parseFloat(pctEl.value) || 0) / 100;
                                 } else {
-                                    if (sur === 'SHM' || sur === 'SHGB') {
-                                        persen = 0.75;
+                                    if (kat === 'sawah_tegal') {
+                                        persen = 0.70;
                                     } else {
-                                        persen = 0.50;
+                                        persen = (sur === 'SHM' || sur === 'SHGB') ? 0.75 : 0.50;
                                     }
                                 }
 
@@ -2475,11 +2512,16 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                                 var np2 = parseFloat(card.querySelector('[name="nilai_pasar[]"]').value) || 0;
                                 var tahun = parseInt(card.querySelector('[name="tahun[]"]').value) || 0;
                                 var umur = (tahun > 0) ? (new Date().getFullYear() - tahun) : 0;
+                                var pctElKend = document.getElementById('persen_taksasi_kendaraan_' + (count - 1));
                                 var pKend = 0;
-                                if (tahun > 0 && np2 > 0) {
-                                    if (umur <= 5) pKend = 0.85;
-                                    else if (umur <= 10) pKend = 0.75;
-                                    else pKend = 0.65;
+                                if (pctElKend && pctElKend.value !== '') {
+                                    pKend = (parseFloat(pctElKend.value) || 0) / 100;
+                                } else {
+                                    if (tahun > 0 && np2 > 0) {
+                                        if (umur <= 5) pKend = 0.85;
+                                        else if (umur <= 10) pKend = 0.75;
+                                        else pKend = 0.65;
+                                    }
                                 }
 
                                 var nt2 = np2 * pKend;
@@ -2524,7 +2566,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 
                 <!-- TAB 5: NERACA -->
                 <div id="tab-neraca" class="tab-content">
-                    <h3 class="tab-title">5. Neraca (Data Aset & Kewajiban - Sebelum & Sesudah Kredit)</h3>
+                    <h3 class="tab-title">5. Data Keuangan (Data Aset & Kewajiban - Sebelum & Sesudah Kredit)</h3>
                     <p class="text-muted">📋 Neraca Sebelum Kredit (otomatis) | 📝 Neraca Sesudah Kredit (manual input)</p>
 
                     <div class="grid-2" style="margin-bottom:1.5rem;">

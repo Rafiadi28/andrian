@@ -284,8 +284,11 @@ function bankKreditEnsureSchema(PDO $pdo)
             }
         }
 
-        // Add manual valuation columns to jaminan tables (idempotent)
         try {
+            $colPersenTaksasi = $pdo->query("SHOW COLUMNS FROM jaminan_tanah_bangunan LIKE 'persentase_taksasi'")->rowCount();
+            if ($colPersenTaksasi == 0) {
+                $pdo->exec("ALTER TABLE jaminan_tanah_bangunan ADD COLUMN persentase_taksasi DECIMAL(5,2) DEFAULT NULL COMMENT 'Persentase Nilai Jaminan (Input Manual)' AFTER nilai_taksasi_sppt");
+            }
             $colTipeValuasi = $pdo->query("SHOW COLUMNS FROM jaminan_tanah_bangunan LIKE 'tipe_valuasi'")->rowCount();
             if ($colTipeValuasi == 0) {
                 $pdo->exec("ALTER TABLE jaminan_tanah_bangunan ADD COLUMN tipe_valuasi ENUM('otomatis','manual') DEFAULT 'otomatis' COMMENT 'Tipe valuasi: otomatis atau manual override' AFTER nilai_taksasi");
@@ -294,6 +297,10 @@ function bankKreditEnsureSchema(PDO $pdo)
         } catch (Exception $e) {}
 
         try {
+            $colPersenTaksasi = $pdo->query("SHOW COLUMNS FROM jaminan_kendaraan LIKE 'persentase_taksasi'")->rowCount();
+            if ($colPersenTaksasi == 0) {
+                $pdo->exec("ALTER TABLE jaminan_kendaraan ADD COLUMN persentase_taksasi DECIMAL(5,2) DEFAULT NULL COMMENT 'Persentase Nilai Jaminan (Input Manual)' AFTER nilai_pasar");
+            }
             $colTipeValuasiKendaraan = $pdo->query("SHOW COLUMNS FROM jaminan_kendaraan LIKE 'tipe_valuasi'")->rowCount();
             if ($colTipeValuasiKendaraan == 0) {
                 $pdo->exec("ALTER TABLE jaminan_kendaraan ADD COLUMN tipe_valuasi ENUM('otomatis','manual') DEFAULT 'otomatis' COMMENT 'Tipe valuasi: otomatis atau manual override' AFTER nilai_taksasi");
@@ -311,6 +318,10 @@ function bankKreditEnsureSchema(PDO $pdo)
         } catch (Exception $e) {}
 
         try {
+            $colPersenTaksasiEmas = $pdo->query("SHOW COLUMNS FROM jaminan_emas LIKE 'persentase_taksasi'")->rowCount();
+            if ($colPersenTaksasiEmas == 0) {
+                $pdo->exec("ALTER TABLE jaminan_emas ADD COLUMN persentase_taksasi DECIMAL(5,2) DEFAULT NULL COMMENT 'Persentase Nilai Jaminan (Input Manual)' AFTER nilai_pasar");
+            }
             $colTipeValuasiEmas = $pdo->query("SHOW COLUMNS FROM jaminan_emas LIKE 'tipe_valuasi'")->rowCount();
             if ($colTipeValuasiEmas == 0) {
                 $pdo->exec("ALTER TABLE jaminan_emas ADD COLUMN tipe_valuasi ENUM('otomatis','manual') DEFAULT 'otomatis' COMMENT 'Tipe valuasi: otomatis atau manual override' AFTER nilai_taksasi");

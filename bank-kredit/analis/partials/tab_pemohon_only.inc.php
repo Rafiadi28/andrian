@@ -1,4 +1,4 @@
-﻿                <!-- TAB 1: PEMOHON -->
+                <!-- TAB 1: PEMOHON -->
                 <div id="tab-pemohon" class="tab-content active">
                     <h3 class="tab-title">1. Data Pemohon</h3>
 

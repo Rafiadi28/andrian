@@ -1421,7 +1421,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                                     <td align="right">
                                         <?= $val_taksasi > 0 ? formatRupiah($val_taksasi) : '-' ?>
                                         <?php if ($tipe_val === 'manual' && $val_manual > 0): ?>
-                                        <br><span style="font-size:7px; color:#dc2626;">✏️ MANUAL</span>
+                                        <br><span style="font-size:7px; color:#dc2626;">✏️ MANUAL <?= floatval($jt['persentase_taksasi'] ?? 0) ?>%</span>
                                         <?php endif; ?>
                                     </td>
                                     <td align="right"><?= $val_pengikatan > 0 ? formatRupiah($val_pengikatan) : '-' ?></td>
@@ -1479,7 +1479,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                                     <td align="right">
                                         <?= $val_taksasi > 0 ? formatRupiah($val_taksasi) : '-' ?>
                                         <?php if ($tipe_val === 'manual' && $val_manual > 0): ?>
-                                        <br><span style="font-size:7px; color:#dc2626;">✏️ MANUAL</span>
+                                        <br><span style="font-size:7px; color:#dc2626;">✏️ MANUAL <?= floatval($jk['persentase_taksasi'] ?? 0) ?>%</span>
                                         <?php endif; ?>
                                     </td>
                                     <td align="right"><?= $val_pengikatan > 0 ? formatRupiah($val_pengikatan) : '-' ?></td>
