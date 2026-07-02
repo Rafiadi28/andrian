@@ -1382,190 +1382,351 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                             </tr>
                         </table>
                     </div>
-                </div>
                 <?php endif; ?>
 
                 <!-- ===== Section 4: COLLATERAL / JAMINAN ===== -->
+                <div class="section-header-formal" style="background-color: #5b21b6;">IV. 🔐 DETAIL JAMINAN / AGUNAN</div>
+
+                <?php 
+                // Hitung coverage ratio keseluruhan
+                $coverage_ratio = $loan_amount > 0 && $total_collateral > 0 ? ($total_collateral / $loan_amount) * 100 : 0;
+                $coverage_color = $coverage_ratio >= 120 ? '#059669' : ($coverage_ratio >= 100 ? '#d97706' : '#dc2626');
+                $coverage_label = $coverage_ratio >= 120 ? 'SANGAT AMAN' : ($coverage_ratio >= 100 ? 'CUKUP' : 'KURANG');
+                ?>
+
                 <?php if (!empty($jaminan_tanah) || !empty($jaminan_kendaraan) || !empty($jaminan_emas)): ?>
-                <div class="collateral-section">
-                    <div class="collateral-title">🔐 DETAIL JAMINAN / AGUNAN</div>
-                    
-                    <?php if (!empty($jaminan_tanah)): ?>
-                    <div style="margin-bottom: 6px;">
-                        <strong style="font-size: 9px; color: #5b21b6;">TANAH & BANGUNAN</strong>
-                        <table class="collateral-table">
-                            <thead>
-                                <tr>
-                                    <th width="20%">Nama Pemilik</th>
-                                    <th width="20%">Alamat</th>
-                                    <th width="15%">Nilai Pasar</th>
-                                    <th width="15%">Nilai Taksasi</th>
-                                    <th width="15%">Nilai Pengikatan</th>
-                                    <th width="15%">Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($jaminan_tanah as $jt): 
-                                    $nama_pemilik = htmlspecialchars(isset($jt['atas_nama']) && $jt['atas_nama'] !== null ? $jt['atas_nama'] : '-');
-                                    $alamat = htmlspecialchars(isset($jt['alamat_agunan']) && $jt['alamat_agunan'] !== null ? substr($jt['alamat_agunan'], 0, 30) : '-');
-                                    $val_pasar = floatval($jt['nilai_pasar'] ?? 0);
-                                    $val_taksasi = floatval($jt['nilai_taksasi'] ?? 0);
-                                    $val_pengikatan = floatval($jt['nilai_likuidasi'] ?? 0);
-                                    $tipe_val = isset($jt['tipe_valuasi']) && $jt['tipe_valuasi'] !== null ? $jt['tipe_valuasi'] : 'otomatis';
-                                    $val_manual = floatval($jt['nilai_taksasi_manual'] ?? 0);
-                                ?>
-                                <tr>
-                                    <td><?= $nama_pemilik ?></td>
-                                    <td><?= $alamat ?></td>
-                                    <td align="right"><?= $val_pasar > 0 ? formatRupiah($val_pasar) : '-' ?></td>
-                                    <td align="right">
-                                        <?= $val_taksasi > 0 ? formatRupiah($val_taksasi) : '-' ?>
-                                        <?php if ($tipe_val === 'manual' && $val_manual > 0): ?>
-                                        <br><span style="font-size:7px; color:#dc2626;">✏️ MANUAL <?= floatval($jt['persentase_taksasi'] ?? 0) ?>%</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td align="right"><?= $val_pengikatan > 0 ? formatRupiah($val_pengikatan) : '-' ?></td>
-                                    <td align="center" style="font-size:7px;">
-                                        <?php if ($tipe_val === 'manual'): ?>
-                                        <span style="color:#dc2626; font-weight:bold;">MANUAL</span>
-                                        <?php else: ?>
-                                        <span style="color:#059669;">AUTO</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <?php endif; ?>
 
-                    <?php if (!empty($jaminan_kendaraan)): ?>
-                    <div style="margin-bottom: 6px;">
-                        <strong style="font-size: 9px; color: #5b21b6;">KENDARAAN BERMOTOR</strong>
-                        <table class="collateral-table">
-                            <thead>
-                                <tr>
-                                    <th width="16%">Nama Pemilik</th>
-                                    <th width="16%">Merk / Tipe</th>
-                                    <th width="10%">Tahun</th>
-                                    <th width="12%">No. Polisi</th>
-                                    <th width="10%">No STNK</th>
-                                    <th width="11%">Nilai Pasar</th>
-                                    <th width="11%">Nilai Taksasi</th>
-                                    <th width="11%">Nilai Pengikatan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($jaminan_kendaraan as $jk):
-                                    $nama_pemilik = htmlspecialchars(isset($jk['nama_pemilik']) && $jk['nama_pemilik'] !== null ? $jk['nama_pemilik'] : '-');
-                                    $merk_tipe = htmlspecialchars((isset($jk['merk']) && $jk['merk'] !== null ? $jk['merk'] : '') . ' ' . (isset($jk['tipe']) && $jk['tipe'] !== null ? $jk['tipe'] : ''));
-                                    if (trim($merk_tipe) === '') $merk_tipe = '-';
-                                    $tahun = isset($jk['tahun_pembuatan']) && $jk['tahun_pembuatan'] !== null ? htmlspecialchars($jk['tahun_pembuatan']) : '-';
-                                    $no_polisi = htmlspecialchars(isset($jk['no_polisi']) && $jk['no_polisi'] !== null ? $jk['no_polisi'] : '-');
-                                    $no_stnk = htmlspecialchars(isset($jk['no_stnk']) && !is_null($jk['no_stnk']) && $jk['no_stnk'] !== '' ? $jk['no_stnk'] : '-');
-                                    $val_pasar = floatval($jk['nilai_pasar'] ?? 0);
-                                    $val_taksasi = floatval($jk['nilai_taksasi'] ?? 0);
-                                    $val_pengikatan = floatval($jk['nilai_likuidasi'] ?? 0);
-                                    $tipe_val = isset($jk['tipe_valuasi']) && $jk['tipe_valuasi'] !== null ? $jk['tipe_valuasi'] : 'otomatis';
-                                    $val_manual = floatval($jk['nilai_taksasi_manual'] ?? 0);
-                                ?>
-                                <tr>
-                                    <td><?= $nama_pemilik ?></td>
-                                    <td><?= $merk_tipe ?></td>
-                                    <td align="center"><?= $tahun ?></td>
-                                    <td><?= $no_polisi ?></td>
-                                    <td style="font-size:8px; color:<?= $no_stnk === '-' ? '#9ca3af' : '#0369a1' ?>;"><?= $no_stnk ?></td>
-                                    <td align="right"><?= $val_pasar > 0 ? formatRupiah($val_pasar) : '-' ?></td>
-                                    <td align="right">
-                                        <?= $val_taksasi > 0 ? formatRupiah($val_taksasi) : '-' ?>
-                                        <?php if ($tipe_val === 'manual' && $val_manual > 0): ?>
-                                        <br><span style="font-size:7px; color:#dc2626;">✏️ MANUAL <?= floatval($jk['persentase_taksasi'] ?? 0) ?>%</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td align="right"><?= $val_pengikatan > 0 ? formatRupiah($val_pengikatan) : '-' ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <?php endif; ?>
+                <!-- Ringkasan Coverage -->
+                <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:12px; border:1px solid #7c3aed;">
+                    <thead>
+                        <tr style="background-color:#5b21b6; color:white; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+                            <th style="padding:7px 10px; text-align:left; border:1px solid #7c3aed;">Jenis Jaminan</th>
+                            <th style="padding:7px 10px; text-align:center; border:1px solid #7c3aed;">Jumlah Item</th>
+                            <th style="padding:7px 10px; text-align:right; border:1px solid #7c3aed;">Nilai Pasar</th>
+                            <th style="padding:7px 10px; text-align:right; border:1px solid #7c3aed;">Nilai Taksasi</th>
+                            <th style="padding:7px 10px; text-align:right; border:1px solid #7c3aed;">Nilai Pengikatan</th>
+                            <th style="padding:7px 10px; text-align:center; border:1px solid #7c3aed;">Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $sum_tanah_pasar=0; $sum_tanah_taksasi=0; $sum_tanah_ikat=0;
+                        foreach ($jaminan_tanah as $jt) { $sum_tanah_pasar += floatval($jt['nilai_pasar']??0); $sum_tanah_taksasi += floatval($jt['nilai_taksasi']??0); $sum_tanah_ikat += floatval($jt['nilai_likuidasi']??0); }
+                        $sum_kend_pasar=0; $sum_kend_taksasi=0; $sum_kend_ikat=0;
+                        foreach ($jaminan_kendaraan as $jk) { $sum_kend_pasar += floatval($jk['nilai_pasar']??0); $sum_kend_taksasi += floatval($jk['nilai_taksasi']??0); $sum_kend_ikat += floatval($jk['nilai_likuidasi']??0); }
+                        $sum_emas_pasar=0; $sum_emas_taksasi=0; $sum_emas_ikat=0;
+                        foreach ($jaminan_emas as $je) { $sum_emas_pasar += floatval($je['nilai_pasar']??0); $sum_emas_taksasi += floatval($je['nilai_pasar']??0); $sum_emas_ikat += floatval($je['nilai_likuidasi']??0); }
+                        ?>
+                        <?php if (!empty($jaminan_tanah)): $cov=($loan_amount>0&&$sum_tanah_taksasi>0)?(($sum_tanah_taksasi/$loan_amount)*100):0; ?>
+                        <tr>
+                            <td style="padding:6px 8px; border:1px solid #ddd;">🏠 Tanah &amp; Bangunan</td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:center;"><?= count($jaminan_tanah) ?> item</td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><?= formatRupiah($sum_tanah_pasar) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right; font-weight:bold;"><?= formatRupiah($sum_tanah_taksasi) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><?= formatRupiah($sum_tanah_ikat) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:<?= $cov>=100?'#059669':($cov>=80?'#d97706':'#dc2626') ?>;"><?= number_format($cov,1) ?>%</td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if (!empty($jaminan_kendaraan)): $cov=($loan_amount>0&&$sum_kend_taksasi>0)?(($sum_kend_taksasi/$loan_amount)*100):0; ?>
+                        <tr style="background:#fafafa;">
+                            <td style="padding:6px 8px; border:1px solid #ddd;">🚗 Kendaraan Bermotor</td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:center;"><?= count($jaminan_kendaraan) ?> item</td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><?= formatRupiah($sum_kend_pasar) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right; font-weight:bold;"><?= formatRupiah($sum_kend_taksasi) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><?= formatRupiah($sum_kend_ikat) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:<?= $cov>=100?'#059669':($cov>=80?'#d97706':'#dc2626') ?>;"><?= number_format($cov,1) ?>%</td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if (!empty($jaminan_emas)): $cov=($loan_amount>0&&$sum_emas_taksasi>0)?(($sum_emas_taksasi/$loan_amount)*100):0; ?>
+                        <tr>
+                            <td style="padding:6px 8px; border:1px solid #ddd;">🥇 Emas / Logam Mulia</td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:center;"><?= count($jaminan_emas) ?> item</td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><?= formatRupiah($sum_emas_pasar) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right; font-weight:bold;"><?= formatRupiah($sum_emas_taksasi) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><?= formatRupiah($sum_emas_ikat) ?></td>
+                            <td style="padding:6px 8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:<?= $cov>=100?'#059669':($cov>=80?'#d97706':'#dc2626') ?>;"><?= number_format($cov,1) ?>%</td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background-color:#ede9fe; font-weight:bold; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+                            <td style="padding:8px 10px; border:1px solid #7c3aed; color:#5b21b6;">TOTAL KESELURUHAN</td>
+                            <td style="padding:8px 10px; border:1px solid #7c3aed; text-align:center; color:#5b21b6;"><?= count($jaminan_tanah)+count($jaminan_kendaraan)+count($jaminan_emas) ?> item</td>
+                            <td style="padding:8px 10px; border:1px solid #7c3aed; text-align:right; color:#5b21b6;"><?= formatRupiah($sum_tanah_pasar+$sum_kend_pasar+$sum_emas_pasar) ?></td>
+                            <td style="padding:8px 10px; border:1px solid #7c3aed; text-align:right; color:#5b21b6; font-size:13px;"><?= formatRupiah($total_collateral) ?></td>
+                            <td style="padding:8px 10px; border:1px solid #7c3aed; text-align:right; color:#5b21b6;"><?= formatRupiah($sum_tanah_ikat+$sum_kend_ikat+$sum_emas_ikat) ?></td>
+                            <td style="padding:8px 10px; border:1px solid #7c3aed; text-align:center; color:<?= $coverage_color ?>; font-size:13px;"><?= number_format($coverage_ratio,1) ?>%<br><span style="font-size:8px;">(<?= $coverage_label ?>)</span></td>
+                        </tr>
+                    </tfoot>
+                </table>
 
-                    <?php if (!empty($jaminan_emas)): ?>
-                    <div>
-                        <strong style="font-size: 9px; color: #5b21b6;">EMAS</strong>
-                        <table class="collateral-table">
-                            <thead>
-                                <tr>
-                                    <th width="20%">Berat (gram)</th>
-                                    <th width="20%">Harga/gram</th>
-                                    <th width="20%">Nilai Pasar</th>
-                                    <th width="20%">Nilai Taksasi</th>
-                                    <th width="20%">Nilai Pengikatan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($jaminan_emas as $je): 
-                                    $berat = floatval($je['berat'] ?? 0);
-                                    $harga_per_gram = floatval($je['harga_per_gram'] ?? 0);
-                                    $val_pasar = floatval($je['nilai_pasar'] ?? 0);
-                                    // Emas tabel doesn't have nilai_taksasi, biasanya sama dengan nilai_pasar
-                                    $val_taksasi = floatval($je['nilai_pasar'] ?? 0);
-                                    $val_pengikatan = floatval($je['nilai_likuidasi'] ?? 0);
-                                ?>
-                                <tr>
-                                    <td align="right"><?= $berat > 0 ? number_format($berat, 2) : '-' ?></td>
-                                    <td align="right"><?= $harga_per_gram > 0 ? formatRupiah($harga_per_gram) : '-' ?></td>
-                                    <td align="right"><?= $val_pasar > 0 ? formatRupiah($val_pasar) : '-' ?></td>
-                                    <td align="right"><?= $val_taksasi > 0 ? formatRupiah($val_taksasi) : '-' ?></td>
-                                    <td align="right"><?= $val_pengikatan > 0 ? formatRupiah($val_pengikatan) : '-' ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <?php endif; ?>
+                <!-- Perbandingan Plafon vs Jaminan -->
+                <table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:12px;">
+                    <tr style="background:#f0fdf4;">
+                        <td style="padding:6px 10px; width:50%; border:1px solid #86efac;">💰 Plafon Kredit</td>
+                        <td style="padding:6px 10px; border:1px solid #86efac; font-weight:bold; color:#1e3a8a;"><?= formatRupiah($loan_amount) ?></td>
+                    </tr>
+                    <tr style="background:#f5f3ff;">
+                        <td style="padding:6px 10px; border:1px solid #c4b5fd;">🔐 Total Nilai Taksasi Jaminan</td>
+                        <td style="padding:6px 10px; border:1px solid #c4b5fd; font-weight:bold; color:#6d28d9;"><?= formatRupiah($total_collateral) ?></td>
+                    </tr>
+                    <tr style="background:#fffbeb;">
+                        <td style="padding:6px 10px; border:1px solid #fcd34d;">📊 Coverage Ratio (Jaminan / Plafon)</td>
+                        <td style="padding:6px 10px; border:1px solid #fcd34d; font-weight:bold; color:<?= $coverage_color ?>;"><?= number_format($coverage_ratio, 2) ?>% — <?= $coverage_label ?></td>
+                    </tr>
+                    <tr style="background:#fff1f2;">
+                        <td style="padding:6px 10px; border:1px solid #fca5a5;">📉 LTV Ratio (Plafon / Jaminan)</td>
+                        <td style="padding:6px 10px; border:1px solid #fca5a5; font-weight:bold; color:<?= $ltv_ratio<=60?'#059669':($ltv_ratio<=80?'#d97706':'#dc2626') ?>;"><?= number_format($ltv_ratio, 2) ?>%<?= $ltv_ratio<=60?' (Aman)':($ltv_ratio<=80?' (Perhatian)':' (Risiko Tinggi)') ?></td>
+                    </tr>
+                </table>
 
-                    <div style="margin-top: 4px; padding: 4px 6px; background-color: white; border-top: 1px dashed #c4b5fd;">
-                        <strong style="font-size: 9px;">Total Nilai Jaminan:</strong>
-                        <span style="float: right; font-weight: bold; color: #6d28d9;"><?= formatRupiah($total_collateral) ?></span>
-                    </div>
-                </div>
-                <?php else: ?>
-                <!-- Fallback jika tidak ada agunan -->
-                <div class="collateral-section">
-                    <div class="collateral-title">🔐 DETAIL JAMINAN / AGUNAN</div>
-                    <div style="padding: 8px; text-align: center; color: #6b7280; font-size: 9px;">
-                        <p style="margin: 0;">-</p>
-                    </div>
+                <!-- ===== IV.A: TANAH & BANGUNAN DETAIL ===== -->
+                <?php if (!empty($jaminan_tanah)): ?>
+                <div style="margin-bottom:14px; page-break-inside:avoid;">
+                    <div style="background:#6d28d9; color:white; padding:5px 10px; font-size:10px; font-weight:bold; -webkit-print-color-adjust:exact; print-color-adjust:exact;">🏠 A. JAMINAN TANAH &amp; BANGUNAN</div>
+                    <?php foreach ($jaminan_tanah as $idx => $jt):
+                        $tipe_val   = isset($jt['tipe_valuasi']) ? $jt['tipe_valuasi'] : 'otomatis';
+                        $val_pasar  = floatval($jt['nilai_pasar'] ?? 0);
+                        $val_taksasi= floatval($jt['nilai_taksasi'] ?? 0);
+                        $val_ikat   = floatval($jt['nilai_likuidasi'] ?? 0);
+                        $persen     = floatval($jt['persentase_taksasi'] ?? 0);
+                        $cov_item   = $loan_amount > 0 && $val_taksasi > 0 ? ($val_taksasi / $loan_amount) * 100 : 0;
+                    ?>
+                    <table style="width:100%; border-collapse:collapse; font-size:10px; margin-top:4px; margin-bottom:6px;">
+                        <thead>
+                            <tr style="background:#ede9fe; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+                                <th colspan="4" style="padding:5px 8px; border:1px solid #c4b5fd; text-align:left; color:#5b21b6;">Jaminan Tanah &amp; Bangunan #<?= ($idx+1) ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; width:25%; font-weight:bold;">Nama Pemilik / Atas Nama</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; width:25%;"><?= htmlspecialchars($jt['atas_nama'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; width:25%; font-weight:bold;">Nomor Sertifikat</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; width:25%;"><?= htmlspecialchars($jt['nomor_sertifikat'] ?? $jt['no_sertifikat'] ?? '-') ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Jenis / Status Hak</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jt['jenis_sertifikat'] ?? $jt['status_kepemilikan'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Lokasi / Alamat</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jt['alamat_agunan'] ?? '-') ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Luas Tanah</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= ($jt['luas_tanah'] ?? 0) > 0 ? number_format(floatval($jt['luas_tanah']),2) . ' m²' : '-' ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Luas Bangunan</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= ($jt['luas_bangunan'] ?? 0) > 0 ? number_format(floatval($jt['luas_bangunan']),2) . ' m²' : '-' ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Peruntukan</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jt['peruntukan'] ?? $jt['jenis_bangunan'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Kondisi Bangunan</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jt['kondisi'] ?? $jt['kondisi_bangunan'] ?? '-') ?></td>
+                            </tr>
+                            <tr style="background:#fef9ff;">
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd; background:#f5f3ff; font-weight:bold;">Nilai Pasar (NJOP)</td>
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd;"><?= $val_pasar > 0 ? formatRupiah($val_pasar) : '-' ?></td>
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd; background:#f5f3ff; font-weight:bold;">Nilai Taksasi Bank</td>
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd; font-weight:bold; color:#5b21b6;">
+                                    <?= $val_taksasi > 0 ? formatRupiah($val_taksasi) : '-' ?>
+                                    <?php if ($tipe_val === 'manual'): ?>
+                                    <span style="font-size:8px; color:#dc2626; margin-left:4px;">✏️ Manual (<?= number_format($persen,1) ?>%)</span>
+                                    <?php else: ?>
+                                    <span style="font-size:8px; color:#059669; margin-left:4px;">🔄 Auto (<?= number_format($persen,0) ?>%)</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr style="background:#fef9ff;">
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd; background:#f5f3ff; font-weight:bold;">Nilai Pengikatan</td>
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd;"><?= $val_ikat > 0 ? formatRupiah($val_ikat) : '-' ?></td>
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd; background:#f5f3ff; font-weight:bold;">Coverage thd. Plafon</td>
+                                <td style="padding:5px 8px; border:1px solid #c4b5fd; font-weight:bold; color:<?= $cov_item>=100?'#059669':($cov_item>=80?'#d97706':'#dc2626') ?>;"><?= number_format($cov_item,2) ?>%</td>
+                            </tr>
+                            <?php if (!empty($jt['keterangan'])): ?>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Keterangan</td>
+                                <td colspan="3" style="padding:5px 8px; border:1px solid #ddd; font-style:italic; color:#374151;"><?= htmlspecialchars($jt['keterangan']) ?></td>
+                            </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
 
-                <!-- ===== Section 4B: AGUNAN FOTO (NEW) ===== -->
-                <?php if (!empty($agunan_foto_all)): ?>
-                <div style="page-break-inside: avoid; margin-top: 8px; padding: 6px; border: 1px solid #d1d5db; background: #f9fafb;">
-                    <strong style="font-size: 9px; color: #1f2937; display: block; margin-bottom: 6px;">📸 Foto-Foto Agunan</strong>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
-                        <?php foreach (array_slice($agunan_foto_all, 0, 8) as $foto): // Limit to 8 photos for print 
-                            $foto_nama = isset($foto['nama_file']) && !empty($foto['nama_file']) ? $foto['nama_file'] : null;
-                            if (!$foto_nama) continue; // Skip jika nama_file kosong
-                            
-                            $file_path = __DIR__ . '/assets/uploads/' . htmlspecialchars($foto_nama);
-                            if (!file_exists($file_path)) continue; // Skip jika file tidak ada
-                        ?>
-                        <div style="border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden; aspect-ratio: 1;">
-                            <img src="<?= htmlspecialchars($file_path) ?>" 
-                                 style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                                 alt="Foto Agunan" />
+                <!-- ===== IV.B: KENDARAAN BERMOTOR DETAIL ===== -->
+                <?php if (!empty($jaminan_kendaraan)): ?>
+                <div style="margin-bottom:14px; page-break-inside:avoid;">
+                    <div style="background:#1d4ed8; color:white; padding:5px 10px; font-size:10px; font-weight:bold; -webkit-print-color-adjust:exact; print-color-adjust:exact;">🚗 B. JAMINAN KENDARAAN BERMOTOR</div>
+                    <?php foreach ($jaminan_kendaraan as $idx => $jk):
+                        $tipe_val   = isset($jk['tipe_valuasi']) ? $jk['tipe_valuasi'] : 'otomatis';
+                        $val_pasar  = floatval($jk['nilai_pasar'] ?? 0);
+                        $val_taksasi= floatval($jk['nilai_taksasi'] ?? 0);
+                        $val_ikat   = floatval($jk['nilai_likuidasi'] ?? 0);
+                        $persen     = floatval($jk['persentase_taksasi'] ?? 0);
+                        $cov_item   = $loan_amount > 0 && $val_taksasi > 0 ? ($val_taksasi / $loan_amount) * 100 : 0;
+                        $merk_tipe  = trim(($jk['merk']??'') . ' ' . ($jk['tipe']??''));
+                        if (!$merk_tipe) $merk_tipe = '-';
+                    ?>
+                    <table style="width:100%; border-collapse:collapse; font-size:10px; margin-top:4px; margin-bottom:6px;">
+                        <thead>
+                            <tr style="background:#dbeafe; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+                                <th colspan="4" style="padding:5px 8px; border:1px solid #93c5fd; text-align:left; color:#1d4ed8;">Jaminan Kendaraan #<?= ($idx+1) ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; width:25%; font-weight:bold;">Nama Pemilik (BPKB)</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; width:25%;"><?= htmlspecialchars($jk['nama_pemilik'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; width:25%; font-weight:bold;">Merk / Tipe</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; width:25%;"><?= htmlspecialchars($merk_tipe) ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Tahun Pembuatan</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['tahun_pembuatan'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Warna</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['warna'] ?? '-') ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. Polisi</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; font-weight:bold;"><?= htmlspecialchars($jk['no_polisi'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. BPKB</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_bpkb'] ?? '-') ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. STNK</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_stnk'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. Rangka</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_rangka'] ?? '-') ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. Mesin</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_mesin'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Kondisi Kendaraan</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['kondisi'] ?? $jk['kondisi_kendaraan'] ?? '-') ?></td>
+                            </tr>
+                            <tr style="background:#eff6ff;">
+                                <td style="padding:5px 8px; border:1px solid #93c5fd; background:#dbeafe; font-weight:bold;">Nilai Pasar</td>
+                                <td style="padding:5px 8px; border:1px solid #93c5fd;"><?= $val_pasar > 0 ? formatRupiah($val_pasar) : '-' ?></td>
+                                <td style="padding:5px 8px; border:1px solid #93c5fd; background:#dbeafe; font-weight:bold;">Nilai Taksasi Bank</td>
+                                <td style="padding:5px 8px; border:1px solid #93c5fd; font-weight:bold; color:#1d4ed8;">
+                                    <?= $val_taksasi > 0 ? formatRupiah($val_taksasi) : '-' ?>
+                                    <?php if ($tipe_val === 'manual'): ?>
+                                    <span style="font-size:8px; color:#dc2626; margin-left:4px;">✏️ Manual (<?= number_format($persen,1) ?>%)</span>
+                                    <?php else: ?>
+                                    <span style="font-size:8px; color:#059669; margin-left:4px;">🔄 Auto (<?= number_format($persen,0) ?>%)</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr style="background:#eff6ff;">
+                                <td style="padding:5px 8px; border:1px solid #93c5fd; background:#dbeafe; font-weight:bold;">Nilai Pengikatan</td>
+                                <td style="padding:5px 8px; border:1px solid #93c5fd;"><?= $val_ikat > 0 ? formatRupiah($val_ikat) : '-' ?></td>
+                                <td style="padding:5px 8px; border:1px solid #93c5fd; background:#dbeafe; font-weight:bold;">Coverage thd. Plafon</td>
+                                <td style="padding:5px 8px; border:1px solid #93c5fd; font-weight:bold; color:<?= $cov_item>=100?'#059669':($cov_item>=80?'#d97706':'#dc2626') ?>;"><?= number_format($cov_item,2) ?>%</td>
+                            </tr>
+                            <?php if (!empty($jk['keterangan'])): ?>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Keterangan</td>
+                                <td colspan="3" style="padding:5px 8px; border:1px solid #ddd; font-style:italic;"><?= htmlspecialchars($jk['keterangan']) ?></td>
+                            </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <!-- ===== IV.C: EMAS DETAIL ===== -->
+                <?php if (!empty($jaminan_emas)): ?>
+                <div style="margin-bottom:14px; page-break-inside:avoid;">
+                    <div style="background:#b45309; color:white; padding:5px 10px; font-size:10px; font-weight:bold; -webkit-print-color-adjust:exact; print-color-adjust:exact;">🥇 C. JAMINAN EMAS / LOGAM MULIA</div>
+                    <?php foreach ($jaminan_emas as $idx => $je):
+                        $berat         = floatval($je['berat'] ?? 0);
+                        $harga_per_gram= floatval($je['harga_per_gram'] ?? 0);
+                        $val_pasar     = floatval($je['nilai_pasar'] ?? 0);
+                        $val_ikat      = floatval($je['nilai_likuidasi'] ?? 0);
+                        $cov_item      = $loan_amount > 0 && $val_pasar > 0 ? ($val_pasar / $loan_amount) * 100 : 0;
+                    ?>
+                    <table style="width:100%; border-collapse:collapse; font-size:10px; margin-top:4px; margin-bottom:6px;">
+                        <thead>
+                            <tr style="background:#fef3c7; -webkit-print-color-adjust:exact; print-color-adjust:exact;">
+                                <th colspan="4" style="padding:5px 8px; border:1px solid #fcd34d; text-align:left; color:#92400e;">Jaminan Emas #<?= ($idx+1) ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; width:25%; font-weight:bold;">Nama Pemilik</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; width:25%;"><?= htmlspecialchars($je['nama_pemilik'] ?? $je['atas_nama'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; width:25%; font-weight:bold;">Jenis Emas</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; width:25%;"><?= htmlspecialchars($je['jenis_emas'] ?? $je['keterangan'] ?? '-') ?></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Berat</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; font-weight:bold;"><?= $berat > 0 ? number_format($berat,2) . ' gram' : '-' ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Harga Per Gram</td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= $harga_per_gram > 0 ? formatRupiah($harga_per_gram) : '-' ?></td>
+                            </tr>
+                            <tr style="background:#fffbeb;">
+                                <td style="padding:5px 8px; border:1px solid #fcd34d; background:#fef3c7; font-weight:bold;">Nilai Pasar / Taksasi</td>
+                                <td style="padding:5px 8px; border:1px solid #fcd34d; font-weight:bold; color:#92400e;"><?= $val_pasar > 0 ? formatRupiah($val_pasar) : '-' ?></td>
+                                <td style="padding:5px 8px; border:1px solid #fcd34d; background:#fef3c7; font-weight:bold;">Nilai Pengikatan</td>
+                                <td style="padding:5px 8px; border:1px solid #fcd34d;"><?= $val_ikat > 0 ? formatRupiah($val_ikat) : '-' ?></td>
+                            </tr>
+                            <tr style="background:#fffbeb;">
+                                <td style="padding:5px 8px; border:1px solid #fcd34d; background:#fef3c7; font-weight:bold;">Coverage thd. Plafon</td>
+                                <td style="padding:5px 8px; border:1px solid #fcd34d; font-weight:bold; color:<?= $cov_item>=100?'#059669':($cov_item>=80?'#d97706':'#dc2626') ?>;"><?= number_format($cov_item,2) ?>%</td>
+                                <td style="padding:5px 8px; border:1px solid #fcd34d; background:#fef3c7; font-weight:bold;">Keterangan</td>
+                                <td style="padding:5px 8px; border:1px solid #fcd34d; font-style:italic;"><?= htmlspecialchars($je['keterangan'] ?? '-') ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <?php else: ?>
+                <!-- Fallback jika tidak ada agunan -->
+                <div style="padding:20px; text-align:center; border:2px dashed #c4b5fd; border-radius:6px; color:#6b7280; margin-bottom:12px;">
+                    <div style="font-size:24px; margin-bottom:8px;">🔐</div>
+                    <div style="font-weight:bold; color:#374151;">Tidak Ada Data Jaminan / Agunan</div>
+                    <div style="font-size:10px; margin-top:4px;">Kredit tanpa jaminan (unsecured loan)</div>
+                </div>
+                <?php endif; ?>
+
+                <!-- ===== Section 4D: AGUNAN FOTO ===== -->
+                <?php if (!empty($agunan_foto_all)): 
+                    // Filter only existing files
+                    $valid_fotos = [];
+                    foreach ($agunan_foto_all as $foto) {
+                        $foto_nama = isset($foto['nama_file']) && !empty($foto['nama_file']) ? $foto['nama_file'] : null;
+                        if (!$foto_nama) continue;
+                        $file_path = __DIR__ . '/assets/uploads/' . $foto_nama;
+                        if (!file_exists($file_path)) continue;
+                        $foto['_file_path'] = 'assets/uploads/' . $foto_nama; // Use relative URL path for web access
+                        $valid_fotos[] = $foto;
+                    }
+                ?>
+                <?php if (!empty($valid_fotos)): ?>
+                <div style="page-break-inside:avoid; margin-top:10px;">
+                    <div style="background:#374151; color:white; padding:5px 10px; font-size:10px; font-weight:bold; -webkit-print-color-adjust:exact; print-color-adjust:exact;">📸 D. DOKUMENTASI FOTO AGUNAN (<?= count($valid_fotos) ?> Foto)</div>
+                    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:8px; border:1px solid #d1d5db; background:#f9fafb;">
+                        <?php foreach (array_slice($valid_fotos, 0, 8) as $idx2 => $foto): ?>
+                        <div style="border:1px solid #e5e7eb; border-radius:4px; overflow:hidden; background:white;">
+                            <img src="<?= htmlspecialchars($foto['_file_path']) ?>" 
+                                 style="width:100%; aspect-ratio:1; object-fit:cover; display:block;"
+                                 alt="Foto Agunan <?= $idx2+1 ?>" />
+                            <div style="font-size:7px; color:#6b7280; text-align:center; padding:2px;">Foto <?= $idx2+1 ?></div>
                         </div>
                         <?php endforeach; ?>
                     </div>
-                    <?php if (count($agunan_foto_all) > 8): ?>
-                    <small style="font-size: 8px; color: #6b7280; display: block; margin-top: 4px;">
-                        ... dan <?= count($agunan_foto_all) - 8 ?> foto lainnya
-                    </small>
+                    <?php if (count($valid_fotos) > 8): ?>
+                    <div style="font-size:9px; color:#6b7280; padding:4px 8px; background:#f3f4f6; border:1px solid #d1d5db; border-top:none;">
+                        ⚠️ Menampilkan 8 dari <?= count($valid_fotos) ?> foto. Silakan lihat sistem untuk foto selengkapnya.
+                    </div>
                     <?php endif; ?>
                 </div>
-                <?php endif; ?>
+                <?php endif; // end valid_fotos ?>
+                <?php endif; // end agunan_foto_all ?>
 
                 <!-- ===== Section 5: COMPLIANCE ASSESSMENT (NEW) ===== -->
                 <?php if (!empty($compliance_items)): ?>

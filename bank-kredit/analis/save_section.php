@@ -1646,8 +1646,10 @@ try {
             $n_hutang_bank = $pinj_bri + $pinj_bawon;
             
             $n_hutang_lain = floatval($_POST['neraca_hutang_lain'] ?? 0);
-            $n_modal = floatval($_POST['neraca_modal'] ?? 0);
             $total_aktiva = $n_kas + $n_bank + $n_tanah + $n_kend + $n_stok + $n_lain;
+            
+            // Perbaikan: Hitung modal sebelum kredit secara otomatis agar selalu balance dengan Aktiva
+            $n_modal = $total_aktiva - ($n_hutang_bank + $n_hutang_lain);
             $total_pasiva = $n_hutang_bank + $n_hutang_lain + $n_modal;
 
             // ===== NERACA SESUDAH KREDIT (Manual Input) =====

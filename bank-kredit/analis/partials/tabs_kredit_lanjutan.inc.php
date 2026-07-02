@@ -893,7 +893,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
                 <tr style="border-bottom:2px solid #e5e7eb;">
                     <td style="padding:10px 4px; font-weight:700;">MODAL <small
                             style="font-weight:normal; color:#6b7280;"><br>(Otomatis)</small></td>
-                    <td style="padding:4px;"><input type="text" id="modal_sebelum" readonly
+                    <td style="padding:4px;"><input type="text" id="modal_sebelum" name="neraca_modal" readonly
                             style="background:#f3f4f6; width:100%; text-align:right; font-weight:700; color:#4f46e5; font-size:1.05rem;">
                     </td>
                     <td style="padding:4px;"><input type="text" id="modal_sesudah" readonly

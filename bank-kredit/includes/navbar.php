@@ -248,11 +248,41 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
                 <a href="<?= BASE_URL ?>/admin/backup.php" class="nav-link-step">Backup Data</a>
             </div>
 
+        <?php elseif ($current_role == 'kepatuhan'): ?>
+            <!-- ═══════════════════════════════════════════════
+                 KEPATUHAN
+                 ═══════════════════════════════════════════════ -->
+            <a href="<?= BASE_URL ?>/kepatuhan/dashboard.php">
+                <?= $ico_dashboard ?> Dashboard
+            </a>
+            <a href="<?= BASE_URL ?>/kepatuhan/assesmen.php">
+                <?= $ico_clipboard ?> Antrian Assesmen
+            </a>
+            <a href="<?= BASE_URL ?>/kepatuhan/riwayat.php">
+                <?= $ico_history ?> Riwayat Assesmen
+            </a>
+            <div class="nav-item-dropdown">
+                <a href="#" class="dropdown-toggle" onclick="toggleSubmenu(event, 'submenu-kepatuhan-doc')">
+                    <?= $ico_doc ?> Arsip Dokumen
+                </a>
+            </div>
+            <div id="submenu-kepatuhan-doc" class="submenu">
+                <a href="<?= BASE_URL ?>/kepatuhan/upload_dokumen.php" class="nav-link-step">Upload Dokumen</a>
+                <a href="<?= BASE_URL ?>/kepatuhan/hasil_dokumen.php" class="nav-link-step">Lihat Dokumen</a>
+            </div>
+
         <?php else: ?>
             <a href="<?= BASE_URL ?>/<?= htmlspecialchars($current_role) ?>/dashboard.php"><?= $ico_dashboard ?> Dashboard</a>
             <?php if (file_exists(__DIR__ . "/../$current_role/history.php")): ?>
                 <a href="<?= BASE_URL ?>/<?= htmlspecialchars($current_role) ?>/history.php"><?= $ico_history ?> Riwayat Pengajuan</a>
             <?php endif; ?>
+        <?php endif; ?>
+
+        <?php if ($current_role !== 'kepatuhan'): ?>
+        <!-- Menu Global Dokumen Kepatuhan untuk SEMUA ROLE selain Kepatuhan -->
+        <a href="<?= BASE_URL ?>/kepatuhan/hasil_dokumen.php" style="margin-top: 1rem; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 1rem;">
+            <?= $ico_shield ?> Info Kepatuhan
+        </a>
         <?php endif; ?>
     </div>
 

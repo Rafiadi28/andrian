@@ -464,7 +464,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
 
             let pajakSesudah = parseFloat(document.getElementById('neraca_hutang_lain_sesudah').value) || 0;
             let pinjBriSesudah = parseFloat(document.getElementById('neraca_pinjaman_bri_sesudah').value) || 0;
-            let pinjBawonSesudah = parseFloat(document.getElementById('neraca_pinjaman_bawon_sesudah').value) || 0 + plafon;
+            let pinjBawonSesudah = (parseFloat(document.getElementById('neraca_pinjaman_bawon_sesudah').value) || 0) + plafon;
 
             let totalPinjSesudah = pinjBriSesudah + pinjBawonSesudah;
             let pasivaTanpaModalSesudah = pajakSesudah + totalPinjSesudah;
@@ -2642,7 +2642,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                                     </tr>
                                     <tr style="border-bottom:2px solid #e5e7eb;">
                                         <td style="padding:8px 4px; font-weight:700;">MODAL (Otomatis)</td>
-                                        <td style="padding:8px 4px;"><input type="text" id="modal_sebelum" readonly style="background:#f3f4f6; width:100%; text-align:right; font-weight:700; color:#4f46e5; border:1px solid #d1d5db; padding:4px;"></td>
+                                        <td style="padding:8px 4px;"><input type="text" id="modal_sebelum" name="neraca_modal" readonly style="background:#f3f4f6; width:100%; text-align:right; font-weight:700; color:#4f46e5; border:1px solid #d1d5db; padding:4px;"></td>
                                     </tr>
                                     <tr style="font-weight:700; background:#fef2f2; color:#b91c1c;">
                                         <td style="padding:10px 4px;">TOTAL PASIVA</td>
@@ -3633,6 +3633,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                 });
                 if (typeof calcUsaha === 'function') calcUsaha();
                 if (typeof calcStruktur === 'function') calcStruktur();
+                if (typeof calcNeraca === 'function') calcNeraca();
                 if (typeof calc6C === 'function') calc6C();
                 if (typeof recalcAgunanTotals === 'function') recalcAgunanTotals();
                 if (typeof updateScoringSummary === 'function') updateScoringSummary();
