@@ -37,7 +37,7 @@ if (isset($_POST['submit_agunan'])) {
             // Delete existing if any (to allow re-input/update)
             $pdo->prepare("DELETE FROM jaminan_tanah_bangunan WHERE id_pengajuan = ?")->execute([$id_pengajuan]);
 
-            try { $pdo->exec("ALTER TABLE jaminan_tanah_bangunan ADD COLUMN IF NOT EXISTS masa_covernote DATE NULL AFTER jenis_surat"); } catch (Exception $e) {}
+            try { $pdo->exec("ALTER TABLE jaminan_tanah_bangunan ADD COLUMN masa_covernote DATE NULL AFTER jenis_surat"); } catch (Exception $e) {}
 
             $stmt = $pdo->prepare("INSERT INTO jaminan_tanah_bangunan 
             (id_pengajuan, alamat_agunan, jenis_surat, masa_covernote, nomor_surat, atas_nama, kategori_agunan, 

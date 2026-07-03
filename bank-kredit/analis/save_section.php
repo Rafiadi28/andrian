@@ -912,7 +912,7 @@ try {
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
-            try { $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN IF NOT EXISTS foto_data_pendukung VARCHAR(255) NULL AFTER foto_usaha"); } catch(Exception $e) {}
+            try { $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN foto_data_pendukung VARCHAR(255) NULL AFTER foto_usaha"); } catch(Exception $e) {}
 
             $file_updates = "";
             $file_params = [];
