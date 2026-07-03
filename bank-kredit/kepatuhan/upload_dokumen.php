@@ -76,27 +76,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (empty($error_msg)) {
                     $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'kepatuhan' . DIRECTORY_SEPARATOR;
                     if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0755, true);
+                        if (!@mkdir($uploadDir, 0777, true)) {
+                            $error_msg = 'Gagal membuat folder tujuan. Pastikan folder assets/uploads mempunyai izin tulis (write permissions) di VPS (misal: chmod 777 atau chown www-data).';
+                        }
                     }
-                    $newName = 'kep_' . date('Ymd_His') . '_' . uniqid() . '.' . $ext;
-                    if (move_uploaded_file($file['tmp_name'], $uploadDir . $newName)) {
-                        $stmt = $pdo->prepare("INSERT INTO dokumen_kepatuhan 
-                            (id_user, judul, deskripsi, kategori, nama_file, nama_asli, ukuran_file, tipe_file)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                        $stmt->execute([
-                            $_SESSION['user_id'],
-                            htmlspecialchars($judul, ENT_QUOTES, 'UTF-8'),
-                            htmlspecialchars($deskripsi, ENT_QUOTES, 'UTF-8'),
-                            $kategori,
-                            $newName,
-                            htmlspecialchars($file['name'], ENT_QUOTES, 'UTF-8'),
-                            $file['size'],
-                            $ext,
-                        ]);
-                        log_activity($pdo, $_SESSION['user_id'], "Upload Dokumen Kepatuhan: " . htmlspecialchars($judul));
-                        $success_msg = 'Dokumen berhasil diupload dan tersedia untuk semua role.';
-                    } else {
-                        $error_msg = 'Gagal menyimpan file ke server.';
+                    if (empty($error_msg)) {
+                        $newName = 'kep_' . date('Ymd_His') . '_' . uniqid() . '.' . $ext;
+                        if (move_uploaded_file($file['tmp_name'], $uploadDir . $newName)) {
+                            $stmt = $pdo->prepare("INSERT INTO dokumen_kepatuhan 
+                                (id_user, judul, deskripsi, kategori, nama_file, nama_asli, ukuran_file, tipe_file)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                            $stmt->execute([
+                                $_SESSION['user_id'],
+                                htmlspecialchars($judul, ENT_QUOTES, 'UTF-8'),
+                                htmlspecialchars($deskripsi, ENT_QUOTES, 'UTF-8'),
+                                $kategori,
+                                $newName,
+                                htmlspecialchars($file['name'], ENT_QUOTES, 'UTF-8'),
+                                $file['size'],
+                                $ext,
+                            ]);
+                            log_activity($pdo, $_SESSION['user_id'], "Upload Dokumen Kepatuhan: " . htmlspecialchars($judul));
+                            $success_msg = 'Dokumen berhasil diupload dan tersedia untuk semua role.';
+                        } else {
+                            $error_msg = 'Gagal menyimpan file ke server. Periksa permissions folder (chmod 777 assets/uploads/kepatuhan) di VPS Anda.';
+                        }
                     }
                 }
             }
