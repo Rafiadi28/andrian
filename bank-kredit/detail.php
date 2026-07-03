@@ -225,108 +225,128 @@ $timeline = $stmt->fetchAll();
             <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #E5E7EB;">
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                <div>
-                    <h3>I. Data Pribadi</h3>
-                    <table style="width:100%; font-size:0.9rem;">
+                <!-- I. Data Pribadi -->
+                <div style="background:#fff; border-radius:8px; padding:1.5rem; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <h3 style="color:#1e293b; margin-top:0; margin-bottom:1rem; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;">I. Data Pribadi</h3>
+                    <table style="width:100%; font-size:0.95rem; border-collapse: separate; border-spacing: 0 0.6rem;">
                         <tr>
-                            <td style="width:120px; color:#64748B;">Alamat KTP</td>
-                            <td>: <?= htmlspecialchars($data['alamat_ktp'] ?? '-') ?></td>
+                            <td style="width:130px; color:#64748B; vertical-align:top;">Alamat KTP</td>
+                            <td style="width:15px; vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['alamat_ktp'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Domisili</td>
-                            <td>: <?= htmlspecialchars($data['alamat_domisili'] ?? '-') ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Domisili</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['alamat_domisili'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">No HP</td>
-                            <td>: <?= htmlspecialchars($data['no_hp'] ?? '-') ?></td>
+                            <td style="color:#64748B; vertical-align:top;">No HP</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['no_hp'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Status</td>
-                            <td>: <?= ucfirst($data['status_perkawinan'] ?? '-') ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Status</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= ucfirst($data['status_perkawinan'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Pasangan</td>
-                            <td>: <?= htmlspecialchars($data['nama_pasangan'] ?? '-') ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Pasangan</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['nama_pasangan'] ?? '-') ?></td>
                         </tr>
                     </table>
                 </div>
-                <div>
-                    <h3>II. Analisa Keuangan & Usaha</h3>
-                    <table style="width:100%; font-size:0.9rem;">
+                
+                <!-- II. Analisa Keuangan & Usaha -->
+                <div style="background:#fff; border-radius:8px; padding:1.5rem; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <h3 style="color:#1e293b; margin-top:0; margin-bottom:1rem; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;">II. Analisa Keuangan & Usaha</h3>
+                    <table style="width:100%; font-size:0.95rem; border-collapse: separate; border-spacing: 0 0.6rem;">
                         <tr>
-                            <td style="width:120px; color:#64748B;">Nama Usaha</td>
-                            <td>: <?= htmlspecialchars($data['nama_usaha'] ?? '-') ?></td>
+                            <td style="width:130px; color:#64748B; vertical-align:top;">Nama Usaha</td>
+                            <td style="width:15px; vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['nama_usaha'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Bidang</td>
-                            <td>: <?= htmlspecialchars($data['bidang_usaha'] ?? '-') ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Bidang</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['bidang_usaha'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Lama Usaha</td>
-                            <td>: <?= htmlspecialchars($data['lama_usaha'] ?? '-') ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Lama Usaha</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['lama_usaha'] ?? '-') ?></td>
                         </tr>
                         <?php if (!empty($data['foto_usaha'])): ?>
                         <tr>
                             <td style="color:#64748B; vertical-align:top;">Foto Usaha</td>
-                            <td>
-                                <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.25rem;">
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top;">
+                                <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.15rem;">
                                     <?php foreach (explode('|', $data['foto_usaha']) as $fu): if (empty(trim($fu))) continue; ?>
                                     <a href="assets/uploads/<?= htmlspecialchars(trim($fu)) ?>" target="_blank">
-                                        <img src="assets/uploads/<?= htmlspecialchars(trim($fu)) ?>" alt="Foto Usaha" style="max-width:180px; max-height:130px; border-radius:4px; border:1px solid #e2e8f0; object-fit:cover;">
+                                        <img src="assets/uploads/<?= htmlspecialchars(trim($fu)) ?>" alt="Foto Usaha" style="max-width:180px; max-height:130px; border-radius:6px; border:1px solid #cbd5e1; object-fit:cover; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                     </a>
                                     <?php endforeach; ?>
                                 </div>
                             </td>
                         </tr>
                         <?php endif; ?>
+                        <tr><td colspan="3"><hr style="border-top:1px dashed #cbd5e1; margin:0.2rem 0;"></td></tr>
                         <tr>
-                            <td colspan="2">
-                                <hr>
-                            </td>
+                            <td style="color:#64748B; vertical-align:top;">Omset/Bln</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top;"><strong style="color:#334155;"><?= formatRupiah($data['omset_per_bulan'] ?? 0) ?></strong></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Omset/Bln</td>
-                            <td>: <strong><?= formatRupiah($data['omset_per_bulan'] ?? 0) ?></strong></td>
+                            <td style="color:#64748B; vertical-align:top;">Pendapatan Lain</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= formatRupiah($data['pendapatan_lain'] ?? 0) ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Pendapatan Lain</td>
-                            <td>: <?= formatRupiah($data['pendapatan_lain'] ?? 0) ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Biaya Ops</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= formatRupiah($data['biaya_operasional'] ?? 0) ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Biaya Ops</td>
-                            <td>: <?= formatRupiah($data['biaya_operasional'] ?? 0) ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Laba Bersih</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top;"><strong style="color:#16a34a; font-size:1.05rem;"><?= formatRupiah($data['laba_bersih'] ?? 0) ?></strong></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B;">Laba Bersih</td>
-                            <td>: <strong style="color:green;"><?= formatRupiah($data['laba_bersih'] ?? 0) ?></strong>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="color:#64748B;">Repayment Cap.</td>
-                            <td>:
-                                <span style="color:#D97706; font-weight:bold;"><?= formatRupiah($data['repayment_capacity'] ?? 0) ?></span>
+                            <td style="color:#64748B; vertical-align:top;">Repayment Cap.</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top;">
+                                <strong style="color:#d97706; font-size:1.05rem;"><?= formatRupiah($data['repayment_capacity'] ?? 0) ?></strong>
                                 <?php if ($repaymentOverride && $repaymentOverride['aktif']): ?>
-                                    <span style="background:#fef3c7;color:#92400e;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:700;margin-left:0.35rem;">OVERRIDE DIREKSI</span>
+                                    <span style="background:#fef3c7;color:#92400e;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:700;margin-left:0.35rem; display:inline-block; vertical-align:middle;">OVERRIDE DIREKSI</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
                         <?php if ($repaymentOverride && $repaymentOverride['aktif']): ?>
-                        <tr>
-                            <td style="color:#64748B;">Nilai Dihitung</td>
-                            <td>: <?= formatRupiah($repaymentOverride['nilai_dihitung']) ?></td>
-                        </tr>
-                        <tr>
-                            <td style="color:#64748B;">Alasan Override</td>
-                            <td>: <?= nl2br(htmlspecialchars($repaymentOverride['alasan'])) ?></td>
-                        </tr>
-                        <tr>
-                            <td style="color:#64748B;">Override Oleh</td>
-                            <td>: <?= htmlspecialchars($repaymentOverride['override_by_nama'] ?? '-') ?>
-                                <?php if (!empty($repaymentOverride['override_at'])): ?>
-                                    <span style="color:#94a3b8;font-size:0.85rem;">(<?= date('d/m/Y H:i', strtotime($repaymentOverride['override_at'])) ?>)</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
+                        <tr><td colspan="3"><div style="background:#fef3c7; border-radius:6px; padding:0.75rem; margin-top:0.5rem;">
+                            <table style="width:100%; font-size:0.85rem; border-collapse: collapse;">
+                                <tr>
+                                    <td style="color:#92400e; width:100px; padding-bottom:0.25rem;">Nilai Dihitung</td>
+                                    <td style="color:#92400e; width:10px; padding-bottom:0.25rem;">:</td>
+                                    <td style="color:#92400e; font-weight:600; padding-bottom:0.25rem;"><?= formatRupiah($repaymentOverride['nilai_dihitung']) ?></td>
+                                </tr>
+                                <tr>
+                                    <td style="color:#92400e; padding-bottom:0.25rem; vertical-align:top;">Alasan</td>
+                                    <td style="color:#92400e; padding-bottom:0.25rem; vertical-align:top;">:</td>
+                                    <td style="color:#92400e; padding-bottom:0.25rem; vertical-align:top;"><?= nl2br(htmlspecialchars($repaymentOverride['alasan'])) ?></td>
+                                </tr>
+                                <tr>
+                                    <td style="color:#92400e; vertical-align:top;">Oleh</td>
+                                    <td style="color:#92400e; vertical-align:top;">:</td>
+                                    <td style="color:#92400e; vertical-align:top;">
+                                        <strong><?= htmlspecialchars($repaymentOverride['override_by_nama'] ?? '-') ?></strong>
+                                        <?php if (!empty($repaymentOverride['override_at'])): ?>
+                                            <span style="color:#b45309; margin-left:0.25rem;">(<?= date('d/m/Y H:i', strtotime($repaymentOverride['override_at'])) ?>)</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div></td></tr>
                         <?php endif; ?>
                     </table>
                 </div>
@@ -1203,25 +1223,32 @@ $timeline = $stmt->fetchAll();
             <div class="timeline">
                 <!-- Input Log -->
                 <div class="timeline-item">
-                    <h4>Pengajuan Dibuat</h4>
-                    <p class="text-muted"><?= date('d F Y H:i', strtotime($data['tanggal_pengajuan'])) ?></p>
-                    <p>Oleh: <?= htmlspecialchars($data['nama_input']) ?> (Analis)</p>
+                    <div class="timeline-title">Pengajuan Dibuat</div>
+                    <div class="timeline-date"><?= date('d F Y H:i', strtotime($data['tanggal_pengajuan'])) ?></div>
+                    <span class="timeline-actor">
+                        <?= htmlspecialchars($data['nama_input']) ?>
+                        <span class="actor-role">Analis</span>
+                    </span>
                 </div>
 
                 <?php foreach ($timeline as $t): ?>
                     <div class="timeline-item <?= $t['is_auto_skip'] ? 'skipped' : '' ?>">
                         <?php if ($t['is_auto_skip']): ?>
-                            <h4 class="text-danger">Eskalasi Otomatis (Skip Level)</h4>
-                            <p class="text-muted">Posisi: <?= strtoupper(str_replace('_', ' ', $t['level_approval'])) ?></p>
-                            <p><em><?= htmlspecialchars($t['catatan']) ?></em></p>
+                            <div class="timeline-title" style="color: var(--danger);">Eskalasi Otomatis (Skip Level)</div>
+                            <div class="timeline-date">Posisi: <?= strtoupper(str_replace('_', ' ', $t['level_approval'])) ?></div>
+                            <?php if (!empty($t['catatan'])): ?>
+                                <div class="timeline-note"><?= htmlspecialchars($t['catatan']) ?></div>
+                            <?php endif; ?>
                         <?php else: ?>
-                            <h4>Keputusan: <?= strtoupper($t['keputusan']) ?></h4>
-                            <p class="text-muted"><?= date('d F Y H:i', strtotime($t['tanggal_approval'])) ?></p>
-                            <p>Oleh: <strong><?= htmlspecialchars($t['nama_approver']) ?></strong>
-                                (<?= strtoupper($t['role_approver']) ?>)</p>
-                            <div style="background: #F3F4F6; padding: 0.5rem; border-radius: 0.25rem; margin-top: 0.5rem;">
-                                "<?= htmlspecialchars($t['catatan']) ?>"
-                            </div>
+                            <div class="timeline-title">Keputusan: <?= strtoupper($t['keputusan']) ?></div>
+                            <div class="timeline-date"><?= date('d F Y H:i', strtotime($t['tanggal_approval'])) ?></div>
+                            <span class="timeline-actor">
+                                <?= htmlspecialchars($t['nama_approver']) ?>
+                                <span class="actor-role"><?= strtoupper($t['role_approver']) ?></span>
+                            </span>
+                            <?php if (!empty($t['catatan'])): ?>
+                                <div class="timeline-note"><?= htmlspecialchars($t['catatan']) ?></div>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -1230,10 +1257,12 @@ $timeline = $stmt->fetchAll();
                 $timeline_proses = in_array($data['status_pengajuan'] ?? '', ['proses', 'diajukan', 'kasubag', 'kabag', 'kadiv', 'direksi'], true);
                 ?>
                 <?php if ($timeline_proses): ?>
-                    <div class="timeline-item" style="opacity: 0.5;">
-                        <h4>Sedang Diproses...</h4>
-                        <p>Posisi Saat Ini:
-                            <strong><?= strtoupper(str_replace('_', ' ', $data['posisi_saat_ini'])) ?></strong></p>
+                    <div class="timeline-item timeline-pending">
+                        <div class="timeline-title" style="color: var(--secondary);">Sedang Diproses...</div>
+                        <span class="timeline-actor">
+                            Posisi Saat Ini:
+                            <span class="actor-role"><?= strtoupper(str_replace('_', ' ', $data['posisi_saat_ini'])) ?></span>
+                        </span>
                     </div>
                 <?php endif; ?>
             </div>
