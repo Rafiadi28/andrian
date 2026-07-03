@@ -251,7 +251,7 @@ $timeline = $stmt->fetchAll();
                     </table>
                 </div>
                 <div>
-                    <h3>II. Analisa Usaha</h3>
+                    <h3>II. Analisa Keuangan & Usaha</h3>
                     <table style="width:100%; font-size:0.9rem;">
                         <tr>
                             <td style="width:120px; color:#64748B;">Nama Usaha</td>
@@ -361,10 +361,10 @@ $timeline = $stmt->fetchAll();
             </div>
             <?php endif; ?>
 
-            <!-- IV. MULTI AGUNAN SECTION -->
+            <!-- III. MULTI AGUNAN SECTION -->
             <div
                 style="background: #F0FDFA; padding: 1.5rem; border-left: 4px solid #0D9488; margin-bottom: 2rem; border-radius:0 0.5rem 0.5rem 0;">
-                <h3 style="color:#0F766E; margin-bottom:1rem;">IV. Analisa Jaminan (<?= $total_agunan_count ?> Jaminan)
+                <h3 style="color:#0F766E; margin-bottom:1rem;">III. Analisa Jaminan (<?= $total_agunan_count ?> Jaminan)
                 </h3>
 
                 <?php if ($total_agunan_count == 0): ?>
@@ -686,10 +686,10 @@ $timeline = $stmt->fetchAll();
                  So I will replace 173-175 with the new table.
             -->
 
-            <!-- III. NERACA -->
+            <!-- IV. NERACA -->
             <?php if ($neraca): ?>
             <div style="background: #F8FAFC; padding: 1.5rem; border-left: 4px solid #3B82F6; margin-bottom: 2rem; border-radius:0 0.5rem 0.5rem 0; clear: both;">
-                <h3 style="color:#1E40AF; margin-bottom:1rem;">III. Neraca (Posisi Keuangan - Sebelum & Sesudah Kredit)</h3>
+                <h3 style="color:#1E40AF; margin-bottom:1rem;">IV. Neraca (Posisi Keuangan - Sebelum & Sesudah Kredit)</h3>
 
                 <!-- NERACA SEBELUM KREDIT -->
                 <div style="background:#f0fdf4; padding:1.5rem; border-radius:8px; border-left:4px solid #16a34a; margin-bottom:2rem;">
@@ -763,28 +763,30 @@ $timeline = $stmt->fetchAll();
             <?php endif; ?>
 
             <!-- V. STRUKTUR KREDIT -->
-            <div style="margin-bottom: 2rem;">
-                <h3>V. Struktur Kredit</h3>
-                <table style="width:100%; font-size:0.9rem;">
-                    <tr>
-                        <td style="color:#64748B; width:150px;">Jenis Kredit</td>
-                        <td>: <span
-                                class="badge badge-process"><?= htmlspecialchars($data['jenis_kredit'] ?? '-') ?></span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="color:#64748B;">Plafon Pengajuan</td>
-                        <td>: <strong><?= formatRupiah($data['jumlah_kredit']) ?></strong></td>
-                    </tr>
-                    <tr>
-                        <td style="color:#64748B;">Jangka Waktu</td>
-                        <td>: <?= $data['jangka_waktu'] ?> Bulan</td>
-                    </tr>
-                    <tr>
-                        <td style="color:#64748B; vertical-align:top;">Tujuan</td>
-                        <td>: <?= nl2br(htmlspecialchars($data['tujuan_kredit'])) ?></td>
-                    </tr>
-                </table>
+            <div style="background: #Faf5ff; padding: 1.5rem; border-left: 4px solid #9333ea; margin-bottom: 2rem; border-radius:0 0.5rem 0.5rem 0; clear: both;">
+                <h3 style="color:#7e22ce; margin-bottom:1rem;">V. Struktur Kredit</h3>
+                <div style="background:#fff; border-radius:8px; padding:1.25rem; border:1px solid #e9d5ff;">
+                    <table style="width:100%; font-size:0.95rem;">
+                        <tr>
+                            <td style="color:#64748B; width:150px; padding-bottom:0.5rem;">Jenis Kredit</td>
+                            <td style="padding-bottom:0.5rem;">: <span
+                                    class="badge badge-process"><?= htmlspecialchars($data['jenis_kredit'] ?? '-') ?></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B; padding-bottom:0.5rem;">Plafon Pengajuan</td>
+                            <td style="padding-bottom:0.5rem;">: <strong style="color:#16a34a; font-size:1.1rem;"><?= formatRupiah($data['jumlah_kredit']) ?></strong></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B; padding-bottom:0.5rem;">Jangka Waktu</td>
+                            <td style="padding-bottom:0.5rem;">: <strong><?= $data['jangka_waktu'] ?> Bulan</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">Tujuan</td>
+                            <td>: <span style="background:#f1f5f9; padding:0.25rem 0.5rem; border-radius:4px; display:inline-block; font-style:italic;"><?= nl2br(htmlspecialchars($data['tujuan_kredit'])) ?></span></td>
+                        </tr>
+                    </table>
+                </div>
             </div>
             <!-- VI. ANALISA 6C -->
             <?php if ($analisa_6c): ?>

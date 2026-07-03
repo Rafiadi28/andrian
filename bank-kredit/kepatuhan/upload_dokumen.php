@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../helpers/credit_helper.php';
 requireSameRole('kepatuhan');
 
 // Ensure DB table exists
