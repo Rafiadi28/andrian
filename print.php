@@ -173,25 +173,33 @@ if ($loan_amount >= $loan_threshold) {
 }
 
 // Fetch master pejabat data for the required roles
-$signature_roles = [];
-$placeholders = implode(',', array_fill(0, count($required_roles), '?'));
 $stmt_pejabat = $pdo->prepare("
     SELECT id_pejabat, role, nama, jabatan, tanda_tangan, stempel, status 
     FROM master_pejabat 
-    WHERE role IN ($placeholders) AND status = 'aktif'
     ORDER BY FIELD(role, 'analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama')
 ");
-$stmt_pejabat->execute($required_roles);
+$stmt_pejabat->execute();
 $pejabat_data = $stmt_pejabat->fetchAll(PDO::FETCH_ASSOC);
 
-// Build signature_roles from master data, with fallback to defaults if not found
 $pejabat_by_role = [];
 foreach ($pejabat_data as $p) {
     $pejabat_by_role[$p['role']] = $p;
 }
 
+$hierarki_atasan = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
+
+$defaults = [
+    'analis' => ['title' => 'Analis', 'full_title' => 'Analis Kredit'],
+    'kasubag_analis' => ['title' => 'Kasubag Analis', 'full_title' => 'Kepala Subbagian Analis'],
+    'kabag_kredit' => ['title' => 'Kabag Kredit', 'full_title' => 'Kepala Bagian Kredit'],
+    'kadiv_bisnis' => ['title' => 'Kadiv Bisnis', 'full_title' => 'Kepala Divisi Bisnis'],
+    'direktur_utama' => ['title' => 'Direktur Utama', 'full_title' => 'Direktur Utama']
+];
+
 foreach ($required_roles as $role) {
-    if (isset($pejabat_by_role[$role])) {
+    $is_active = isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['status'] === 'aktif' && strpos($pejabat_by_role[$role]['nama'], 'Belum Ditentukan') === false;
+    
+    if ($is_active) {
         $p = $pejabat_by_role[$role];
         $signature_roles[] = [
             'id_pejabat' => $p['id_pejabat'],
@@ -202,22 +210,63 @@ foreach ($required_roles as $role) {
             'stempel' => $p['stempel']
         ];
     } else {
-        // Fallback to default titles if not in master_pejabat
-        $defaults = [
-            'analis' => ['title' => 'Analis', 'full_title' => 'Analis Kredit'],
-            'kasubag_analis' => ['title' => 'Kasubag Analis', 'full_title' => 'Kepala Subbagian Analis'],
-            'kabag_kredit' => ['title' => 'Kabag Kredit', 'full_title' => 'Kepala Bagian Kredit'],
-            'kadiv_bisnis' => ['title' => 'Kadiv Bisnis', 'full_title' => 'Kepala Divisi Bisnis'],
-            'direktur_utama' => ['title' => 'Direktur Utama', 'full_title' => 'Direktur Utama']
-        ];
-        $signature_roles[] = [
-            'id_pejabat' => null,
-            'role' => $role,
-            'nama' => '',
-            'jabatan' => $defaults[$role]['full_title'] ?? '',
-            'tanda_tangan' => null,
-            'stempel' => null
-        ];
+        // Cuti / nonaktif - cari pengganti
+        $pengganti_ditemukan = false;
+        
+        // Tergantung role, kita cari pengganti di hierarki atasan
+        if (in_array($role, $hierarki_atasan)) {
+            $idx_current = array_search($role, $hierarki_atasan);
+            
+            // Cari ke atas dulu
+            for ($i = $idx_current + 1; $i < count($hierarki_atasan); $i++) {
+                $check_role = $hierarki_atasan[$i];
+                if (isset($pejabat_by_role[$check_role]) && $pejabat_by_role[$check_role]['status'] === 'aktif' && strpos($pejabat_by_role[$check_role]['nama'], 'Belum Ditentukan') === false) {
+                    $p = $pejabat_by_role[$check_role];
+                    $signature_roles[] = [
+                        'id_pejabat' => $p['id_pejabat'],
+                        'role' => $role,
+                        'nama' => $p['nama'], // Nama pengganti
+                        'jabatan' => 'a.n. ' . ($defaults[$role]['full_title'] ?? $role), // a.n. Jabatan Asli
+                        'tanda_tangan' => $p['tanda_tangan'],
+                        'stempel' => $p['stempel']
+                    ];
+                    $pengganti_ditemukan = true;
+                    break;
+                }
+            }
+            
+            // Jika tidak ada di atas, cari ke bawah (sesama atasan)
+            if (!$pengganti_ditemukan) {
+                for ($i = $idx_current - 1; $i >= 0; $i--) {
+                    $check_role = $hierarki_atasan[$i];
+                    if (isset($pejabat_by_role[$check_role]) && $pejabat_by_role[$check_role]['status'] === 'aktif' && strpos($pejabat_by_role[$check_role]['nama'], 'Belum Ditentukan') === false) {
+                        $p = $pejabat_by_role[$check_role];
+                        $signature_roles[] = [
+                            'id_pejabat' => $p['id_pejabat'],
+                            'role' => $role,
+                            'nama' => $p['nama'], // Nama pengganti
+                            'jabatan' => 'a.n. ' . ($defaults[$role]['full_title'] ?? $role), // a.n. Jabatan Asli
+                            'tanda_tangan' => $p['tanda_tangan'],
+                            'stempel' => $p['stempel']
+                        ];
+                        $pengganti_ditemukan = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Fallback jika tetap tidak ditemukan pengganti
+        if (!$pengganti_ditemukan) {
+            $signature_roles[] = [
+                'id_pejabat' => null,
+                'role' => $role,
+                'nama' => '',
+                'jabatan' => $defaults[$role]['full_title'] ?? '',
+                'tanda_tangan' => null,
+                'stempel' => null
+            ];
+        }
     }
 }
 
