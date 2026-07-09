@@ -197,76 +197,80 @@ $defaults = [
 ];
 
 foreach ($required_roles as $role) {
+    // Determine the actual role to use for signature based on approval history or active status
+    $approver_name = isset($approval_map[$role]) ? $approval_map[$role]['nama_approver'] : null;
+    $actual_role = $role; // start with original role
+    
+    // Check if the role is currently active
     $is_active = isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['status'] === 'aktif' && strpos($pejabat_by_role[$role]['nama'], 'Belum Ditentukan') === false;
     
-    if ($is_active) {
-        $p = $pejabat_by_role[$role];
-        $signature_roles[] = [
-            'id_pejabat' => $p['id_pejabat'],
-            'role' => $p['role'],
-            'nama' => $p['nama'],
-            'jabatan' => $p['jabatan'],
-            'tanda_tangan' => $p['tanda_tangan'],
-            'stempel' => $p['stempel']
-        ];
-    } else {
-        // Cuti / nonaktif - cari pengganti
+    // If NOT approved yet, AND role is not active -> Find a replacement active role!
+    if (!$approver_name && !$is_active) {
         $pengganti_ditemukan = false;
         
-        // Tergantung role, kita cari pengganti di hierarki atasan
         if (in_array($role, $hierarki_atasan)) {
             $idx_current = array_search($role, $hierarki_atasan);
-            
-            // Cari ke atas dulu
             for ($i = $idx_current + 1; $i < count($hierarki_atasan); $i++) {
                 $check_role = $hierarki_atasan[$i];
                 if (isset($pejabat_by_role[$check_role]) && $pejabat_by_role[$check_role]['status'] === 'aktif' && strpos($pejabat_by_role[$check_role]['nama'], 'Belum Ditentukan') === false) {
-                    $p = $pejabat_by_role[$check_role];
-                    $signature_roles[] = [
-                        'id_pejabat' => $p['id_pejabat'],
-                        'role' => $role,
-                        'nama' => $p['nama'], // Nama pengganti
-                        'jabatan' => 'a.n. ' . ($defaults[$role]['full_title'] ?? $role), // a.n. Jabatan Asli
-                        'tanda_tangan' => $p['tanda_tangan'],
-                        'stempel' => $p['stempel']
-                    ];
+                    $actual_role = $check_role;
                     $pengganti_ditemukan = true;
                     break;
                 }
             }
-            
-            // Jika tidak ada di atas, cari ke bawah (sesama atasan)
             if (!$pengganti_ditemukan) {
                 for ($i = $idx_current - 1; $i >= 0; $i--) {
                     $check_role = $hierarki_atasan[$i];
                     if (isset($pejabat_by_role[$check_role]) && $pejabat_by_role[$check_role]['status'] === 'aktif' && strpos($pejabat_by_role[$check_role]['nama'], 'Belum Ditentukan') === false) {
-                        $p = $pejabat_by_role[$check_role];
-                        $signature_roles[] = [
-                            'id_pejabat' => $p['id_pejabat'],
-                            'role' => $role,
-                            'nama' => $p['nama'], // Nama pengganti
-                            'jabatan' => 'a.n. ' . ($defaults[$role]['full_title'] ?? $role), // a.n. Jabatan Asli
-                            'tanda_tangan' => $p['tanda_tangan'],
-                            'stempel' => $p['stempel']
-                        ];
+                        $actual_role = $check_role;
                         $pengganti_ditemukan = true;
                         break;
                     }
                 }
             }
         }
-        
-        // Fallback jika tetap tidak ditemukan pengganti
-        if (!$pengganti_ditemukan) {
-            $signature_roles[] = [
-                'id_pejabat' => null,
-                'role' => $role,
-                'nama' => '',
-                'jabatan' => $defaults[$role]['full_title'] ?? '',
-                'tanda_tangan' => null,
-                'stempel' => null
-            ];
+    } 
+    // If ALREADY APPROVED, we should ideally find which role matches the approver name
+    elseif ($approver_name) {
+        // If the original role's name doesn't match the approver, someone else approved it
+        if (isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['nama'] !== $approver_name) {
+            // Find who actually approved it among all master_pejabat
+            foreach ($pejabat_by_role as $r => $p) {
+                if ($p['nama'] === $approver_name) {
+                    $actual_role = $r;
+                    break;
+                }
+            }
         }
+    }
+
+    // Now populate $signature_roles using $actual_role for the data, but keep $role for the structure
+    if (isset($pejabat_by_role[$actual_role])) {
+        $p = $pejabat_by_role[$actual_role];
+        
+        $jabatan_tampil = $actual_role !== $role ? 'a.n. ' . ($defaults[$role]['full_title'] ?? $role) : ($p['jabatan']);
+        if ($approver_name && $actual_role === $role) {
+            // normal case where it was approved by original
+            $jabatan_tampil = $p['jabatan'];
+        }
+
+        $signature_roles[] = [
+            'id_pejabat' => $p['id_pejabat'],
+            'role' => $role, // Keep original position
+            'nama' => $p['nama'],
+            'jabatan' => $jabatan_tampil,
+            'tanda_tangan' => $p['tanda_tangan'],
+            'stempel' => $p['stempel']
+        ];
+    } else {
+        $signature_roles[] = [
+            'id_pejabat' => null,
+            'role' => $role,
+            'nama' => '',
+            'jabatan' => $defaults[$role]['full_title'] ?? '',
+            'tanda_tangan' => null,
+            'stempel' => null
+        ];
     }
 }
 
@@ -2085,10 +2089,15 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                             </div>
                             
                             <!-- Ruang Tanda Tangan -->
-                            <div style="height: 100px; display: flex; align-items: center; justify-content: center; margin: 10px 0;">
+                            <div style="height: 100px; position: relative; display: flex; align-items: center; justify-content: center; margin: 10px 0;">
+                                <?php if (!empty($sig['tanda_tangan']) && file_exists('assets/uploads/' . $sig['tanda_tangan'])): ?>
+                                <img src="<?= htmlspecialchars('assets/uploads/' . $sig['tanda_tangan']) ?>" 
+                                     style="max-height: 80px; position: absolute; z-index: 10; object-fit: contain; mix-blend-mode: multiply;" 
+                                     alt="Tanda Tangan" />
+                                <?php endif; ?>
                                 <?php if (!empty($sig['stempel']) && file_exists('assets/uploads/' . $sig['stempel'])): ?>
                                 <img src="<?= htmlspecialchars('assets/uploads/' . $sig['stempel']) ?>" 
-                                     style="max-height: 85px; width: auto; max-width: 100%; object-fit: contain; mix-blend-mode: multiply;" 
+                                     style="max-height: 85px; position: absolute; z-index: 5; opacity: 0.8; object-fit: contain; mix-blend-mode: multiply;" 
                                      alt="Stempel" />
                                 <?php endif; ?>
                             </div>
