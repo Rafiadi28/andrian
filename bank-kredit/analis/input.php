@@ -35,14 +35,17 @@ if ($edit_id > 0) {
         exit;
     }
     $edit_id_pengajuan = $edit_id;
-    $stored_jenis = isset($rowEdit['jenis_pekerjaan']) ? trim((string) $rowEdit['jenis_pekerjaan']) : '';
+    $stored_jenis = isset($rowEdit['jenis_pekerjaan']) ? normalizeJenisPekerjaan((string) $rowEdit['jenis_pekerjaan']) : '';
     if ($stored_jenis !== '' && in_array($stored_jenis, $allowed_jenis, true)) {
         $jenis_pekerjaan = $stored_jenis;
-            } else {
+    } else {
         $jenis_pekerjaan = 'umum';
     }
-    if ($jenis_param !== null && $jenis_param !== '' && in_array($jenis_param, $allowed_jenis, true)) {
-        $jenis_pekerjaan = $jenis_param;
+    if ($jenis_param !== null && $jenis_param !== '') {
+        $normalized_param = normalizeJenisPekerjaan($jenis_param);
+        if (in_array($normalized_param, $allowed_jenis, true)) {
+            $jenis_pekerjaan = $normalized_param;
+        }
     }
     $catatan_revisi_display = trim((string) ($rowEdit['catatan_revisi'] ?? ''));
     if ($catatan_revisi_display === '' && !empty($rowEdit['alasan_penolakan'])) {
@@ -54,12 +57,13 @@ if ($edit_id > 0) {
         $prefill_json = 'null';
     }
                             } else {
-    if ($jenis_param === null || $jenis_param === '' || !in_array($jenis_param, $allowed_jenis, true)) {
-        include __DIR__ . '/pilih_jenis_pekerjaan.php';
-        exit;
+        $normalized_param = $jenis_param !== null ? normalizeJenisPekerjaan($jenis_param) : '';
+        if ($normalized_param === '' || !in_array($normalized_param, $allowed_jenis, true)) {
+            include __DIR__ . '/pilih_jenis_pekerjaan.php';
+            exit;
+        }
+        $jenis_pekerjaan = $normalized_param;
     }
-    $jenis_pekerjaan = $jenis_param;
-}
 
 $nav_q = [];
 if ($edit_id_pengajuan > 0) {

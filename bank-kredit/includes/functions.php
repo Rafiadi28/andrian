@@ -162,6 +162,72 @@ function sanitizeApprovalCatatan($text)
 }
 
 /**
+ * Normalize legacy or variant labels for jenis_pekerjaan into canonical internal codes.
+ *
+ * Supported canonical values:
+ * - umum
+ * - pppk
+ * - perangkat_desa
+ * - kpr
+ * - kretamas
+ * - cashcolateral
+ */
+function normalizeJenisPekerjaan(string $jenis): string
+{
+    $value = trim(strtolower($jenis));
+    $value = preg_replace('/\s+/', ' ', $value);
+
+    $map = [
+        'umum' => 'umum',
+        'pppk' => 'pppk',
+        'pegawai pemerintah' => 'pppk',
+        'pegawai pemerintah dengan perjanjian kerja' => 'pppk',
+        'perangkat desa' => 'perangkat_desa',
+        'kepala desa' => 'perangkat_desa',
+        'sekdes' => 'perangkat_desa',
+        'kaur' => 'perangkat_desa',
+        'bpd' => 'perangkat_desa',
+        'kpr' => 'kpr',
+        'kredit pemilikan rumah' => 'kpr',
+        'kredit khusus' => 'kpr',
+        'kretamas' => 'kretamas',
+        'kredit emas' => 'kretamas',
+        'cashcolateral' => 'cashcolateral',
+        'cash collateral' => 'cashcolateral',
+        'kredit dengan jaminan deposito' => 'cashcolateral',
+        'kredit dengan jaminan tabungan' => 'cashcolateral',
+        'deposito' => 'cashcolateral',
+        'tabungan' => 'cashcolateral',
+    ];
+
+    if (isset($map[$value])) {
+        return $map[$value];
+    }
+
+    if (strpos($value, 'pppk') !== false || strpos($value, 'perjanjian kerja') !== false) {
+        return 'pppk';
+    }
+    if (strpos($value, 'perangkat') !== false
+        || strpos($value, 'kepala desa') !== false
+        || strpos($value, 'sekdes') !== false
+        || strpos($value, 'kaur') !== false
+        || strpos($value, 'bpd') !== false) {
+        return 'perangkat_desa';
+    }
+    if (strpos($value, 'kretamas') !== false || strpos($value, 'kredit emas') !== false) {
+        return 'kretamas';
+    }
+    if (strpos($value, 'cash') !== false || strpos($value, 'deposito') !== false || strpos($value, 'tabungan') !== false) {
+        return 'cashcolateral';
+    }
+    if (strpos($value, 'kpr') !== false || strpos($value, 'kredit pemilikan') !== false || strpos($value, 'kredit khusus') !== false) {
+        return 'kpr';
+    }
+
+    return 'umum';
+}
+
+/**
  * MIME yang diizinkan per ekstensi (untuk finfo).
  */
 function bankKreditMimeTypesForExtension(string $ext): array

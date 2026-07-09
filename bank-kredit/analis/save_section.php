@@ -147,7 +147,7 @@ function getAnalisEditableCondition() {
 }
 const ANALIS_DRAFT_LIKE = "status_pengajuan IN ('draft','revisi','ditolak','diajukan_ulang','revisi_diajukan')";
 
-$jenis_pekerjaan_post = trim((string) ($_POST['jenis_pekerjaan'] ?? 'umum'));
+$jenis_pekerjaan_post = isset($_POST['jenis_pekerjaan']) ? normalizeJenisPekerjaan((string) $_POST['jenis_pekerjaan']) : 'umum';
 $allowed_jenis_pekerjaan = ['umum', 'pppk', 'perangkat_desa', 'kpr', 'kretamas', 'cashcolateral'];
 if (!in_array($jenis_pekerjaan_post, $allowed_jenis_pekerjaan, true)) {
     $jenis_pekerjaan_post = 'umum';

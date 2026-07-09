@@ -116,7 +116,22 @@ if ($monthly_installment <= 0 && $loan_amount > 0) {
     if ($jangka_waktu <= 0) {
         $jangka_waktu = 12; // Default to 12 months
     }
-    $monthly_installment = $loan_amount / $jangka_waktu;
+    
+    $suku_bunga = floatval($data['suku_bunga'] ?? 0);
+    $sistem_bunga = strtolower($data['sistem_bunga'] ?? 'anuitas');
+    
+    if (strpos($sistem_bunga, 'flat') !== false) {
+        // Flat calculation
+        $monthly_installment = ($loan_amount + ($loan_amount * ($suku_bunga / 100) * ($jangka_waktu / 12))) / $jangka_waktu;
+    } else {
+        // Anuitas / Efektif calculation (PMT Formula)
+        if ($suku_bunga > 0) {
+            $r = ($suku_bunga / 100) / 12; // Monthly interest rate
+            $monthly_installment = $loan_amount * ($r * pow(1 + $r, $jangka_waktu)) / (pow(1 + $r, $jangka_waktu) - 1);
+        } else {
+            $monthly_installment = $loan_amount / $jangka_waktu;
+        }
+    }
 }
 
 // Calculate ratios
@@ -1028,7 +1043,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 <!-- ===== FINANCIAL HEALTH METRICS (NEW) ===== -->
                 <div class="metrics-box">
                     <div class="metrics-title">💰 ANALISA KESEHATAN KEUANGAN</div>
-                    <div class="metrics-grid">
+                    <div class="metrics-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                         <div class="metric-item">
                             <div class="metric-label">Penghasilan Bulanan</div>
                             <div class="metric-value"><?= formatRupiah($monthly_income) ?></div>
@@ -1038,34 +1053,25 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                             <div class="metric-value"><?= formatRupiah($monthly_installment) ?></div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-label">Debt-to-Income Ratio</div>
-                            <div class="metric-value" style="color: <?= $debt_income_ratio <= 35 ? '#15803d' : ($debt_income_ratio <= 50 ? '#b45309' : '#991b1b') ?>;">
-                                <?= number_format($debt_income_ratio, 1) ?>%
-                            </div>
-                        </div>
-                        <div class="metric-item">
                             <div class="metric-label">Sisa Kapasitas</div>
                             <div class="metric-value" style="color: <?= $remaining_capacity > 0 ? '#15803d' : '#991b1b' ?>;">
                                 <?= formatRupiah(max(0, $remaining_capacity)) ?>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-label">Total Jaminan</div>
-                            <div class="metric-value"><?= formatRupiah($total_collateral) ?></div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-label">LTV Ratio</div>
-                            <div class="metric-value" style="color: <?= $ltv_ratio <= 60 ? '#15803d' : ($ltv_ratio <= 80 ? '#b45309' : '#991b1b') ?>;">
-                                <?= number_format($ltv_ratio, 1) ?>%
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ===== INCOME BREAKDOWN (OMZET + PENDAPATAN LAIN) ===== -->
+                <?php
+                if (in_array($data['jenis_pekerjaan'] ?? 'umum', ['pppk', 'perangkat_desa'])) {
+                    $lbl_pendapatan_utama = 'Gaji / Pendapatan Bulanan';
+                } else {
+                    $lbl_pendapatan_utama = 'Omzet Usaha Per Bulan';
+                }
+                ?>
                 <table class="summary-table" style="margin-top: 1rem;">
                     <tr>
-                        <td class="summary-label">Omzet Usaha Per Bulan</td>
+                        <td class="summary-label"><?= $lbl_pendapatan_utama ?></td>
                         <td class="summary-value"><?= formatRupiah($data['omset_per_bulan'] ?? 0) ?></td>
                     </tr>
                     <tr>
@@ -1092,6 +1098,38 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                         $usia = '-';
                     }
                 }
+
+                // Calculate Sisa Masa Kerja from contract dates
+                // For PPPK: lama_usaha = start date, departemen_bagian = end date
+                // For Perangkat Desa: same mapping
+                $sisa_masa_kerja = '-';
+                $jenis_pek = $data['jenis_pekerjaan'] ?? 'umum';
+                if (in_array($jenis_pek, ['pppk', 'perangkat_desa'])) {
+                    $tgl_akhir_kontrak = $data['departemen_bagian'] ?? '';
+                    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl_akhir_kontrak)) {
+                        try {
+                            $today = new DateTime('today');
+                            $akhir = new DateTime($tgl_akhir_kontrak);
+                            if ($akhir > $today) {
+                                $diff = $today->diff($akhir);
+                                $parts = [];
+                                if ($diff->y > 0) $parts[] = $diff->y . ' Tahun';
+                                if ($diff->m > 0) $parts[] = $diff->m . ' Bulan';
+                                $sisa_masa_kerja = !empty($parts) ? implode(' ', $parts) : '< 1 Bulan';
+                            } else {
+                                $sisa_masa_kerja = 'Sudah Berakhir';
+                            }
+                        } catch (Exception $e) {
+                            $sisa_masa_kerja = '-';
+                        }
+                    }
+                }
+
+                // Nomor SK: stored in bidang_usaha for PPPK/Perangkat Desa
+                $nomor_sk_display = '-';
+                if (in_array($jenis_pek, ['pppk', 'perangkat_desa'])) {
+                    $nomor_sk_display = $data['bidang_usaha'] ?? '-';
+                }
                 ?>
                 <table class="data-table" style="table-layout: fixed; width: 100%;">
                     <tr>
@@ -1109,20 +1147,20 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     <tr>
                         <td class="label">Nomor KTP</td>
                         <td class="value"><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
-                        <td class="label">Masa Kerja</td>
-                        <td class="value"><?= htmlspecialchars($data['masa_kerja'] ?? '-') ?></td>
+                        <td class="label">Sisa Masa Kerja</td>
+                        <td class="value"><?= htmlspecialchars($sisa_masa_kerja) ?></td>
                     </tr>
                     <tr>
                         <td class="label">Alamat</td>
                         <td class="value"><?= htmlspecialchars($data['alamat_ktp'] ?? '-') ?></td>
                         <td class="label">Nomor SK</td>
-                        <td class="value"><?= htmlspecialchars($data['nomor_sk'] ?? '-') ?></td>
+                        <td class="value"><?= htmlspecialchars($nomor_sk_display) ?></td>
                     </tr>
                     <tr>
                         <td class="label">Pekerjaan</td>
                         <td class="value"><?= htmlspecialchars($data['pekerjaan'] ?? '-') ?></td>
-                        <td class="label">Status Kepegawaian</td>
-                        <td class="value"><?= htmlspecialchars($data['status_kepegawaian'] ?? '-') ?></td>
+                        <td class="label"></td>
+                        <td class="value"></td>
                     </tr>
                 </table>
 

@@ -98,7 +98,7 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
             $analisNavQ = isset($ANALIS_INPUT_NAV_QUERY) ? $ANALIS_INPUT_NAV_QUERY : '';
             $pegawaiInputNav = isset($jenis_pekerjaan) && in_array($jenis_pekerjaan, ['pppk', 'perangkat_desa'], true);
             $analisStep2Target = $pegawaiInputNav ? 'tab-penghasilan' : 'tab-usaha';
-            $analisStep2Label = isset($jenis_pekerjaan) && $jenis_pekerjaan === 'pppk' ? 'Analisa' : 'Analisa Usaha';
+            $analisStep2Label = $pegawaiInputNav ? 'Analisa' : 'Analisa Usaha';
             ?>
             <div id="submenu-input" class="submenu <?= $open_class ?>">
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-pemohon" class="nav-link-step" data-target="tab-pemohon">Data Debitur</a>
