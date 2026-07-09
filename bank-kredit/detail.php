@@ -173,7 +173,7 @@ $timeline = $stmt->fetchAll();
                         <?php // Action buttons: Edit (analis owner), Delete (owner or admin), Continue (if user's role matches posisi_saat_ini) ?>
                         <?php
                         $analis_edit_ok = $_SESSION['user_id'] == $data['input_by']
-                            && in_array($data['status_pengajuan'] ?? '', ['draft', 'revisi', 'ditolak'], true)
+                            && in_array($data['status_pengajuan'] ?? '', ['draft', 'revisi', 'ditolak', 'revisi_diajukan'], true)
                             && $can_edit;
                         ?>
                         <?php if ($analis_edit_ok): ?>

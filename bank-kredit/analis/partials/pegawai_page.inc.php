@@ -23,8 +23,11 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
     <?php include __DIR__ . '/../../includes/navbar.php'; ?>
 
     <div class="container form-content">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>Input Analisa Kredit</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary" onclick="if (document.referrer) { history.back(); } else { window.location.href = '../dashboard.php'; }">← Kembali</button>
+                <h2 style="margin:0;">Input Analisa Kredit</h2>
+            </div>
             <a href="riwayat.php" class="btn btn-secondary">Lihat Riwayat</a>
         </div>
 
