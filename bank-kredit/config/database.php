@@ -16,7 +16,7 @@
 
 $host = 'localhost';
 $user = 'root';          // ← HOSTINGER: ganti dengan DB User dari hPanel
-$pass = 'rian123';              // ← HOSTINGER: ganti dengan DB Password Anda
+$pass = '';              // ← HOSTINGER: ganti dengan DB Password Anda
 $db   = 'bank_kredit_db'; // ← HOSTINGER: ganti dengan DB Name dari hPanel
 
 define('BASE_URL', '/andrian/bank-kredit'); // ← Lokal: '/andrian/bank-kredit' | VPS: '/bank-kredit'
