@@ -161,6 +161,14 @@ if ($debt_income_ratio > 50 || $ltv_ratio > 80 || $remaining_capacity < 0) {
     $risk_level = 'RENDAH';
 }
 
+// Build approval map from query results
+$approval_map = [];
+foreach ((array)$approvals as $a) {
+    if ($a['keputusan'] === 'setuju') {
+        $approval_map[$a['level_approval']] = $a;
+    }
+}
+
 // ===== DETERMINE SIGNATURE APPROVAL LEVELS BASED ON LOAN AMOUNT =====
 $loan_threshold = 500000000; // 500 juta threshold
 
@@ -170,6 +178,29 @@ $required_roles = ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'];
 // Add Direktur Utama if loan >= 500 juta
 if ($loan_amount >= $loan_threshold) {
     $required_roles[] = 'direktur_utama';
+}
+
+// Determine if all required signatures are present
+$semua_disetujui = true;
+foreach ($required_roles as $role) {
+    if (!isset($approval_map[$role])) {
+        $semua_disetujui = false;
+        break;
+    }
+}
+
+if ($semua_disetujui) {
+    $teks_status = '✓ DISETUJUI';
+    $dok_status_formal = '✓ DISETUJUI UNTUK DICAIRKAN';
+    $warna_status = '#15803d'; // green
+    $warna_status_formal = '#155724'; // dark green
+    $bg_status_formal = '';
+} else {
+    $teks_status = '⏳ MENUNGGU';
+    $dok_status_formal = '⏳ MENUNGGU PERSETUJUAN';
+    $warna_status = '#d97706'; // amber
+    $warna_status_formal = '#856404'; // dark amber
+    $bg_status_formal = 'background-color: #fff3cd; padding: 4px 8px; border-radius: 4px; display: inline-block;';
 }
 
 // Fetch master pejabat data for the required roles
@@ -1030,7 +1061,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
         </select>
         <button onclick="window.print()" style="background-color:#1e3a8a;">🖨️ Cetak Dokumen</button>
         <button onclick="savePDF()" style="background-color:#059669;">📥 Simpan PDF</button>
-        <span class="paper-info">Status: <strong><?= strtoupper(htmlspecialchars($data['status_pengajuan'])) ?></strong></span>
+        <span class="paper-info">Status: <strong><?= strtoupper(htmlspecialchars($semua_disetujui ? 'DISETUJUI' : 'MENUNGGU')) ?></strong></span>
     </div>
     
     <div class="pages-container">
@@ -1056,7 +1087,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 <!-- Document Title -->
                 <div class="doc-title-formal" style="font-size: 16px; margin: 15px 0 20px 0;">LEMBAR PERSETUJUAN PENGAJUAN KREDIT</div>
                 
-                <div class="doc-status-formal">✓ DISETUJUI UNTUK DICAIRKAN</div>
+                <div class="doc-status-formal" style="color: <?= $warna_status_formal ?>; <?= $bg_status_formal ?>"><?= $dok_status_formal ?></div>
 
                 <!-- ===== EXECUTIVE SUMMARY (NEW) ===== -->
                 <div class="executive-summary">
@@ -1068,7 +1099,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                         </div>
                         <div class="summary-item">
                             <div class="summary-item-label">Status Kredit</div>
-                            <div class="summary-item-value" style="color: #15803d;">✓ DISETUJUI</div>
+                            <div class="summary-item-value" style="color: <?= $warna_status ?>;"><?= $teks_status ?></div>
                         </div>
                         <div class="summary-item">
                             <div class="summary-item-label">Plafon Disetujui</div>
