@@ -247,6 +247,7 @@ try {
             $telepon_kantor = trim($_POST['telepon_kantor'] ?? '');
             $departemen_bagian = strtoupper(trim($_POST['departemen_bagian'] ?? ''));
             $jabatan = strtoupper(trim($_POST['jabatan'] ?? ''));
+            $sk_avalis = strtoupper(trim($_POST['sk_avalis'] ?? ''));
 
             $pinjaman_ke = intval($_POST['pinjaman_ke'] ?? 1);
             if ($pinjaman_ke < 1) {
@@ -308,7 +309,7 @@ try {
                             nama_debitur=?, id_nasabah=?, nik=?, npwp=?, tempat_lahir=?, tanggal_lahir=?, pekerjaan=?, alamat_pekerjaan=?,
                             status_perkawinan=?, nama_pasangan=?, tempat_lahir_pasangan=?, tanggal_lahir_pasangan=?, pekerjaan_pasangan=?, alamat_pekerjaan_pasangan=?,
                             alamat_ktp=?, dukuh=?, desa=?, kecamatan=?, kota_kabupaten=?, alamat_domisili=?, no_hp=?, jumlah_tanggungan=?, nama_ibu_kandung=?,
-                            nib=?, nama_instansi=?, alamat_instansi=?, telepon_kantor=?, departemen_bagian=?, jabatan=?";
+                            nib=?, nama_instansi=?, alamat_instansi=?, telepon_kantor=?, departemen_bagian=?, jabatan=?, sk_avalis=?";
 
                     $params = [
                         $nama,
@@ -339,7 +340,8 @@ try {
                         $alamat_instansi,
                         $telepon_kantor,
                         $departemen_bagian,
-                        $jabatan
+                        $jabatan,
+                        $sk_avalis
                     ];
 
                     if (in_array($curr_status, ['draft', 'revisi', 'ditolak'], true)) {
@@ -376,14 +378,14 @@ try {
                         (nama_debitur, id_nasabah, nik, npwp, tempat_lahir, tanggal_lahir, pekerjaan, alamat_pekerjaan,
                          status_perkawinan, nama_pasangan, tempat_lahir_pasangan, tanggal_lahir_pasangan, pekerjaan_pasangan, alamat_pekerjaan_pasangan,
                          alamat_ktp, dukuh, desa, kecamatan, kota_kabupaten, alamat_domisili, no_hp, jumlah_tanggungan, nama_ibu_kandung,
-                         nib, nama_instansi, alamat_instansi, telepon_kantor, departemen_bagian, jabatan, pinjaman_ke, jenis_pekerjaan,
+                         nib, nama_instansi, alamat_instansi, telepon_kantor, departemen_bagian, jabatan, sk_avalis, pinjaman_ke, jenis_pekerjaan,
                          tanggal_analisa,
                          file_pendukung, nama_usaha, bidang_usaha, lama_usaha, omset_per_bulan, biaya_operasional, laba_bersih, repayment_capacity,
                          jumlah_kredit, jangka_waktu, tujuan_kredit, jenis_kredit, jenis_jaminan, status_pengajuan, input_by) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                                ?, ?, ?, ?, ?, ?, ?, ?,
+                                ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                 ?,
                                 ?, '', '', '', 0, 0, 0, 0,
                                 0, 0, '', 'KMK', 'tanah_bangunan', 'draft', ?)";
@@ -417,6 +419,7 @@ try {
                         $telepon_kantor,
                         $departemen_bagian,
                         $jabatan,
+                        $sk_avalis,
                         $pinjaman_ke,
                         $jenis_pekerjaan_post,
                         date('Y-m-d'),

@@ -1245,11 +1245,11 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                         <td class="label">Pekerjaan</td>
                         <td class="value"><?= htmlspecialchars($data['pekerjaan'] ?? '-') ?></td>
                         <?php if (in_array($jenis_pek, ['pppk', 'perangkat_desa'])): ?>
-                        <td class="label">Jaminan</td>
-                        <td class="value">SK / AVALIS</td>
+                        <td class="label">SK / AVALIS</td>
+                        <td class="value"><?= htmlspecialchars(!empty($data['sk_avalis']) ? $data['sk_avalis'] : 'SK / AVALIS') ?></td>
                         <?php else: ?>
-                        <td class="label"></td>
-                        <td class="value"></td>
+                        <td class="label">SK / AVALIS</td>
+                        <td class="value"><?= htmlspecialchars($data['sk_avalis'] ?? '-') ?></td>
                         <?php endif; ?>
                     </tr>
                 </table>

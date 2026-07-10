@@ -278,9 +278,19 @@ $timeline = $stmt->fetchAll();
                         </tr>
                         <?php if ($is_pegawai): ?>
                         <tr>
-                            <td style="color:#64748B; vertical-align:top;">Jaminan</td>
+                            <td style="color:#64748B; vertical-align:top;">SK / Avalis</td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
-                            <td style="vertical-align:top; font-weight:500; color:#334155;">SK / AVALIS</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;">
+                                <?= htmlspecialchars(!empty($data['sk_avalis']) ? $data['sk_avalis'] : 'SK / AVALIS') ?>
+                            </td>
+                        </tr>
+                        <?php else: ?>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">SK / Avalis</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;">
+                                <?= htmlspecialchars($data['sk_avalis'] ?? '-') ?>
+                            </td>
                         </tr>
                         <?php endif; ?>
                         <tr>
