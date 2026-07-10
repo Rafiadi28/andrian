@@ -1203,8 +1203,9 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                             } else {
                                 $sisa_masa_kerja = 'Sudah Berakhir';
                             }
+                            $sisa_masa_kerja = date('d-m-Y', strtotime($tgl_akhir_kontrak)) . ' (' . $sisa_masa_kerja . ')';
                         } catch (Exception $e) {
-                            $sisa_masa_kerja = '-';
+                            $sisa_masa_kerja = date('d-m-Y', strtotime($tgl_akhir_kontrak));
                         }
                     }
                 }

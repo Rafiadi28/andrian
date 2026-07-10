@@ -713,8 +713,8 @@ function is_unique_no_sk(PDO $pdo, $no_sk, $excludeId = 0) {
             return false;
         }
 
-        // Check in pengajuan_kredit table
-        $sql = "SELECT COUNT(*) FROM pengajuan_kredit WHERE UPPER(bidang_usaha) = UPPER(?)";
+        // Check in pengajuan_kredit table (excluding finished/rejected ones)
+        $sql = "SELECT COUNT(*) FROM pengajuan_kredit WHERE UPPER(bidang_usaha) = UPPER(?) AND status_pengajuan NOT IN ('selesai', 'ditolak', 'batal')";
         $params = [$no_sk];
         
         if ($excludeId > 0) {

@@ -121,7 +121,7 @@ function validateDate(mixed $value, string $fieldName = 'field'): ?string
 
 function ensureUniqueNik(PDO $pdo, string $nik, int $excludeId = 0): void
 {
-    $sql = "SELECT id_pengajuan FROM pengajuan_kredit WHERE nik = ?";
+    $sql = "SELECT id_pengajuan FROM pengajuan_kredit WHERE nik = ? AND status_pengajuan NOT IN ('selesai', 'ditolak', 'batal')";
     $params = [$nik];
     if ($excludeId > 0) {
         $sql .= " AND id_pengajuan <> ?";

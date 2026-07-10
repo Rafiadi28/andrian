@@ -261,20 +261,52 @@ $timeline = $stmt->fetchAll();
                 <div style="background:#fff; border-radius:8px; padding:1.5rem; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                     <h3 style="color:#1e293b; margin-top:0; margin-bottom:1rem; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;">II. Analisa Keuangan & Usaha</h3>
                     <table style="width:100%; font-size:0.95rem; border-collapse: separate; border-spacing: 0 0.6rem;">
+                        <?php 
+                        $jenis_pek = $data['jenis_pekerjaan'] ?? 'umum';
+                        $is_pegawai = in_array($jenis_pek, ['pppk', 'perangkat_desa']);
+                        ?>
                         <tr>
-                            <td style="width:130px; color:#64748B; vertical-align:top;">Nama Usaha</td>
+                            <td style="width:130px; color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Pekerjaan' : 'Nama Usaha' ?></td>
                             <td style="width:15px; vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['nama_usaha'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B; vertical-align:top;">Bidang</td>
+                            <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'No SK' : 'Bidang' ?></td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['bidang_usaha'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B; vertical-align:top;">Lama Usaha</td>
+                            <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Sisa Masa Kerja' : 'Lama Usaha' ?></td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
-                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['lama_usaha'] ?? '-') ?></td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;">
+                                <?php 
+                                if ($is_pegawai) {
+                                    $tgl_akhir_kontrak = $data['departemen_bagian'] ?? '';
+                                    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl_akhir_kontrak)) {
+                                        try {
+                                            $today = new DateTime('today');
+                                            $akhir = new DateTime($tgl_akhir_kontrak);
+                                            if ($akhir > $today) {
+                                                $diff = $today->diff($akhir);
+                                                $parts = [];
+                                                if ($diff->y > 0) $parts[] = $diff->y . ' Tahun';
+                                                if ($diff->m > 0) $parts[] = $diff->m . ' Bulan';
+                                                $sisa_text = !empty($parts) ? implode(' ', $parts) : '< 1 Bulan';
+                                            } else {
+                                                $sisa_text = 'Sudah Berakhir';
+                                            }
+                                            echo htmlspecialchars(date('d-m-Y', strtotime($tgl_akhir_kontrak)) . ' (' . $sisa_text . ')');
+                                        } catch (Exception $e) {
+                                            echo htmlspecialchars($data['lama_usaha'] ?? '-');
+                                        }
+                                    } else {
+                                        echo htmlspecialchars($data['lama_usaha'] ?? '-');
+                                    }
+                                } else {
+                                    echo htmlspecialchars($data['lama_usaha'] ?? '-');
+                                }
+                                ?>
+                            </td>
                         </tr>
                         <?php if (!empty($data['foto_usaha'])): ?>
                         <tr>
@@ -293,7 +325,7 @@ $timeline = $stmt->fetchAll();
                         <?php endif; ?>
                         <tr><td colspan="3"><hr style="border-top:1px dashed #cbd5e1; margin:0.2rem 0;"></td></tr>
                         <tr>
-                            <td style="color:#64748B; vertical-align:top;">Omset/Bln</td>
+                            <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Gaji/Bln' : 'Omset/Bln' ?></td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top;"><strong style="color:#334155;"><?= formatRupiah($data['omset_per_bulan'] ?? 0) ?></strong></td>
                         </tr>
@@ -302,6 +334,7 @@ $timeline = $stmt->fetchAll();
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= formatRupiah($data['pendapatan_lain'] ?? 0) ?></td>
                         </tr>
+                        <?php if (!$is_pegawai): ?>
                         <tr>
                             <td style="color:#64748B; vertical-align:top;">Biaya Ops</td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
@@ -312,6 +345,7 @@ $timeline = $stmt->fetchAll();
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top;"><strong style="color:#16a34a; font-size:1.05rem;"><?= formatRupiah($data['laba_bersih'] ?? 0) ?></strong></td>
                         </tr>
+                        <?php endif; ?>
                         <tr>
                             <td style="color:#64748B; vertical-align:top;">Repayment Cap.</td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
