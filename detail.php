@@ -3,6 +3,7 @@ require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/helpers/credit_helper.php';
 require_once __DIR__ . '/helpers/repayment_override.php';
 
+/** @var PDO $pdo */
 
 if (!isLoggedIn()) {
     header("Location: " . BASE_URL . "/auth/login.php");
@@ -275,6 +276,13 @@ $timeline = $stmt->fetchAll();
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['bidang_usaha'] ?? '-') ?></td>
                         </tr>
+                        <?php if ($is_pegawai): ?>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">Jaminan</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;">SK / AVALIS</td>
+                        </tr>
+                        <?php endif; ?>
                         <tr>
                             <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Sisa Masa Kerja' : 'Lama Usaha' ?></td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>

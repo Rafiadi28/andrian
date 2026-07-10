@@ -1244,8 +1244,13 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     <tr>
                         <td class="label">Pekerjaan</td>
                         <td class="value"><?= htmlspecialchars($data['pekerjaan'] ?? '-') ?></td>
+                        <?php if (in_array($jenis_pek, ['pppk', 'perangkat_desa'])): ?>
+                        <td class="label">Jaminan</td>
+                        <td class="value">SK / AVALIS</td>
+                        <?php else: ?>
                         <td class="label"></td>
                         <td class="value"></td>
+                        <?php endif; ?>
                     </tr>
                 </table>
 
