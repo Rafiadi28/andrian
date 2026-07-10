@@ -160,16 +160,16 @@ $timeline = $stmt->fetchAll();
         </div>
         <?php endif; ?>
 
-        <div class="card" style="margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between;">
-                <div>
+        <div class="card" style="margin-bottom: 2rem; overflow: hidden; word-wrap: break-word;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start;">
+                <div style="flex: 1 1 min-content; min-width: 250px;">
                     <h2><?= htmlspecialchars($data['nama_debitur']) ?></h2>
                     <p class="text-muted">ID Nasabah: <?= htmlspecialchars($data['id_nasabah'] ?? '-') ?> | NIK: <?= htmlspecialchars($data['nik']) ?> | NPWP: <?= htmlspecialchars($data['npwp'] ?? '-') ?></p>
                     <p class="text-muted">Pekerjaan: <?= htmlspecialchars($data['pekerjaan']) ?><?= (!empty($data['nib'])) ? " | NIB: " . htmlspecialchars($data['nib']) : '' ?></p>
                 </div>
-                <div style="text-align: right;">
-                    <h2 class="text-primary"><?= formatRupiah($data['jumlah_kredit']) ?></h2>
-                    <div style="display:flex; gap:0.5rem; align-items:center; justify-content:flex-end;">
+                <div style="text-align: right; flex: 1 1 min-content; min-width: 250px; display: flex; flex-direction: column; align-items: flex-end;">
+                    <h2 class="text-primary" style="margin-bottom: 0.5rem;"><?= formatRupiah($data['jumlah_kredit']) ?></h2>
+                    <div style="display:flex; gap:0.5rem; align-items:center; justify-content:flex-end; flex-wrap: wrap;">
                         <span class="badge badge-process"><?= strtoupper($data['status_pengajuan']) ?></span>
                         <?php // Action buttons: Edit (analis owner), Delete (owner or admin), Continue (if user's role matches posisi_saat_ini) ?>
                         <?php
@@ -225,7 +225,7 @@ $timeline = $stmt->fetchAll();
             </div>
             <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #E5E7EB;">
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
                 <!-- I. Data Pribadi -->
                 <div style="background:#fff; border-radius:8px; padding:1.5rem; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                     <h3 style="color:#1e293b; margin-top:0; margin-bottom:1rem; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;">I. Data Pribadi</h3>
@@ -460,7 +460,7 @@ $timeline = $stmt->fetchAll();
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                             <div>
                                 <h5 style="border-bottom: 1px solid #ccc; padding-bottom: 5px;">Data Fisik & Legalitas</h5>
                                 <table style="width:100%; font-size:0.9rem;">
@@ -563,7 +563,7 @@ $timeline = $stmt->fetchAll();
                                 <?= (($jk['tipe_valuasi'] ?? 'otomatis') === 'manual') ? '✏️ Manual Override' : '🔄 Otomatis' ?>
                             </span>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                             <table style="width:100%; font-size:0.9rem;">
                                 <tr>
                                     <td style="color:#64748B; width:130px;">Kendaraan</td>
@@ -648,7 +648,7 @@ $timeline = $stmt->fetchAll();
                                 <strong>💛 EMAS</strong>
                             </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                             <table style="width:100%; font-size:0.9rem;">
                                 <tr>
                                     <td style="color:#64748B; width:130px;">Harga per Gram (Rp)</td>
@@ -756,7 +756,7 @@ $timeline = $stmt->fetchAll();
                 <!-- NERACA SEBELUM KREDIT -->
                 <div style="background:#f0fdf4; padding:1.5rem; border-radius:8px; border-left:4px solid #16a34a; margin-bottom:2rem;">
                     <h4 style="color:#16a34a; margin-top:0; margin-bottom:1rem;">📋 Neraca Sebelum Kredit</h4>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                         <div>
                             <h5 style="color:#059669; border-bottom:1px solid #10B981; padding-bottom:0.5rem; margin-bottom:0.5rem;">Total Aktiva</h5>
                             <table style="width:100%; font-size:0.95rem;">
@@ -784,7 +784,7 @@ $timeline = $stmt->fetchAll();
                 <!-- NERACA SESUDAH KREDIT -->
                 <div style="background:#fef3c7; padding:1.5rem; border-radius:8px; border-left:4px solid #d97706;">
                     <h4 style="color:#d97706; margin-top:0; margin-bottom:1rem;">📝 Neraca Sesudah Kredit (Proyeksi)</h4>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                         <div>
                             <h5 style="color:#059669; border-bottom:1px solid #10B981; padding-bottom:0.5rem; margin-bottom:0.5rem;">Total Aktiva</h5>
                             <table style="width:100%; font-size:0.95rem;">
@@ -882,7 +882,7 @@ $timeline = $stmt->fetchAll();
             <div style="background: #FEF3C7; padding: 1.5rem; border-left: 4px solid #F59E0B; margin-bottom: 2rem; border-radius:0 0.5rem 0.5rem 0; clear: both;">
                 <h3 style="color:#B45309; margin-bottom:1rem;">VI. Hasil Analisa 6C</h3>
 
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom:1rem;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom:1rem;">
                     <?php
                     $sixc_items = [
                         ['label'=>'Character',  'score'=>$s6c_char,  'note'=>$analisa_6c['catatan_character']??''],
@@ -1102,7 +1102,7 @@ $timeline = $stmt->fetchAll();
         <div class="card">
             <?php if ($assessment): ?>
                 <div style="margin-bottom: 1.5rem;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                         <div style="background: #EFF6FF; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #0369A1;">
                             <p style="color: #0369A1; font-weight: bold; margin: 0; font-size: 0.85rem;">Tanggal Assessment</p>
                             <p style="margin: 0.5rem 0; font-size: 1rem; font-weight: bold;">
@@ -1219,7 +1219,7 @@ $timeline = $stmt->fetchAll();
                     <?php endif; ?>
 
                     <!-- Kesimpulan & Rekomendasi -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                         <?php if (!empty($assessment['kesimpulan'])): ?>
                         <div style="background: #EDE9FE; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #7C3AED;">
                             <h5 style="margin-top: 0; color: #7C3AED;">Kesimpulan</h5>
