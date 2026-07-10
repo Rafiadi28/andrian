@@ -157,14 +157,14 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
         <div class="section-header" style="margin-bottom: 2rem; border-bottom: none;">
             <h1>Manajemen Users & Status</h1>
             <div class="button-group">
-                <button onclick="document.getElementById('modal-add').style.display='block'" class="btn btn-primary"
+                <button onclick="document.getElementById('modal-add').style.display='flex'" class="btn btn-primary"
                     style="display:flex; align-items:center; gap:0.5rem;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Tambah User Baru
                 </button>
-                <button onclick="document.getElementById('modal-roles').style.display='block'" class="btn btn-secondary">
+                <button onclick="document.getElementById('modal-roles').style.display='flex'" class="btn btn-secondary">
                     Kelola Role
                 </button>
             </div>
@@ -282,17 +282,18 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
     <style>
         /* Improved Modal Container styling */
         .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999 !important;
             background: rgba(15, 23, 42, 0.6) !important;
             backdrop-filter: blur(4px);
             display: none;
             align-items: center;
             justify-content: center;
             padding: 1rem;
-        }
-
-        /* Override inline block from JS to flex for centering */
-        .modal-overlay[style*="display: block"] {
-            display: flex !important;
         }
 
         .modal-content {
@@ -526,7 +527,7 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
 
     <script>
         function openEditModal(id, nama, username, role) {
-            document.getElementById('modal-edit').style.display = 'block';
+            document.getElementById('modal-edit').style.display = 'flex';
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nama').value = nama;
             document.getElementById('edit_username').value = username;
