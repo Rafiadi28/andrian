@@ -280,13 +280,11 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
 
     <!-- Page-specific Modal Overrides -->
     <style>
-        /* Improved Modal Container styling */
+        /* Improved Modal Container */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100vh;
             z-index: 9999 !important;
             background: rgba(15, 23, 42, 0.6) !important;
             backdrop-filter: blur(4px);
@@ -300,12 +298,22 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
             background: #ffffff;
             border-radius: 16px;
             width: 100%;
-            max-width: 650px;
+            max-width: 580px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
             animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid #f1f5f9;
             overflow: hidden;
-            margin: auto; /* Fallback for older browsers */
+            margin: auto;
+            max-height: 90vh; /* Prevent cut-offs */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-height: 90vh; /* Form takes full modal height */
         }
 
         @keyframes modalFadeIn {
@@ -314,23 +322,24 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
         }
 
         .modal-header {
-            padding: 1.5rem 1.75rem;
+            padding: 1.25rem 1.75rem;
             border-bottom: 1px solid #f1f5f9;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #f8fafc;
+            background: #ffffff;
+            flex-shrink: 0;
         }
 
         .modal-header h3 {
             margin: 0;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             color: #0f172a;
             font-weight: 600;
         }
 
         .modal-close {
-            background: #f1f5f9;
+            background: #f8fafc;
             border: none;
             width: 32px;
             height: 32px;
@@ -351,6 +360,8 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
 
         .modal-body {
             padding: 1.75rem;
+            overflow-y: auto;
+            flex-grow: 1;
         }
 
         .modal-footer {
@@ -359,51 +370,88 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
             border-top: 1px solid #f1f5f9;
             display: flex;
             justify-content: flex-end;
-            gap: 1rem;
+            gap: 0.75rem;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .modal-footer .btn {
-            padding: 0.625rem 1.25rem;
-            min-height: 42px;
+            padding: 0.625rem 1.5rem;
+            min-height: 40px;
             border-radius: 8px;
             font-size: 0.95rem;
+            font-weight: 500;
         }
 
         /* Two-column responsive grid for modal form fields */
         .modal-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
+            gap: 1.25rem;
         }
         
         .modal-grid .form-group {
             margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-grid label {
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .modal-grid .form-hint {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .modal-grid input, .modal-grid select {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 0.65rem 1rem;
+            font-size: 0.95rem;
+            background: #ffffff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .modal-grid input:focus, .modal-grid select:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
         .full-width {
             grid-column: 1 / -1;
         }
         
+        
         @media (max-width: 640px) {
             .modal-grid {
                 grid-template-columns: 1fr;
-                gap: 1.25rem;
+                gap: 1rem;
             }
             .full-width {
                 grid-column: span 1;
             }
-            .modal-content {
-                max-height: 90vh;
-                overflow-y: auto;
-            }
             .modal-footer {
                 flex-direction: column-reverse;
-                gap: 0.75rem;
+                gap: 0.5rem;
+                padding: 1.25rem;
             }
             .modal-footer .btn {
                 width: 100%;
                 justify-content: center;
+            }
+            .modal-content {
+                max-width: 100%;
+                border-radius: 12px;
+                max-height: 95vh;
+            }
+            .modal-content form {
+                max-height: 95vh;
             }
         }
     </style>
