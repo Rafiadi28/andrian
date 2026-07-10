@@ -19,12 +19,14 @@ if (!in_array($method, ['GET', 'POST', 'PUT', 'DELETE'], true)) {
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
 // Include dependencies
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../helpers/functions.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 // Check authorization (admin only)
-session_start();
-if (empty($_SESSION['user_id']) || !in_array($_SESSION['role'] ?? '', ['admin', 'direksi', 'kadiv_kredit'])) {
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (empty($_SESSION['user_id']) || !in_array($_SESSION['role'] ?? '', ['admin', 'Superadmin', 'direksi', 'kadiv_kredit'])) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Akses ditolak']);
     exit;

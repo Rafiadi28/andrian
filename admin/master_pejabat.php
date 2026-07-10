@@ -395,7 +395,10 @@ $role_labels = [
                 <h1>📋 Master Pejabat</h1>
                 <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Manajemen tanda tangan dan stempel pejabat bank</p>
             </div>
-            <button class="btn-add" onclick="openFormModal()">+ Tambah Pejabat</button>
+            <div>
+                <a href="dashboard.php" style="text-decoration: none; padding: 10px 20px; background-color: #e5e7eb; color: #374151; border-radius: 6px; font-size: 14px; font-weight: 600; margin-right: 10px; transition: background-color 0.2s;">&larr; Kembali</a>
+                <button class="btn-add" onclick="openFormModal()">+ Tambah Pejabat</button>
+            </div>
         </div>
 
         <?php if (empty($pejabat_list)): ?>
