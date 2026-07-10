@@ -9,10 +9,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 // Check authorization
-if (empty($_SESSION['user_id']) || !in_array($_SESSION['role'] ?? '', ['admin', 'direksi', 'kadiv_kredit'])) {
-    header('Location: ../login_page.html');
-    exit;
-}
+requireAnyRole(['Superadmin', 'direksi', 'kadiv_kredit']);
 
 // Get all pejabat
 $stmt = $pdo->prepare("
