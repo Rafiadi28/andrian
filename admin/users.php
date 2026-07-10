@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+/** @var PDO $pdo */
 requireSameRole('Superadmin');
 
 $csrf_ok = ($_SERVER['REQUEST_METHOD'] !== 'POST') || verifyCsrfToken($_POST['csrf_token'] ?? '');
@@ -277,9 +278,138 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
         </div>
     </div>
 
+    <!-- Page-specific Modal Overrides -->
+    <style>
+        /* Improved Modal Container styling */
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.6) !important;
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        /* Override inline block from JS to flex for centering */
+        .modal-overlay[style*="display: block"] {
+            display: flex !important;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+            margin: auto; /* Fallback for older browsers */
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            padding: 1.5rem 1.75rem;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .modal-body {
+            padding: 1.75rem;
+        }
+
+        .modal-footer {
+            padding: 1.25rem 1.75rem;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .modal-footer .btn {
+            padding: 0.625rem 1.25rem;
+            min-height: 42px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        /* Two-column responsive grid for modal form fields */
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .modal-grid .form-group {
+            margin-bottom: 0;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        @media (max-width: 640px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+            .modal-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            .modal-footer {
+                flex-direction: column-reverse;
+                gap: 0.75rem;
+            }
+            .modal-footer .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+
     <!-- Modal Manage Roles -->
     <div id="modal-roles" class="modal-overlay" style="display:none; z-index: 104;">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <form method="POST">
                 <div class="modal-header">
                     <h3>Kelola Role (Label)</h3>
@@ -287,7 +417,7 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="modal-grid">
                         <?php foreach (getHierarchy() as $rk): ?>
                             <div class="form-group">
                                 <label for="label_<?= htmlspecialchars($rk) ?>"><?= htmlspecialchars($rk) ?> <span class="required">*</span></label>
@@ -315,18 +445,16 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
-                        <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                    <div class="modal-grid">
+                        <div class="form-group full-width">
                             <label for="add_nama">Nama Lengkap <span class="required">*</span></label>
                             <input type="text" id="add_nama" name="nama" placeholder="Contoh: Budi Santoso" required>
                         </div>
-
-                        <div class="form-group" style="margin-bottom: 0;">
+                        <div class="form-group">
                             <label for="add_username">Username <span class="required">*</span></label>
                             <input type="text" id="add_username" name="username" placeholder="Contoh: budi123" required>
                         </div>
-
-                        <div class="form-group" style="margin-bottom: 0;">
+                        <div class="form-group">
                             <label for="add_role">Role <span class="required">*</span></label>
                             <select id="add_role" name="role" required>
                                 <?php foreach ($roles as $r): ?>
@@ -334,11 +462,10 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
                                 <?php endforeach; ?>
                             </select>
                         </div>
-
-                        <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                        <div class="form-group full-width">
                             <label for="add_password">Password <span class="required">*</span></label>
                             <input type="password" id="add_password" name="password" placeholder="Masukkan password minimum 6 karakter" required>
-                            <small class="form-hint text-muted"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:text-bottom"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Gunakan kombinasi huruf dan angka untuk keamanan.</small>
+                            <small class="form-hint text-muted" style="display:block; margin-top:5px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Gunakan kombinasi huruf dan angka untuk keamanan.</small>
                         </div>
                     </div>
                 </div>
@@ -362,18 +489,18 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                     <input type="hidden" name="edit_id" id="edit_id">
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
-                        <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
+                    <div class="modal-grid">
+                        <div class="form-group full-width">
                             <label for="edit_nama">Nama Lengkap <span class="required">*</span></label>
                             <input type="text" id="edit_nama" name="nama" placeholder="Contoh: Budi Santoso" required>
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 0;">
+                        <div class="form-group">
                             <label for="edit_username">Username <span class="required">*</span></label>
                             <input type="text" id="edit_username" name="username" placeholder="Contoh: budi123" required>
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 0;">
+                        <div class="form-group">
                             <label for="edit_role">Role <span class="required">*</span></label>
                             <select id="edit_role" name="role" required>
                                 <?php foreach ($roles as $r): ?>
@@ -382,10 +509,10 @@ array_unshift($roles, 'Superadmin', 'kepatuhan');
                             </select>
                         </div>
 
-                        <div class="form-group" style="grid-column: span 2; margin-bottom: 0;">
-                            <label for="edit_password">Password Baru <span class="optional">(opsional)</span></label>
-                            <input type="password" id="edit_password" name="password" placeholder="Ketik password baru jika ingin mereset">
-                            <small class="form-hint text-warning" style="color: #d97706;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:text-bottom"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Biarkan kosong jika tidak ingin mengubah password saat ini.</small>
+                        <div class="form-group full-width">
+                            <label for="edit_password">Password Baru <span class="optional" style="font-weight:normal; color:#64748b;">(opsional)</span></label>
+                            <input type="password" id="edit_password" name="password" placeholder="Ketik password baru untuk mereset">
+                            <small class="form-hint" style="color: #d97706; display:block; margin-top:5px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Biarkan kosong jika tidak ingin mengubah password saat ini.</small>
                         </div>
                     </div>
                 </div>
