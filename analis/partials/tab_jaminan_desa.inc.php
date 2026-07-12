@@ -1,9 +1,9 @@
 <div id="tab-jaminan" class="tab-content desa-penghasilan-container">
-    <h3 class="tab-title">3. SK / Avalis</h3>
-    <p class="text-muted desa-subtitle">Formulir SK / Avalis untuk Perangkat Desa bersifat <strong>opsional</strong>. Data hanya akan muncul di cetakan akhir jika bagian ini diisi.</p>
+    <h3 class="tab-title">3. Jaminan</h3>
+    <p class="text-muted desa-subtitle">Formulir Jaminan untuk PPPK dan Perangkat Desa bersifat <strong>opsional</strong>. Data hanya akan muncul di cetakan akhir jika bagian ini diisi.</p>
 
     <div class="section-header desa-section-header">
-        <span class="section-icon">📋</span> SK / Avalis Pekerjaan
+        <span class="section-icon">📋</span> Jaminan / SK Pekerjaan
     </div>
 
     <div class="desa-form-grid desa-grid-2">
@@ -12,12 +12,13 @@
             <input
                 type="text"
                 id="jaminan_sk_jabatan_display"
+                name="jaminan_bidang_usaha"
                 class="desa-input"
-                readonly
+                <?= $pegawai_tipe_save === 'perangkat_desa' ? 'readonly' : '' ?>
                 style="background:#f3f4f6; text-transform:uppercase;"
-                placeholder="Isi di tab Analisa (field Jaminan)"
+                placeholder="<?= $pegawai_tipe_save === 'perangkat_desa' ? 'Isi di tab Analisa (field Jaminan)' : 'Cth: SK PPPK / SK Pengangkatan' ?>"
             >
-            <small class="desa-helper">Diambil otomatis dari field Jaminan pada tab Analisa</small>
+            <small class="desa-helper"><?= $pegawai_tipe_save === 'perangkat_desa' ? 'Diambil otomatis dari field Jaminan pada tab Analisa' : 'Isi Jaminan PPPK di sini jika tersedia' ?></small>
         </div>
 
         <div class="desa-form-group">
@@ -70,7 +71,7 @@
         style="margin-top: 1.5rem;"
     >
         <span class="spinner"></span>
-        <span class="btn-text">Simpan Data SK / Avalis</span>
+        <span class="btn-text">Simpan Data Jaminan</span>
     </button>
     <div id="toast-jaminan_pegawai" class="toast-msg"></div>
 </div>

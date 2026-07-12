@@ -59,18 +59,11 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
         <div class="form-stepper">
             <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pribadi</a>
             <a href="#tab-penghasilan" class="nav-link-step" data-target="tab-penghasilan">2. Analisa</a>
-            <?php if ($pegawai_tipe_save === 'pppk'): ?>
-            <a href="#tab-jaminan" class="nav-link-step" data-target="tab-jaminan">3. SK/Avalis</a>
+            <a href="#tab-jaminan" class="nav-link-step" data-target="tab-jaminan">3. Jaminan</a>
             <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">4. Jaminan Agunan</a>
             <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">5. Struktur Kredit</a>
             <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">6. Analisa 6C</a>
             <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">7. Review & Submit</a>
-            <?php else: ?>
-            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">3. Jaminan Agunan</a>
-            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">4. Struktur Kredit</a>
-            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">5. Analisa 6C</a>
-            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">6. Review & Submit</a>
-            <?php endif; ?>
         </div>
 
         <form method="POST" enctype="multipart/form-data" onsubmit="return false;">
@@ -100,13 +93,7 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 }
                 ?>
                 
-                <?php
-                if ($pegawai_tipe_save === 'pppk') {
-                    include __DIR__ . '/tab_jaminan_pppk.inc.php';
-                } else {
-                    include __DIR__ . '/tab_jaminan_desa.inc.php';
-                }
-                ?>
+                <?php include __DIR__ . '/tab_jaminan_desa.inc.php'; ?>
 
                 <?php include __DIR__ . '/tabs_kredit_lanjutan.inc.php'; ?>
             </div>
