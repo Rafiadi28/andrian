@@ -96,6 +96,8 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 <?php
                 if ($pegawai_tipe_save === 'pppk') {
                     include __DIR__ . '/tab_jaminan_pppk.inc.php';
+                } else {
+                    include __DIR__ . '/tab_jaminan_desa.inc.php';
                 }
                 ?>
 
@@ -171,6 +173,9 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                     var jabatan = pg.jabatan || '';
                     setId('desk_jabatan', jabatan);
                     setId('desk_no_sk', pg.bidang_usaha);
+                    setId('jaminan_sk_avalis', pg.sk_avalis);
+                    setId('jaminan_no_sk_agunan', pg.pppk_agunan_no_sk);
+                    setId('jaminan_sk_jabatan_display', pg.bidang_usaha);
                     // Tanggal kontrak (stored in lama_usaha & departemen_bagian)
                     if (pg.lama_usaha) setId('desk_tgl_mulai', pg.lama_usaha);
                     
