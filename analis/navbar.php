@@ -107,8 +107,10 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-struktur" class="nav-link-step"
                     data-target="tab-struktur">Data Kredit</a>
                 <?php if ($pegawaiInputNav): ?>
+                <?php if (isset($jenis_pekerjaan) && $jenis_pekerjaan === 'pppk'): ?>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-jaminan" class="nav-link-step"
                     data-target="tab-jaminan">SK / Avalis</a>
+                <?php endif; ?>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-agunan" class="nav-link-step"
                     data-target="tab-agunan">Jaminan Agunan</a>
                 <?php else: ?>

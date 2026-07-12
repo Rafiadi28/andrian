@@ -591,9 +591,9 @@ try {
             }
             else { // perangkat_desa
                 $jabatan = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['desk_jabatan'] ?? '')));
-                $sk_d = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['desk_no_sk'] ?? '')));
+                $sk_d = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['desk_jaminan'] ?? $_POST['desk_no_sk'] ?? '')));
                 if ($jabatan === '' || $sk_d === '') {
-                    echo json_encode(['success' => false, 'message' => 'Jabatan dan Nomor SK wajib diisi.']);
+                    echo json_encode(['success' => false, 'message' => 'Jabatan dan Jaminan wajib diisi.']);
                     exit;
                 }
                 
@@ -690,30 +690,7 @@ try {
                     $status_kelayakan = '';
                 }
 
-                // --- Upload File SK (opsional, hanya saat ada file baru) ---
-                $file_sk_saved = null;
-                if (isset($_FILES['desk_file_sk']) && $_FILES['desk_file_sk']['error'] === UPLOAD_ERR_OK) {
-                    $uploadDir = __DIR__ . '/../assets/uploads/';
-                    if (!is_dir($uploadDir)) { mkdir($uploadDir, 0755, true); }
-
-                    $skFile = $_FILES['desk_file_sk'];
-                    if ($skFile['size'] > 2 * 1024 * 1024) {
-                        echo json_encode(['success' => false, 'message' => 'File SK terlalu besar. Maksimal 2MB.']);
-                        exit;
-                    }
-                    $ext = strtolower(pathinfo($skFile['name'], PATHINFO_EXTENSION));
-                    if (!in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'])) {
-                        echo json_encode(['success' => false, 'message' => 'Format file SK tidak didukung. Gunakan PDF, JPG, atau PNG.']);
-                        exit;
-                    }
-                    $newName = 'sk_desa_' . $id_pengajuan . '_' . time() . '.' . $ext;
-                    if (move_uploaded_file($skFile['tmp_name'], $uploadDir . $newName)) {
-                        $file_sk_saved = $newName;
-                    }
-                }
-
                 // Build UPDATE
-                $fileSkSql = $file_sk_saved !== null ? ', file_sk_pppk=?' : '';
                 $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET 
                     jabatan=?,
                     nama_usaha=?, bidang_usaha=?, lama_usaha=?, departemen_bagian=?,
@@ -721,7 +698,7 @@ try {
                     biaya_operasional=0, laba_bersih=?, penyusutan=0, cashflow_usaha=?,
                     biaya_hidup=?, cicilan_lain=?, total_pengeluaran_tetap=?,
                     net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?,
-                    pppk_agunan_no_sk=?" . $fileSkSql . "
+                    pppk_agunan_no_sk=?
                     WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
                 
                 $execParams = [
@@ -744,9 +721,6 @@ try {
                     $status_kelayakan,      // status_kelayakan
                     '-'                     // pppk_agunan_no_sk (tidak digunakan untuk perangkat_desa)
                 ];
-                if ($file_sk_saved !== null) {
-                    $execParams[] = $file_sk_saved;
-                }
                 $execParams[] = $id_pengajuan;
                 
                 $stmt->execute($execParams);
@@ -805,22 +779,6 @@ try {
             }
 
             $fileSkSql = $file_sk_saved !== null ? ', file_sk_pppk=?' : '';
-
-            if ($jenis_pekerjaan_post === 'perangkat_desa') {
-                // Perangkat Desa: bidang_usaha sudah dipakai untuk Nomor SK jabatan di tab Analisa
-                $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET 
-                    sk_avalis=?, pppk_agunan_no_sk=?" . $fileSkSql . "
-                    WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
-
-                $execParams = [$sk_avalis, $agunan_no_sk];
-                if ($file_sk_saved !== null) { $execParams[] = $file_sk_saved; }
-                $execParams[] = $id_pengajuan;
-                $stmt->execute($execParams);
-
-                log_activity($pdo, $_SESSION['user_id'] ?? 0, "Menyimpan Data SK/Avalis Perangkat Desa (ID Pengajuan: $id_pengajuan)");
-                echo json_encode(['success' => true, 'message' => 'Data SK / Avalis berhasil disimpan!', 'id_pengajuan' => $id_pengajuan]);
-                break;
-            }
 
             $bidang_usaha = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['jaminan_bidang_usaha'] ?? '')));
 

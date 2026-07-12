@@ -59,11 +59,18 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
         <div class="form-stepper">
             <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pribadi</a>
             <a href="#tab-penghasilan" class="nav-link-step" data-target="tab-penghasilan">2. Analisa</a>
+            <?php if ($pegawai_tipe_save === 'pppk'): ?>
             <a href="#tab-jaminan" class="nav-link-step" data-target="tab-jaminan">3. SK/Avalis</a>
             <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">4. Jaminan Agunan</a>
             <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">5. Struktur Kredit</a>
             <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">6. Analisa 6C</a>
             <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">7. Review & Submit</a>
+            <?php else: ?>
+            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">3. Jaminan Agunan</a>
+            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">4. Struktur Kredit</a>
+            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">5. Analisa 6C</a>
+            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">6. Review & Submit</a>
+            <?php endif; ?>
         </div>
 
         <form method="POST" enctype="multipart/form-data" onsubmit="return false;">
@@ -96,8 +103,6 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 <?php
                 if ($pegawai_tipe_save === 'pppk') {
                     include __DIR__ . '/tab_jaminan_pppk.inc.php';
-                } else {
-                    include __DIR__ . '/tab_jaminan_desa.inc.php';
                 }
                 ?>
 
@@ -172,10 +177,7 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 } else if (jenis === 'perangkat_desa' || marker === 'PERANGKAT_DESA') {
                     var jabatan = pg.jabatan || '';
                     setId('desk_jabatan', jabatan);
-                    setId('desk_no_sk', pg.bidang_usaha);
-                    setId('jaminan_sk_avalis', pg.sk_avalis);
-                    setId('jaminan_no_sk_agunan', pg.pppk_agunan_no_sk);
-                    setId('jaminan_sk_jabatan_display', pg.bidang_usaha);
+                    setId('desk_jaminan', pg.bidang_usaha);
                     // Tanggal kontrak (stored in lama_usaha & departemen_bagian)
                     if (pg.lama_usaha) setId('desk_tgl_mulai', pg.lama_usaha);
                     

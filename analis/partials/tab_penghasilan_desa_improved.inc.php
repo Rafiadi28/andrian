@@ -11,7 +11,7 @@ $angsuran_helper = getAngsuranHelperText();
     Fitur:
     - Date picker untuk tanggal mulai & akhir jabatan
     - Perhitungan otomatis sisa masa kerja (bulan/tahun)
-    - Nomor SK dan upload SK (PDF, JPG, PNG)
+    - Field Jaminan (dipindah dari tab SK/Avalis PPPK)
     - Dynamic input untuk angsuran bank Wonosobo (OPSIONAL)
     - Validasi lengkap dan error message
     - Modern UI/UX dengan spacing konsisten
@@ -51,18 +51,19 @@ $angsuran_helper = getAngsuranHelperText();
 
         <!-- Nomor SK -->
         <div class="desa-form-group">
-            <label class="desa-label">Nomor SK (Surat Keputusan) <span class="desa-required">*</span></label>
+            <label class="desa-label">Jaminan <span class="desa-required">*</span></label>
             <input 
                 type="text" 
-                id="desk_no_sk" 
-                name="desk_no_sk" 
+                id="desk_jaminan" 
+                name="desk_jaminan" 
                 class="desa-input"
-                placeholder="cth: SK/DESA/2024/001"
+                placeholder="cth: SK PERANGKAT DESA / SK PENGANGKATAN"
                 required
                 style="text-transform:uppercase;"
                 data-validate="text"
             >
-            <span class="desa-error-msg" id="error-desk_no_sk"></span>
+            <small class="desa-helper">Cth: SK Perangkat Desa / SK Pengangkatan ...</small>
+            <span class="desa-error-msg" id="error-desk_jaminan"></span>
         </div>
 
         <!-- Tanggal Mulai Jabatan -->
@@ -180,40 +181,10 @@ $angsuran_helper = getAngsuranHelperText();
     </div>
 
     <!-- ===================================================================== 
-         SECTION 3: AGUNAN - NOMOR SK & UPLOAD FILE SK
+         SECTION 3: ANGSURAN BANK WONOSOBO (DYNAMIC/REPEATABLE)
          ===================================================================== -->
     <div class="section-header desa-section-header">
-        <span class="section-icon">📄</span> 3. Surat Keputusan (SK) - Agunan
-    </div>
-
-    <div class="desa-form-grid desa-grid-1">
-        <!-- Upload File SK -->
-        <div class="desa-form-group">
-            <label class="desa-label">Upload File SK <span class="desa-required">*</span></label>
-            <div class="desa-file-upload-wrapper">
-                <input 
-                    type="file" 
-                    id="desk_file_sk" 
-                    name="desk_file_sk" 
-                    class="desa-file-input"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    data-validate="file"
-                >
-                <label for="desk_file_sk" class="desa-file-label">
-                    <span class="desa-file-icon">📎</span>
-                    <span class="desa-file-text">Pilih File (PDF, JPG, PNG • Max 2MB)</span>
-                </label>
-                <div id="desk_file_preview" class="desa-file-preview"></div>
-                <span class="desa-error-msg" id="error-desk_file_sk"></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================================================================== 
-         SECTION 4: ANGSURAN BANK WONOSOBO (DYNAMIC/REPEATABLE)
-         ===================================================================== -->
-    <div class="section-header desa-section-header">
-        <span class="section-icon">🏦</span> 4. Angsuran Bank Wonosobo 
+        <span class="section-icon">🏦</span> 3. Angsuran Bank Wonosobo 
         <?php if (!$angsuran_required): ?>
             <span style="font-size:0.75rem; color:#10b981; font-weight:600; background:#d1fae5; padding:0.25rem 0.5rem; border-radius:4px; margin-left:0.5rem;">OPSIONAL</span>
         <?php else: ?>
@@ -881,43 +852,6 @@ function clearDesaError(fieldId) {
 
 // ===== FILE UPLOAD HANDLER =====
 document.addEventListener('DOMContentLoaded', function () {
-    const fileInput = document.getElementById('desk_file_sk');
-    if (!fileInput) return;
-
-    fileInput.addEventListener('change', function (e) {
-        const file = this.files[0];
-        const previewDiv = document.getElementById('desk_file_preview');
-
-        if (!file) {
-            previewDiv.classList.remove('show');
-            clearDesaError('desk_file_sk');
-            return;
-        }
-
-        // Validasi ukuran file
-        if (file.size > DESA_MAX_FILE_SIZE) {
-            showDesaError('desk_file_sk', 'Ukuran file maksimal 2MB (file Anda: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB)');
-            previewDiv.classList.remove('show');
-            this.value = '';
-            return;
-        }
-
-        // Validasi tipe file
-        const ext = file.name.split('.').pop().toLowerCase();
-        if (!DESA_ALLOWED_EXTENSIONS.includes(ext) || !DESA_ALLOWED_FILE_TYPES.includes(file.type)) {
-            showDesaError('desk_file_sk', 'Format file tidak didukung. Gunakan: PDF, JPG, atau PNG');
-            previewDiv.classList.remove('show');
-            this.value = '';
-            return;
-        }
-
-        // Tampilkan preview
-        clearDesaError('desk_file_sk');
-        previewDiv.innerHTML = `<strong>✓ File terpilih:</strong> ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-        previewDiv.classList.add('show');
-    });
-
-    // Add event listeners untuk tanggal
     const tglMulaiElem = document.getElementById('desk_tgl_mulai');
     const tglAkhirElem = document.getElementById('desk_tgl_akhir');
     const tglLahirElem = document.getElementById('desk_tgl_lahir');
@@ -944,7 +878,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Add event listeners untuk text input
-    ['desk_jabatan', 'desk_no_sk'].forEach(id => {
+    ['desk_jabatan', 'desk_jaminan'].forEach(id => {
         const elem = document.getElementById(id);
         if (elem) {
             elem.addEventListener('blur', function () {
@@ -1079,7 +1013,7 @@ function validateDesaForm() {
     // Validasi fields wajib
     const wajibFields = [
         { id: 'desk_jabatan', type: 'text' },
-        { id: 'desk_no_sk', type: 'text' },
+        { id: 'desk_jaminan', type: 'text' },
         { id: 'desk_tgl_mulai', type: 'date' },
         { id: 'desk_penghasilan_tetap', type: 'number' }
     ];
@@ -1102,14 +1036,6 @@ function validateDesaForm() {
             showDesaError('desk_tgl_lahir', 'Tanggal lahir wajib diisi');
             isValid = false;
         }
-    }
-
-    // Validasi file SK - hanya wajib jika belum ada file dan form baru
-    const fileInput = document.getElementById('desk_file_sk');
-    const idPengajuan = document.getElementById('id_pengajuan')?.value || '0';
-    if (parseInt(idPengajuan) === 0 && (!fileInput?.files || fileInput.files.length === 0)) {
-        showDesaError('desk_file_sk', 'File SK wajib diisi untuk pengajuan baru');
-        isValid = false;
     }
 
     // Validasi minimal 1 angsuran HANYA jika dibutuhkan
