@@ -59,11 +59,9 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
         <div class="form-stepper">
             <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pribadi</a>
             <a href="#tab-penghasilan" class="nav-link-step" data-target="tab-penghasilan">2. Analisa</a>
-            <a href="#tab-jaminan" class="nav-link-step" data-target="tab-jaminan">3. Jaminan</a>
-            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">4. Jaminan Agunan</a>
-            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">5. Struktur Kredit</a>
-            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">6. Analisa 6C</a>
-            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">7. Review & Submit</a>
+            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">3. Struktur Kredit</a>
+            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">4. Analisa 6C</a>
+            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">5. Review & Submit</a>
         </div>
 
         <form method="POST" enctype="multipart/form-data" onsubmit="return false;">
@@ -93,8 +91,6 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 }
                 ?>
                 
-                <?php include __DIR__ . '/tab_jaminan_desa.inc.php'; ?>
-
                 <?php include __DIR__ . '/tabs_kredit_lanjutan.inc.php'; ?>
             </div>
         </form>
@@ -135,10 +131,7 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 var marker = (pg.nama_usaha || '').toString().trim().toUpperCase();
 
                 if (jenis === 'pppk' || marker === 'PPPK') {
-                    setId('jaminan_bidang_usaha', pg.bidang_usaha);
-                    setId('jaminan_sk_avalis', pg.sk_avalis);
-                    setId('jaminan_no_sk_agunan', pg.pppk_agunan_no_sk);
-                    
+                    setId('pppk_no_sk', pg.bidang_usaha || pg.pppk_agunan_no_sk || '');
                     setId('pppk_gaji', pg.omset_per_bulan);
                     setId('pppk_biaya_hidup', pg.biaya_operasional);
                     // Tanggal kontrak (stored in lama_usaha & departemen_bagian for backward compat)
@@ -167,9 +160,6 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                     var jabatan = pg.jabatan || '';
                     setId('desk_jabatan', jabatan);
                     setId('desk_jaminan', pg.bidang_usaha);
-                    setId('jaminan_sk_avalis', pg.sk_avalis);
-                    setId('jaminan_no_sk_agunan', pg.pppk_agunan_no_sk);
-                    setId('jaminan_sk_jabatan_display', pg.bidang_usaha);
                     // Tanggal kontrak (stored in lama_usaha & departemen_bagian)
                     if (pg.lama_usaha) setId('desk_tgl_mulai', pg.lama_usaha);
                     

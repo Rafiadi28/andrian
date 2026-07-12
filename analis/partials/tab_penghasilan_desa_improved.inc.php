@@ -51,18 +51,17 @@ $angsuran_helper = getAngsuranHelperText();
 
         <!-- Nomor SK -->
         <div class="desa-form-group">
-            <label class="desa-label">Jaminan <span class="desa-required">*</span></label>
+            <label class="desa-label">Jaminan</label>
             <input 
                 type="text" 
                 id="desk_jaminan" 
                 name="desk_jaminan" 
                 class="desa-input"
                 placeholder="cth: SK PERANGKAT DESA / SK PENGANGKATAN"
-                required
                 style="text-transform:uppercase;"
                 data-validate="text"
             >
-            <small class="desa-helper">Cth: SK Perangkat Desa / SK Pengangkatan ...</small>
+            <small class="desa-helper">Opsional — hanya diisi jika ada nomor SK atau dokumen Jaminan.</small>
             <span class="desa-error-msg" id="error-desk_jaminan"></span>
         </div>
 
@@ -878,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Add event listeners untuk text input
-    ['desk_jabatan', 'desk_jaminan'].forEach(id => {
+    ['desk_jabatan'].forEach(id => {
         const elem = document.getElementById(id);
         if (elem) {
             elem.addEventListener('blur', function () {
@@ -886,6 +885,17 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
     });
+
+    const deskJaminanElem = document.getElementById('desk_jaminan');
+    if (deskJaminanElem) {
+        deskJaminanElem.addEventListener('blur', function () {
+            if (this.value.trim()) {
+                validateDesaField('desk_jaminan', 'text');
+            } else {
+                clearDesaError('desk_jaminan');
+            }
+        });
+    }
 
     // Initialize angsuran container if empty
     const container = document.getElementById('desk_angsuran_container');
@@ -1013,7 +1023,6 @@ function validateDesaForm() {
     // Validasi fields wajib
     const wajibFields = [
         { id: 'desk_jabatan', type: 'text' },
-        { id: 'desk_jaminan', type: 'text' },
         { id: 'desk_tgl_mulai', type: 'date' },
         { id: 'desk_penghasilan_tetap', type: 'number' }
     ];
@@ -1036,6 +1045,13 @@ function validateDesaForm() {
             showDesaError('desk_tgl_lahir', 'Tanggal lahir wajib diisi');
             isValid = false;
         }
+    }
+
+    // Validasi Jaminan opsional jika diisi
+    const jaminanField = document.getElementById('desk_jaminan');
+    if (jaminanField && jaminanField.value.trim() && jaminanField.value.trim().length > 100) {
+        showDesaError('desk_jaminan', 'Maksimal 100 karakter');
+        isValid = false;
     }
 
     // Validasi minimal 1 angsuran HANYA jika dibutuhkan

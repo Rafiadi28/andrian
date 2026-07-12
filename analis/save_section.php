@@ -560,6 +560,12 @@ try {
                     // Snapshot captured successfully
                     logError('repayment_snapshot_pppk', ['id_snapshot' => $snapshotResult['id_snapshot'], 'rpc' => $rpc]);
                 }
+
+                $pppk_no_sk = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['pppk_no_sk'] ?? '')));
+                if ($pppk_no_sk !== '' && !is_unique_no_sk($pdo, $pppk_no_sk, $id_pengajuan)) {
+                    echo json_encode(['success' => false, 'message' => '❌ No SK Jaminan sudah digunakan pada pengajuan lain. Silakan gunakan No SK yang berbeda.']);
+                    exit;
+                }
                 
                 // Klasifikasi repayment quality
                 $klasifikasi_rpc = klasifikasi_repayment($rpc, $gaji_pp);
@@ -576,7 +582,8 @@ try {
                     omset_per_bulan=?, biaya_bahan_baku=0, biaya_gaji=0, biaya_listrik=0, biaya_air=0, biaya_sewa=0, biaya_transportasi=0, biaya_lainnya=0,
                     biaya_operasional=?, laba_bersih=?, penyusutan=0, cashflow_usaha=?,
                     biaya_hidup=?, cicilan_lain=?, total_pengeluaran_tetap=?,
-                    net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?
+                    net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?,
+                    bidang_usaha=?, sk_avalis=?, pppk_agunan_no_sk=?
                     WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
 
                 $execParams = [
@@ -584,16 +591,17 @@ try {
                     $gaji_pp,
                     $biaya_operasional, $laba, $laba,
                     $biaya_hidup, $cic, $total_pengeluaran,
-                    $net_cashflow, $rpc, $rpc_dihitung, $id_param_repayment, $snapshot_json, $angsuran_diajukan, $status_kelayakan
+                    $net_cashflow, $rpc, $rpc_dihitung, $id_param_repayment, $snapshot_json, $angsuran_diajukan, $status_kelayakan,
+                    $pppk_no_sk, '', ''
                 ];
                 $execParams[] = $id_pengajuan;
                 $stmt->execute($execParams);
             }
             else { // perangkat_desa
                 $jabatan = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['desk_jabatan'] ?? '')));
-                $sk_d = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['desk_jaminan'] ?? $_POST['desk_no_sk'] ?? '')));
-                if ($jabatan === '' || $sk_d === '') {
-                    echo json_encode(['success' => false, 'message' => 'Jabatan dan Jaminan wajib diisi.']);
+                $sk_d = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['desk_jaminan'] ?? '')));
+                if ($jabatan === '') {
+                    echo json_encode(['success' => false, 'message' => 'Jabatan wajib diisi.']);
                     exit;
                 }
                 
@@ -698,7 +706,7 @@ try {
                     biaya_operasional=0, laba_bersih=?, penyusutan=0, cashflow_usaha=?,
                     biaya_hidup=?, cicilan_lain=?, total_pengeluaran_tetap=?,
                     net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?,
-                    pppk_agunan_no_sk=?
+                    sk_avalis=?, pppk_agunan_no_sk=?
                     WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
                 
                 $execParams = [
@@ -719,7 +727,8 @@ try {
                     $snapshot_json,         // repayment_parameter_snapshot
                     $angsuran_diajukan,     // angsuran_diajukan
                     $status_kelayakan,      // status_kelayakan
-                    '-'                     // pppk_agunan_no_sk (tidak digunakan untuk perangkat_desa)
+                    '',                     // sk_avalis (tidak digunakan untuk perangkat_desa)
+                    ''                      // pppk_agunan_no_sk (tidak digunakan untuk perangkat_desa)
                 ];
                 $execParams[] = $id_pengajuan;
                 

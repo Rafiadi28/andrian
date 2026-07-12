@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     require_once __DIR__ . '/../../helpers/credit_helper.php';
     $rpcJenis = $jenis_pekerjaan ?? ($pegawai_tipe_save ?? 'umum');
@@ -278,6 +278,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     }
 </script>
 
+<?php if (!in_array($jenis_pekerjaan, ['pppk', 'perangkat_desa'])): ?>
 <!-- TAB 4: AGUNAN MULTI (DYNAMIC REPEATABLE) -->
 <div id="tab-agunan" class="tab-content">
     <h3 class="tab-title">4. Data Agunan</h3>
@@ -352,6 +353,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     </button>
     <div id="toast-agunan" class="toast-msg"></div>
 </div>
+<?php endif; ?>
 
 <script>
     var agunanCounter = 0;
@@ -1657,7 +1659,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
         </div>
         <div class="score-card">
             <p>Repayment Capacity</p>
-            <div class="score-value" id="score_summary_rpc">Rp 0</div>
+            <small class="text-muted">(<?= number_format($RPC_PERSEN_MAKS, 0) ?>% × <?= htmlspecialchars($RPC_DASAR_LABEL) ?>)</small>
             <small class="text-muted">(<?= number_format($RPC_PERSEN_MAKS, 0) ?>% × <?= htmlspecialchars($RPC_DASAR_LABEL) ?>)</small>
         </div>
     </div>

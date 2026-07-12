@@ -1248,54 +1248,25 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     </tr>
                     <tr>
                         <td class="label">Alamat</td>
-                        <td class="value"><?= htmlspecialchars($data['alamat_ktp'] ?? '-') ?></td>
-                        <td class="label">Jaminan</td>
-                        <td class="value"><?= htmlspecialchars($nomor_sk_display) ?></td>
+                        <td class="value" colspan="3"><?= htmlspecialchars($data['alamat_ktp'] ?? '-') ?></td>
                     </tr>
+                    <?php if (in_array($jenis_pek, ['pppk', 'perangkat_desa']) && !empty($data['bidang_usaha'])): ?>
+                    <tr>
+                        <td class="label">Jaminan</td>
+                        <td class="value" colspan="3"><?= htmlspecialchars($data['bidang_usaha']) ?></td>
+                    </tr>
+                    <?php endif; ?>
                     <tr>
                         <td class="label">Pekerjaan</td>
-                        <td class="value"><?= htmlspecialchars($data['pekerjaan'] ?? '-') ?></td>
-                        <?php if (!in_array($jenis_pek, ['pppk', 'perangkat_desa'])): ?>
+                        <td class="value" colspan="3"><?= htmlspecialchars($data['pekerjaan'] ?? '-') ?></td>
+                    </tr>
+                    <?php if (!in_array($jenis_pek, ['pppk', 'perangkat_desa'])): ?>
+                    <tr>
                         <td class="label">SK / AVALIS</td>
-                        <td class="value"><?= htmlspecialchars($data['sk_avalis'] ?? '-') ?></td>
-                        <?php else: ?>
-                        <td class="label">&nbsp;</td>
-                        <td class="value">&nbsp;</td>
-                        <?php endif; ?>
-                    </tr>
-                </table>
-
-                <?php
-                // Jaminan PPPK section - only show when data exists for PPPK/Perangkat Desa
-                if (in_array($jenis_pek, ['pppk', 'perangkat_desa'])):
-                    $has_jaminan_pppk = !empty($data['bidang_usaha']) || !empty($data['sk_avalis']) || !empty($data['pppk_agunan_no_sk']);
-                    if ($has_jaminan_pppk):
-                ?>
-                <div class="section-header-formal" style="background-color: #047857;">I.A SK / AVALIS PEKERJAAN</div>
-                <table class="data-table" style="table-layout: fixed; width: 100%;">
-                    <?php if (!empty($data['bidang_usaha'])): ?>
-                    <tr>
-                        <td class="label" style="width: 35%;">SK / Surat Keputusan</td>
-                        <td class="value" style="width: 65%;"><?= htmlspecialchars($data['bidang_usaha']) ?></td>
-                    </tr>
-                    <?php endif; ?>
-                    <?php if (!empty($data['sk_avalis'])): ?>
-                    <tr>
-                        <td class="label">Pihak Avalis</td>
-                        <td class="value"><?= htmlspecialchars($data['sk_avalis']) ?></td>
-                    </tr>
-                    <?php endif; ?>
-                    <?php if (!empty($data['pppk_agunan_no_sk'])): ?>
-                    <tr>
-                        <td class="label">No SK Agunan</td>
-                        <td class="value"><?= htmlspecialchars($data['pppk_agunan_no_sk']) ?></td>
+                        <td class="value" colspan="3"><?= htmlspecialchars($data['sk_avalis'] ?? '-') ?></td>
                     </tr>
                     <?php endif; ?>
                 </table>
-                <?php
-                    endif;
-                endif;
-                ?>
 
                 <!-- Section 2: DATA PINJAMAN -->
                 <div class="section-header-formal">II. INFORMASI KREDIT & STRUKTUR PEMBIAYAAN</div>

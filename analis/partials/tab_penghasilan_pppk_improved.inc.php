@@ -111,10 +111,33 @@ $angsuran_helper = getAngsuranHelperText();
     </div>
 
     <!-- ===================================================================== 
-         SECTION 3: ANGSURAN BANK WONOSOBO (DYNAMIC/REPEATABLE)
+         SECTION 3: JAMINAN / NO SK (OPSIONAL)
          ===================================================================== -->
     <div class="section-header pppk-section-header">
-        <span class="section-icon">🏦</span> 3. Angsuran Bank Wonosobo 
+        <span class="section-icon">🧾</span> 3. Jaminan / No SK (Opsional)
+    </div>
+
+    <div class="pppk-form-grid pppk-grid-1">
+        <div class="pppk-form-group">
+            <label class="pppk-label">Jaminan / No SK</label>
+            <input
+                type="text"
+                id="pppk_no_sk"
+                name="pppk_no_sk"
+                class="pppk-input"
+                style="text-transform:uppercase;"
+                placeholder="Cth: SK PPPK / SK Pengangkatan"
+            >
+            <small class="pppk-helper">Opsional — hanya diisi jika ada nomor SK atau dokumen Jaminan.</small>
+            <span class="pppk-error-msg" id="error-pppk_no_sk"></span>
+        </div>
+    </div>
+
+    <!-- ===================================================================== 
+         SECTION 4: ANGSURAN BANK WONOSOBO (DYNAMIC/REPEATABLE)
+         ===================================================================== -->
+    <div class="section-header pppk-section-header">
+        <span class="section-icon">🏦</span> 4. Angsuran Bank Wonosobo 
         <?php if (!$angsuran_required): ?>
             <span style="font-size:0.75rem; color:#10b981; font-weight:600; background:#d1fae5; padding:0.25rem 0.5rem; border-radius:4px; margin-left:0.5rem;">OPSIONAL</span>
         <?php else: ?>
@@ -792,14 +815,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const noSkElem = document.getElementById('pppk_no_sk');
     if (noSkElem) {
         noSkElem.addEventListener('blur', function () {
-            validateField('pppk_no_sk', 'text');
-        });
-    }
-
-    const agunanNoSkElem = document.getElementById('pppk_agunan_no_sk');
-    if (agunanNoSkElem) {
-        agunanNoSkElem.addEventListener('blur', function () {
-            validateField('pppk_agunan_no_sk', 'text');
+            if (this.value.trim()) {
+                validateField('pppk_no_sk', 'text');
+            } else {
+                clearError('pppk_no_sk');
+            }
         });
     }
 
@@ -894,7 +914,6 @@ function validatePPPKForm() {
 
     // Fields wajib
     const wajibFields = [
-        { id: 'pppk_no_sk',    type: 'text' },
         { id: 'pppk_tgl_awal', type: 'date' },
         { id: 'pppk_tgl_akhir', type: 'date' },
         { id: 'pppk_gaji',     type: 'number' }
@@ -905,13 +924,6 @@ function validatePPPKForm() {
             isValid = false;
         }
     });
-
-    // pppk_agunan_no_sk: opsional, validasi hanya jika diisi
-    const agunanSk = document.getElementById('pppk_agunan_no_sk');
-    if (agunanSk && agunanSk.value.trim() && agunanSk.value.trim().length > 100) {
-        showError('pppk_agunan_no_sk', 'Maksimal 100 karakter');
-        isValid = false;
-    }
 
     // Sisa masa kerja > 0 (kontrak belum habis)
     const sisaBulan = parseInt(document.getElementById('pppk_sisa_kerja_bulan')?.value || '0');
