@@ -272,27 +272,11 @@ $timeline = $stmt->fetchAll();
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['nama_usaha'] ?? '-') ?></td>
                         </tr>
                         <tr>
-                            <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'No SK' : 'Bidang' ?></td>
+                            <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Jaminan' : 'Bidang' ?></td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['bidang_usaha'] ?? '-') ?></td>
                         </tr>
-                        <?php if ($is_pegawai): ?>
-                        <tr>
-                            <td style="color:#64748B; vertical-align:top;">SK / Avalis</td>
-                            <td style="vertical-align:top; color:#94a3b8;">:</td>
-                            <td style="vertical-align:top; font-weight:500; color:#334155;">
-                                <?= htmlspecialchars(!empty($data['sk_avalis']) ? $data['sk_avalis'] : 'SK / AVALIS') ?>
-                            </td>
-                        </tr>
-                        <?php else: ?>
-                        <tr>
-                            <td style="color:#64748B; vertical-align:top;">SK / Avalis</td>
-                            <td style="vertical-align:top; color:#94a3b8;">:</td>
-                            <td style="vertical-align:top; font-weight:500; color:#334155;">
-                                <?= htmlspecialchars($data['sk_avalis'] ?? '-') ?>
-                            </td>
-                        </tr>
-                        <?php endif; ?>
+
                         <tr>
                             <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Sisa Masa Kerja' : 'Lama Usaha' ?></td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
@@ -402,6 +386,41 @@ $timeline = $stmt->fetchAll();
                         <?php endif; ?>
                     </table>
                 </div>
+
+                <?php if ($is_pegawai): ?>
+                <!-- Jaminan PPPK Section - Only shown when data exists -->
+                <?php
+                $has_jaminan_pppk = !empty($data['bidang_usaha']) || !empty($data['sk_avalis']) || !empty($data['pppk_agunan_no_sk']);
+                ?>
+                <?php if ($has_jaminan_pppk): ?>
+                <div style="background:#fff; border-radius:8px; padding:1.5rem; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05); margin-top:1.5rem;">
+                    <h3 style="color:#1e293b; margin-top:0; margin-bottom:1rem; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;">📋 Jaminan PPPK</h3>
+                    <table style="width:100%; font-size:0.95rem; border-collapse: separate; border-spacing: 0 0.6rem;">
+                        <?php if (!empty($data['bidang_usaha'])): ?>
+                        <tr>
+                            <td style="width:130px; color:#64748B; vertical-align:top;">Jaminan</td>
+                            <td style="width:15px; vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['bidang_usaha']) ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if (!empty($data['sk_avalis'])): ?>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">SK / Avalis</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['sk_avalis']) ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if (!empty($data['pppk_agunan_no_sk'])): ?>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">No SK Agunan</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['pppk_agunan_no_sk']) ?></td>
+                        </tr>
+                        <?php endif; ?>
+                    </table>
+                </div>
+                <?php endif; ?>
+                <?php endif; ?>
             </div>
 
             <?php if ($canRepaymentOverride): ?>

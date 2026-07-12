@@ -30,23 +30,6 @@ $angsuran_helper = getAngsuranHelperText();
     </div>
 
     <div class="pppk-form-grid pppk-grid-2">
-        <!-- Nomor SK -->
-        <div class="pppk-form-group">
-            <label class="pppk-label">Nomor SK PPPK <span class="pppk-required">*</span></label>
-            <input 
-                type="text" 
-                id="pppk_no_sk" 
-                name="pppk_no_sk" 
-                class="pppk-input"
-                placeholder="cth: SK/HRM/2024/001"
-                required
-                style="text-transform:uppercase;"
-                data-validate="text"
-                data-error-class="pppk-error"
-            >
-            <span class="pppk-error-msg" id="error-pppk_no_sk"></span>
-        </div>
-
         <!-- Tanggal Awal Perjanjian -->
         <div class="pppk-form-group">
             <label class="pppk-label">Tanggal Awal Perjanjian <span class="pppk-required">*</span></label>
@@ -128,41 +111,10 @@ $angsuran_helper = getAngsuranHelperText();
     </div>
 
     <!-- ===================================================================== 
-         SECTION 3: AGUNAN - NOMOR SK & UPLOAD FILE SK
+         SECTION 3: ANGSURAN BANK WONOSOBO (DYNAMIC/REPEATABLE)
          ===================================================================== -->
     <div class="section-header pppk-section-header">
-        <span class="section-icon">📄</span> 3. Surat Keputusan (SK)
-    </div>
-
-    <div class="pppk-form-grid pppk-grid-1">
-        <!-- Upload File SK -->
-        <div class="pppk-form-group">
-            <label class="pppk-label">Upload File SK <span class="pppk-required">*</span></label>
-            <div class="pppk-file-upload-wrapper">
-                <input 
-                    type="file" 
-                    id="pppk_file_sk" 
-                    name="pppk_file_sk" 
-                    class="pppk-file-input"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    required
-                    data-validate="file"
-                >
-                <label for="pppk_file_sk" class="pppk-file-label">
-                    <span class="pppk-file-icon">📎</span>
-                    <span class="pppk-file-text">Pilih File (PDF, JPG, PNG • Max 2MB)</span>
-                </label>
-                <div id="pppk_file_preview" class="pppk-file-preview"></div>
-                <span class="pppk-error-msg" id="error-pppk_file_sk"></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================================================================== 
-         SECTION 4: ANGSURAN BANK WONOSOBO (DYNAMIC/REPEATABLE)
-         ===================================================================== -->
-    <div class="section-header pppk-section-header">
-        <span class="section-icon">🏦</span> 4. Angsuran Bank Wonosobo 
+        <span class="section-icon">🏦</span> 3. Angsuran Bank Wonosobo 
         <?php if (!$angsuran_required): ?>
             <span style="font-size:0.75rem; color:#10b981; font-weight:600; background:#d1fae5; padding:0.25rem 0.5rem; border-radius:4px; margin-left:0.5rem;">OPSIONAL</span>
         <?php else: ?>

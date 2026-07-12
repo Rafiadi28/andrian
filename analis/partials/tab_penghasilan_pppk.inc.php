@@ -5,10 +5,9 @@
 
                     <div class="section-header">Kontrak PPPK</div>
                     <div class="grid-2">
-                        <div class="custom-form-group"><label>Nomor SK PPPK <span style="color:red">*</span></label><input
-                                type="text" id="pppk_no_sk" name="pppk_no_sk" required style="text-transform:uppercase;"></div>
                         <div class="custom-form-group"><label>Masa kontrak (uraian)</label><input type="text" id="pppk_masa_kontrak"
                                 name="pppk_masa_kontrak" placeholder="cth: 31 DES 2025"></div>
+                        <div></div>
                     </div>
                     <div class="grid-2">
                         <div class="custom-form-group"><label>Sisa kontrak (uraian)</label><input type="text" id="pppk_sisa_kontrak"

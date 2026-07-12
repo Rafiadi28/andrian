@@ -37,11 +37,7 @@
                                 name="alamat_pekerjaan" rows="2" style="text-transform:uppercase;"
                                 placeholder="Opsional"></textarea></div>
                     </div>
-                    <div class="grid-2">
-                        <div class="custom-form-group"><label>SK/Avalis</label><input type="text" name="sk_avalis"
-                                style="text-transform:uppercase;" placeholder="Contoh: SK Pengangkatan ..."></div>
-                        <div></div>
-                    </div>
+
 
                     <div id="section-pasangan"
                         style="display:none; margin-top:1rem; padding:1.5rem; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">

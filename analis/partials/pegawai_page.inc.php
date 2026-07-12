@@ -59,9 +59,10 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
         <div class="form-stepper">
             <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pribadi</a>
             <a href="#tab-penghasilan" class="nav-link-step" data-target="tab-penghasilan">2. Analisa</a>
-            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">3. Struktur Kredit</a>
-            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">4. Analisa 6C</a>
-            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">5. Review & Submit</a>
+            <a href="#tab-jaminan" class="nav-link-step" data-target="tab-jaminan">3. Jaminan PPPK</a>
+            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">4. Struktur Kredit</a>
+            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">5. Analisa 6C</a>
+            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">6. Review & Submit</a>
         </div>
 
         <form method="POST" enctype="multipart/form-data" onsubmit="return false;">
@@ -88,6 +89,12 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                     include __DIR__ . '/tab_penghasilan_pppk_improved.inc.php';
                 } else {
                     include __DIR__ . '/tab_penghasilan_desa_improved.inc.php';
+                }
+                ?>
+                
+                <?php
+                if ($pegawai_tipe_save === 'pppk') {
+                    include __DIR__ . '/tab_jaminan_pppk.inc.php';
                 }
                 ?>
 
@@ -131,7 +138,10 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 var marker = (pg.nama_usaha || '').toString().trim().toUpperCase();
 
                 if (jenis === 'pppk' || marker === 'PPPK') {
-                    setId('pppk_no_sk', pg.bidang_usaha);
+                    setId('jaminan_bidang_usaha', pg.bidang_usaha);
+                    setId('jaminan_sk_avalis', pg.sk_avalis);
+                    setId('jaminan_no_sk_agunan', pg.pppk_agunan_no_sk);
+                    
                     setId('pppk_gaji', pg.omset_per_bulan);
                     setId('pppk_biaya_hidup', pg.biaya_operasional);
                     // Tanggal kontrak (stored in lama_usaha & departemen_bagian for backward compat)

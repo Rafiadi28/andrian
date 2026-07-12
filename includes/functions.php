@@ -605,7 +605,7 @@ function enumAllows($pdo, $table, $column, $value)
 
 function formatRupiah($angka)
 {
-    return "Rp " . number_format($angka, 2, ',', '.');
+    return "Rp " . number_format((float)$angka, 0, ',', '.');
 }
 
 /**

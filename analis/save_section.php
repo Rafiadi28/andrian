@@ -476,18 +476,6 @@ try {
             $net_cashflow = 0.0;
 
             if ($jenis_pekerjaan_post === 'pppk') {
-                $sk = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['pppk_no_sk'] ?? '')));
-                if ($sk === '') {
-                    echo json_encode(['success' => false, 'message' => 'Nomor SK PPPK wajib diisi.']);
-                    exit;
-                }
-
-                // ⚠️ VALIDASI: Cek No SK tidak duplikasi
-                if (!is_unique_no_sk($pdo, $sk, $id_pengajuan)) {
-                    echo json_encode(['success' => false, 'message' => '❌ No SK sudah digunakan pada pengajuan lain. Silakan gunakan No SK yang berbeda.']);
-                    exit;
-                }
-
                 // --- Tanggal perjanjian (form baru) ---
                 $tgl_awal  = trim($_POST['pppk_tgl_awal'] ?? '');
                 $tgl_akhir = trim($_POST['pppk_tgl_akhir'] ?? '');
@@ -583,53 +571,21 @@ try {
                     $status_kelayakan = '';
                 }
 
-                // --- Nomor SK Agunan (opsional) ---
-                $agunan_no_sk = strtoupper(trim($_POST['pppk_agunan_no_sk'] ?? ''));
-
-                // --- Upload File SK (opsional) ---
-                $file_sk_pppk_saved = null; // null = tidak ada file baru, keep existing
-                if (isset($_FILES['pppk_file_sk']) && $_FILES['pppk_file_sk']['error'] === UPLOAD_ERR_OK) {
-                    $uploadDir = __DIR__ . '/../assets/uploads/';
-                    if (!is_dir($uploadDir)) { mkdir($uploadDir, 0755, true); }
-
-                    $skFile = $_FILES['pppk_file_sk'];
-                    if ($skFile['size'] > 2 * 1024 * 1024) {
-                        echo json_encode(['success' => false, 'message' => 'File SK terlalu besar. Maksimal 2MB.']);
-                        exit;
-                    }
-                    $ext = strtolower(pathinfo($skFile['name'], PATHINFO_EXTENSION));
-                    if (!in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'])) {
-                        echo json_encode(['success' => false, 'message' => 'Format file SK tidak didukung. Gunakan PDF, JPG, atau PNG.']);
-                        exit;
-                    }
-                    $newName = 'sk_pppk_' . $id_pengajuan . '_' . time() . '.' . $ext;
-                    if (move_uploaded_file($skFile['tmp_name'], $uploadDir . $newName)) {
-                        $file_sk_pppk_saved = $newName;
-                    }
-                }
-
-                // Build UPDATE: jika ada file baru, update file_sk_pppk juga
-                $fileSkSql = $file_sk_pppk_saved !== null ? ', file_sk_pppk=?' : '';
                 $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET 
-                    nama_usaha=?, bidang_usaha=?, lama_usaha=?, departemen_bagian=?,
+                    nama_usaha=?, departemen_bagian=?, lama_usaha=?,
                     omset_per_bulan=?, biaya_bahan_baku=0, biaya_gaji=0, biaya_listrik=0, biaya_air=0, biaya_sewa=0, biaya_transportasi=0, biaya_lainnya=0,
                     biaya_operasional=?, laba_bersih=?, penyusutan=0, cashflow_usaha=?,
                     biaya_hidup=?, cicilan_lain=?, total_pengeluaran_tetap=?,
-                    net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?,
-                    pppk_agunan_no_sk=?" . $fileSkSql . "
+                    net_cashflow=?, repayment_capacity=?, repayment_capacity_dihitung=?, id_parameter_repayment=?, repayment_parameter_snapshot=?, angsuran_diajukan=?, status_kelayakan=?
                     WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
 
                 $execParams = [
-                    'PPPK', $sk, $tgl_awal, $tgl_akhir,
+                    'PPPK', $tgl_akhir, $tgl_awal,
                     $gaji_pp,
                     $biaya_operasional, $laba, $laba,
                     $biaya_hidup, $cic, $total_pengeluaran,
-                    $net_cashflow, $rpc, $rpc_dihitung, $id_param_repayment, $snapshot_json, $angsuran_diajukan, $status_kelayakan,
-                    $agunan_no_sk,
+                    $net_cashflow, $rpc, $rpc_dihitung, $id_param_repayment, $snapshot_json, $angsuran_diajukan, $status_kelayakan
                 ];
-                if ($file_sk_pppk_saved !== null) {
-                    $execParams[] = $file_sk_pppk_saved;
-                }
                 $execParams[] = $id_pengajuan;
                 $stmt->execute($execParams);
             }
@@ -812,6 +768,60 @@ try {
             }
 
             echo json_encode(['success' => true, 'message' => $msg, 'id_pengajuan' => $id_pengajuan]);
+            break;
+
+        // ============================================================
+        // SECTION: JAMINAN PPPK
+        // ============================================================
+        case 'jaminan_pegawai':
+            if ($id_pengajuan <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Simpan Data Pemohon terlebih dahulu!']);
+                exit;
+            }
+            
+            $bidang_usaha = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['jaminan_bidang_usaha'] ?? '')));
+            $sk_avalis = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['jaminan_sk_avalis'] ?? '')));
+            $agunan_no_sk = strtoupper(trim($_POST['jaminan_no_sk_agunan'] ?? ''));
+
+            if ($bidang_usaha !== '' && !is_unique_no_sk($pdo, $bidang_usaha, $id_pengajuan)) {
+                echo json_encode(['success' => false, 'message' => '❌ No SK Jaminan sudah digunakan pada pengajuan lain. Silakan gunakan No SK yang berbeda.']);
+                exit;
+            }
+
+            // Upload File SK Jaminan
+            $file_sk_saved = null;
+            if (isset($_FILES['jaminan_file_sk']) && $_FILES['jaminan_file_sk']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../assets/uploads/';
+                if (!is_dir($uploadDir)) { mkdir($uploadDir, 0755, true); }
+
+                $skFile = $_FILES['jaminan_file_sk'];
+                if ($skFile['size'] > 2 * 1024 * 1024) {
+                    echo json_encode(['success' => false, 'message' => 'File SK terlalu besar. Maksimal 2MB.']);
+                    exit;
+                }
+                $ext = strtolower(pathinfo($skFile['name'], PATHINFO_EXTENSION));
+                if (!in_array($ext, ['pdf', 'jpg', 'jpeg', 'png'])) {
+                    echo json_encode(['success' => false, 'message' => 'Format file SK tidak didukung. Gunakan PDF, JPG, atau PNG.']);
+                    exit;
+                }
+                $newName = 'sk_jaminan_' . $id_pengajuan . '_' . time() . '.' . $ext;
+                if (move_uploaded_file($skFile['tmp_name'], $uploadDir . $newName)) {
+                    $file_sk_saved = $newName;
+                }
+            }
+
+            $fileSkSql = $file_sk_saved !== null ? ', file_sk_pppk=?' : '';
+            $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET 
+                bidang_usaha=?, sk_avalis=?, pppk_agunan_no_sk=?" . $fileSkSql . "
+                WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
+                
+            $execParams = [$bidang_usaha, $sk_avalis, $agunan_no_sk];
+            if ($file_sk_saved !== null) { $execParams[] = $file_sk_saved; }
+            $execParams[] = $id_pengajuan;
+            $stmt->execute($execParams);
+
+            log_activity($pdo, $_SESSION['user_id'] ?? 0, "Menyimpan Data Jaminan PPPK (ID Pengajuan: $id_pengajuan)");
+            echo json_encode(['success' => true, 'message' => 'Data jaminan berhasil disimpan!', 'id_pengajuan' => $id_pengajuan]);
             break;
 
         // ============================================================
