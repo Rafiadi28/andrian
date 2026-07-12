@@ -650,6 +650,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR) || !isset($RPC_DASAR_LABEL)) 
             let tabMap = {
                 'pemohon': '#tab-pemohon',
                 'penghasilan_pegawai': '#tab-penghasilan',
+                'jaminan_pegawai': '#tab-jaminan',
                 'struktur': '#tab-struktur',
                 'agunan': '#tab-agunan',
                 'neraca': '#tab-neraca',

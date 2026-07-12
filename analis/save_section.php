@@ -780,6 +780,21 @@ try {
 
             $fileSkSql = $file_sk_saved !== null ? ', file_sk_pppk=?' : '';
 
+            if ($jenis_pekerjaan_post === 'perangkat_desa') {
+                $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET 
+                    sk_avalis=?, pppk_agunan_no_sk=?" . $fileSkSql . "
+                    WHERE id_pengajuan=? AND " . getAnalisEditableCondition());
+
+                $execParams = [$sk_avalis, $agunan_no_sk];
+                if ($file_sk_saved !== null) { $execParams[] = $file_sk_saved; }
+                $execParams[] = $id_pengajuan;
+                $stmt->execute($execParams);
+
+                log_activity($pdo, $_SESSION['user_id'] ?? 0, "Menyimpan Data SK/Avalis Perangkat Desa (ID Pengajuan: $id_pengajuan)");
+                echo json_encode(['success' => true, 'message' => 'Data SK / Avalis berhasil disimpan!', 'id_pengajuan' => $id_pengajuan]);
+                break;
+            }
+
             $bidang_usaha = strtoupper(preg_replace('/\s+/', ' ', trim($_POST['jaminan_bidang_usaha'] ?? '')));
 
             if ($bidang_usaha !== '' && !is_unique_no_sk($pdo, $bidang_usaha, $id_pengajuan)) {
