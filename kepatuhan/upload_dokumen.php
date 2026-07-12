@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $judul = trim($_POST['judul'] ?? '');
         $deskripsi = trim($_POST['deskripsi'] ?? '');
         $kategori = trim($_POST['kategori'] ?? 'umum');
-        $allowed_kategori = ['umum', 'regulasi', 'kebijakan', 'laporan', 'pengumuman', 'panduan', 'lainnya'];
+        $allowed_kategori = ['umum', 'pppk', 'perdes', 'addendum', 'tempo', 'cashcol', 'kpr', 'kurda', 'kretamas'];
         if (!in_array($kategori, $allowed_kategori, true)) $kategori = 'umum';
 
         if (empty($judul)) {
@@ -175,12 +175,14 @@ if (isset($_GET['deleted'])) $success_msg = 'Dokumen berhasil dihapus.';
         .doc-table tr:hover td { background:#f8fafc; }
         .badge-kategori { padding:2px 10px; border-radius:999px; font-size:0.78rem; font-weight:600; text-transform:uppercase; }
         .badge-umum { background:#e0f2fe; color:#0369a1; }
-        .badge-regulasi { background:#fce7f3; color:#be185d; }
-        .badge-kebijakan { background:#e0e7ff; color:#3730a3; }
-        .badge-laporan { background:#dcfce7; color:#15803d; }
-        .badge-pengumuman { background:#fef3c7; color:#92400e; }
-        .badge-panduan { background:#f3e8ff; color:#6d28d9; }
-        .badge-lainnya { background:#f1f5f9; color:#475569; }
+        .badge-pppk { background:#fce7f3; color:#be185d; }
+        .badge-perdes { background:#e0e7ff; color:#3730a3; }
+        .badge-addendum { background:#dcfce7; color:#15803d; }
+        .badge-tempo { background:#fef3c7; color:#92400e; }
+        .badge-cashcol { background:#f3e8ff; color:#6d28d9; }
+        .badge-kpr { background:#fef9c3; color:#854d0e; }
+        .badge-kurda { background:#ccfbf1; color:#115e59; }
+        .badge-kretamas { background:#f1f5f9; color:#475569; }
         .file-size { color:#94a3b8; font-size:0.82rem; }
         .alert { padding:1rem 1.25rem; border-radius:8px; margin-bottom:1.5rem; font-weight:500; }
         .alert-success { background:#dcfce7; color:#166534; border:1px solid #86efac; }
@@ -230,12 +232,14 @@ if (isset($_GET['deleted'])) $success_msg = 'Dokumen berhasil dihapus.';
                     <label style="display:block;margin-bottom:0.4rem;font-weight:500;color:#475569;">Kategori</label>
                     <select name="kategori" style="width:100%;padding:0.75rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.95rem;">
                         <option value="umum">Umum</option>
-                        <option value="regulasi">Regulasi</option>
-                        <option value="kebijakan">Kebijakan</option>
-                        <option value="laporan">Laporan</option>
-                        <option value="pengumuman">Pengumuman</option>
-                        <option value="panduan">Panduan</option>
-                        <option value="lainnya">Lainnya</option>
+                        <option value="pppk">PPPK</option>
+                        <option value="perdes">Perdes</option>
+                        <option value="addendum">Addendum</option>
+                        <option value="tempo">Tempo</option>
+                        <option value="cashcol">Cashcol</option>
+                        <option value="kpr">KPR</option>
+                        <option value="kurda">Kurda</option>
+                        <option value="kretamas">Kretamas</option>
                     </select>
                 </div>
             </div>

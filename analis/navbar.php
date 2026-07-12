@@ -106,11 +106,14 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
                     data-target="<?= htmlspecialchars($analisStep2Target, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($analisStep2Label) ?></a>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-struktur" class="nav-link-step"
                     data-target="tab-struktur">Data Kredit</a>
-                <?php if (!$pegawaiInputNav): ?>
+                <?php if ($pegawaiInputNav): ?>
+                <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-jaminan" class="nav-link-step"
+                    data-target="tab-jaminan">SK / Avalis</a>
+                <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-agunan" class="nav-link-step"
+                    data-target="tab-agunan">Jaminan Agunan</a>
+                <?php else: ?>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-agunan" class="nav-link-step"
                     data-target="tab-agunan">Agunan</a>
-                <?php endif; ?>
-                <?php if (!$pegawaiInputNav): ?>
                 <a href="<?= BASE_URL ?>/analis/input.php<?= htmlspecialchars($analisNavQ, ENT_QUOTES, 'UTF-8') ?>#tab-neraca" class="nav-link-step"
                     data-target="tab-neraca">Analisa Jaminan</a>
                 <?php endif; ?>

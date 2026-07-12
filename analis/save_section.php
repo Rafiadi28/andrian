@@ -731,7 +731,7 @@ try {
                     $tgl_mulai, $tgl_akhir, // lama_usaha, departemen_bagian (tanggal mulai dan akhir/lahir)
                     $omset_total,           // omset_per_bulan
                     $laba,                  // laba_bersih
-                    $laba,                  // cashflow_usaha (sama dengan laba karena biaya semua 0)
+                    $tambahan,              // cashflow_usaha (menyimpan tambahan penghasilan)
                     $biaya_hidup,           // biaya_hidup
                     $cic,                   // cicilan_lain
                     $total_pengeluaran,     // total_pengeluaran_tetap

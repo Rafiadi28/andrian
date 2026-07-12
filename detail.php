@@ -326,8 +326,31 @@ $timeline = $stmt->fetchAll();
                         </tr>
                         <?php endif; ?>
                         <tr><td colspan="3"><hr style="border-top:1px dashed #cbd5e1; margin:0.2rem 0;"></td></tr>
+                        <?php if ($jenis_pek === 'perangkat_desa'): ?>
                         <tr>
-                            <td style="color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Gaji/Bln' : 'Omset/Bln' ?></td>
+                            <td style="color:#64748B; vertical-align:top;">Penghasilan Tetap (Siltap)</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top;"><strong style="color:#334155;"><?= formatRupiah(max(0, ($data['omset_per_bulan'] ?? 0) - ($data['cashflow_usaha'] ?? 0))) ?></strong></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">Tambahan Penghasilan</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= formatRupiah($data['cashflow_usaha'] ?? 0) ?></td>
+                        </tr>
+                        <?php elseif ($jenis_pek === 'pppk'): ?>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">Gaji Pokok / THP Bulanan</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top;"><strong style="color:#334155;"><?= formatRupiah($data['omset_per_bulan'] ?? 0) ?></strong></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">Tunjangan / Pendapatan Lain</td>
+                            <td style="vertical-align:top; color:#94a3b8;">:</td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= formatRupiah($data['pendapatan_lain'] ?? 0) ?></td>
+                        </tr>
+                        <?php else: ?>
+                        <tr>
+                            <td style="color:#64748B; vertical-align:top;">Omzet/Bln</td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top;"><strong style="color:#334155;"><?= formatRupiah($data['omset_per_bulan'] ?? 0) ?></strong></td>
                         </tr>
@@ -336,7 +359,6 @@ $timeline = $stmt->fetchAll();
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= formatRupiah($data['pendapatan_lain'] ?? 0) ?></td>
                         </tr>
-                        <?php if (!$is_pegawai): ?>
                         <tr>
                             <td style="color:#64748B; vertical-align:top;">Biaya Ops</td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
@@ -394,18 +416,18 @@ $timeline = $stmt->fetchAll();
                 ?>
                 <?php if ($has_jaminan_pppk): ?>
                 <div style="background:#fff; border-radius:8px; padding:1.5rem; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.05); margin-top:1.5rem;">
-                    <h3 style="color:#1e293b; margin-top:0; margin-bottom:1rem; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;">📋 Jaminan PPPK</h3>
+                    <h3 style="color:#1e293b; margin-top:0; margin-bottom:1rem; border-bottom:2px solid #f1f5f9; padding-bottom:0.5rem;">📋 SK / Avalis Pekerjaan</h3>
                     <table style="width:100%; font-size:0.95rem; border-collapse: separate; border-spacing: 0 0.6rem;">
                         <?php if (!empty($data['bidang_usaha'])): ?>
                         <tr>
-                            <td style="width:130px; color:#64748B; vertical-align:top;">Jaminan</td>
+                            <td style="width:130px; color:#64748B; vertical-align:top;">SK / Surat Keputusan</td>
                             <td style="width:15px; vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['bidang_usaha']) ?></td>
                         </tr>
                         <?php endif; ?>
                         <?php if (!empty($data['sk_avalis'])): ?>
                         <tr>
-                            <td style="color:#64748B; vertical-align:top;">SK / Avalis</td>
+                            <td style="color:#64748B; vertical-align:top;">Pihak Avalis</td>
                             <td style="vertical-align:top; color:#94a3b8;">:</td>
                             <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['sk_avalis']) ?></td>
                         </tr>

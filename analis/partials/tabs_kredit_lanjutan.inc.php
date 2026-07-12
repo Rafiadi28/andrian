@@ -3,6 +3,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     require_once __DIR__ . '/../../helpers/credit_helper.php';
     $rpcJenis = $jenis_pekerjaan ?? ($pegawai_tipe_save ?? 'umum');
     $rpcPengajuanId = (int) ($EDIT_ID_PENGAJUAN ?? ($edit_id_pengajuan ?? 0));
+    /** @var PDO $pdo */
     extract(bootstrapRepaymentFormConfig($pdo, $rpcJenis, $rpcPengajuanId > 0 ? $rpcPengajuanId : null));
 }
 ?>
@@ -277,8 +278,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     }
 </script>
 
-<!-- TAB 4: AGUNAN MULTI (DYNAMIC REPEATABLE) - HIDDEN FOR PPPK/PERANGKAT DESA -->
-<?php if (($jenis_pekerjaan ?? 'umum') !== 'pppk' && ($jenis_pekerjaan ?? 'umum') !== 'perangkat_desa'): ?>
+<!-- TAB 4: AGUNAN MULTI (DYNAMIC REPEATABLE) -->
 <div id="tab-agunan" class="tab-content">
     <h3 class="tab-title">4. Data Agunan</h3>
 
@@ -746,8 +746,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     });
 </script>
 
-<!-- TAB 4 CLOSED: AGUNAN - HIDDEN FOR PPPK/PERANGKAT DESA -->
-<?php endif; // End of agunan tab - ONLY FOR NON-PEGAWAI TYPES ?>
+<!-- TAB 4 CLOSED: AGUNAN -->
 
 <!-- TAB 5: NERACA - Only for non-pegawai (regular employees) -->
 <?php if (($jenis_pekerjaan ?? 'umum') === 'umum'): ?>

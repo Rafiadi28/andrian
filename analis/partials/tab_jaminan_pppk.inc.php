@@ -1,10 +1,10 @@
 <div id="tab-jaminan" class="tab-content pppk-penghasilan-container">
-    <h3 class="tab-title">3. Jaminan PPPK</h3>
+    <h3 class="tab-title">3. SK / Avalis</h3>
     <p class="text-muted pppk-subtitle">Formulir jaminan untuk PPPK bersifat <strong>opsional</strong>. Data hanya akan muncul di cetakan akhir jika bagian ini diisi.</p>
 
     <!-- SECTION: JAMINAN PPPK -->
     <div class="section-header pppk-section-header">
-        <span class="section-icon">📋</span> Jaminan PPPK
+        <span class="section-icon">📋</span> SK / Avalis Pekerjaan
     </div>
 
     <div class="pppk-form-grid pppk-grid-2">

@@ -1147,20 +1147,31 @@ if ($from === 'dashboard' || $from === 'riwayat') {
 
                 <!-- ===== INCOME BREAKDOWN (OMZET + PENDAPATAN LAIN) ===== -->
                 <?php
-                if (in_array($data['jenis_pekerjaan'] ?? 'umum', ['pppk', 'perangkat_desa'])) {
-                    $lbl_pendapatan_utama = 'Gaji / Pendapatan Bulanan';
+                if (($data['jenis_pekerjaan'] ?? '') === 'perangkat_desa') {
+                    $lbl_pendapatan_utama = 'Penghasilan Tetap (Siltap)';
+                    $lbl_pendapatan_lain = 'Tambahan Penghasilan';
+                    $val_pendapatan_utama = formatRupiah(max(0, ($data['omset_per_bulan'] ?? 0) - ($data['cashflow_usaha'] ?? 0)));
+                    $val_pendapatan_lain = formatRupiah($data['cashflow_usaha'] ?? 0);
+                } elseif (($data['jenis_pekerjaan'] ?? '') === 'pppk') {
+                    $lbl_pendapatan_utama = 'Gaji Pokok / THP Bulanan';
+                    $lbl_pendapatan_lain = 'Tunjangan & Pendapatan Lain';
+                    $val_pendapatan_utama = formatRupiah($data['omset_per_bulan'] ?? 0);
+                    $val_pendapatan_lain = formatRupiah($data['pendapatan_lain'] ?? 0);
                 } else {
                     $lbl_pendapatan_utama = 'Omzet Usaha Per Bulan';
+                    $lbl_pendapatan_lain = 'Pendapatan Lain-lain Per Bulan';
+                    $val_pendapatan_utama = formatRupiah($data['omset_per_bulan'] ?? 0);
+                    $val_pendapatan_lain = formatRupiah($data['pendapatan_lain'] ?? 0);
                 }
                 ?>
                 <table class="summary-table" style="margin-top: 1rem;">
                     <tr>
                         <td class="summary-label"><?= $lbl_pendapatan_utama ?></td>
-                        <td class="summary-value"><?= formatRupiah($data['omset_per_bulan'] ?? 0) ?></td>
+                        <td class="summary-value"><?= $val_pendapatan_utama ?></td>
                     </tr>
                     <tr>
-                        <td class="summary-label">Pendapatan Lain-lain Per Bulan</td>
-                        <td class="summary-value"><?= formatRupiah($data['pendapatan_lain'] ?? 0) ?></td>
+                        <td class="summary-label"><?= $lbl_pendapatan_lain ?></td>
+                        <td class="summary-value"><?= $val_pendapatan_lain ?></td>
                     </tr>
                     <tr style="background:#e0f2fe; font-weight:bold;">
                         <td class="summary-label">Total Penghasilan Bulanan</td>
@@ -1260,17 +1271,17 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     $has_jaminan_pppk = !empty($data['bidang_usaha']) || !empty($data['sk_avalis']) || !empty($data['pppk_agunan_no_sk']);
                     if ($has_jaminan_pppk):
                 ?>
-                <div class="section-header-formal" style="background-color: #047857;">I.A JAMINAN PPPK</div>
+                <div class="section-header-formal" style="background-color: #047857;">I.A SK / AVALIS PEKERJAAN</div>
                 <table class="data-table" style="table-layout: fixed; width: 100%;">
                     <?php if (!empty($data['bidang_usaha'])): ?>
                     <tr>
-                        <td class="label" style="width: 35%;">Jaminan</td>
+                        <td class="label" style="width: 35%;">SK / Surat Keputusan</td>
                         <td class="value" style="width: 65%;"><?= htmlspecialchars($data['bidang_usaha']) ?></td>
                     </tr>
                     <?php endif; ?>
                     <?php if (!empty($data['sk_avalis'])): ?>
                     <tr>
-                        <td class="label">SK / Avalis</td>
+                        <td class="label">Pihak Avalis</td>
                         <td class="value"><?= htmlspecialchars($data['sk_avalis']) ?></td>
                     </tr>
                     <?php endif; ?>
