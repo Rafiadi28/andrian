@@ -1186,6 +1186,32 @@ try {
                     ->execute([$foto_usaha_col, $id_pengajuan]);
             }
 
+            // --- BEGIN: AGUNAN OPTIONAL LOGIC FOR PPPK & PERANGKAT DESA ---
+            // Jika jenis_pekerjaan adalah PPPK atau PERANGKAT_DESA, agunan bersifat opsional
+            $is_agunan_optional = in_array($jenis_pekerjaan_post, ['pppk', 'perangkat_desa'], true);
+            
+            // Check if there's any agunan data submitted
+            $jenis_jaminan_arr = $_POST['jenis_jaminan'] ?? [];
+            if (!is_array($jenis_jaminan_arr)) {
+                $jenis_jaminan_arr = [$jenis_jaminan_arr];
+            }
+            
+            // Filter out empty entries to check if truly no data
+            $jenis_jaminan_arr_filtered = array_filter(array_map('trim', $jenis_jaminan_arr));
+            
+            // Jika agunan optional dan tidak ada data, sukses tanpa simpan
+            if ($is_agunan_optional && empty($jenis_jaminan_arr_filtered)) {
+                // Delete any existing agunan data for this pengajuan
+                $pdo->prepare("DELETE FROM jaminan_tanah_bangunan WHERE id_pengajuan=?")->execute([$id_pengajuan]);
+                $pdo->prepare("DELETE FROM jaminan_kendaraan WHERE id_pengajuan=?")->execute([$id_pengajuan]);
+                $pdo->prepare("DELETE FROM jaminan_emas WHERE id_pengajuan=?")->execute([$id_pengajuan]);
+                $pdo->prepare("DELETE FROM agunan_foto WHERE id_pengajuan=?")->execute([$id_pengajuan]);
+                
+                echo json_encode(['success' => true, 'message' => '✅ Data Agunan tidak diisi (Opsional). Pengajuan tetap dapat dilanjutkan.']);
+                exit;
+            }
+            // --- END: AGUNAN OPTIONAL LOGIC ---
+
             // --- Begin transaction for multi-agunan ---
             try {
                 $pdo->beginTransaction();

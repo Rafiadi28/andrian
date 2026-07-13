@@ -1868,22 +1868,33 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                     }
                 </script>
                 <!-- DATA AGUNAN MULTI (DYNAMIC REPEATABLE) -->
-                <?php if (($jenis_pekerjaan ?? 'umum') !== 'pppk' && ($jenis_pekerjaan ?? 'umum') !== 'perangkat_desa'): ?>
                 <div id="tab-agunan" class="tab-content">
                     <hr style="border:0; border-top:1px dashed #cbd5e1; margin: 2rem 0;">
                     <div class="section-header">D. DATA AGUNAN</div>
 
-                    <div
-                        style="background:linear-gradient(135deg,#eff6ff,#f0fdf4); padding:1rem 1.25rem; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:1.5rem;">
-                        <div style="display:flex; align-items:center; gap:0.5rem;">
-                            <span style="font-size:1.25rem;">🏦</span>
-                            <div>
-                                <strong style="color:#1e40af;">Multi Agunan</strong>
-                                <div style="font-size:0.82rem; color:#6b7280;">Anda dapat menambahkan lebih dari 1
-                                    jaminan dalam 1 pengajuan kredit. Nilai total akan dihitung otomatis.</div>
+                    <?php if (($jenis_pekerjaan ?? 'umum') === 'pppk' || ($jenis_pekerjaan ?? 'umum') === 'perangkat_desa'): ?>
+                        <!-- Info untuk PPPK & Perangkat Desa -->
+                        <div style="background:linear-gradient(135deg,#fef3c7,#fef08a); padding:1rem 1.25rem; border-radius:8px; border:1px solid #fcd34d; margin-bottom:1.5rem;">
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <span style="font-size:1.25rem;">⚠️</span>
+                                <div>
+                                    <strong style="color:#92400e;">Agunan Bersifat Opsional</strong>
+                                    <div style="font-size:0.82rem; color:#78350f;">Data agunan tidak wajib diisi. Jika diisi, data akan diproses dan ditampilkan pada hasil analisa dan cetakan.</div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    <?php else: ?>
+                        <!-- Info untuk Umum -->
+                        <div style="background:linear-gradient(135deg,#eff6ff,#f0fdf4); padding:1rem 1.25rem; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:1.5rem;">
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <span style="font-size:1.25rem;">🏦</span>
+                                <div>
+                                    <strong style="color:#1e40af;">Multi Agunan</strong>
+                                    <div style="font-size:0.82rem; color:#6b7280;">Anda dapat menambahkan lebih dari 1 jaminan dalam 1 pengajuan kredit. Nilai total akan dihitung otomatis.</div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- CONTAINER FOR DYNAMIC AGUNAN ENTRIES -->
                     <div id="agunan-container"></div>
@@ -2564,7 +2575,6 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         }
                     });
                 </script>
-                <?php endif; ?>
                 </div>
 
                 <!-- TAB 5: NERACA -->

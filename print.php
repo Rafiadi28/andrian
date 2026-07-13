@@ -1527,6 +1527,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 <?php endif; ?>
 
                 <!-- ===== Section 4: COLLATERAL / JAMINAN ===== -->
+                <?php if (!empty($jaminan_tanah) || !empty($jaminan_kendaraan) || !empty($jaminan_emas)): ?>
                 <div class="section-header-formal" style="background-color: #5b21b6;">IV. 🔐 DETAIL JAMINAN / AGUNAN</div>
 
                 <?php 
@@ -1869,6 +1870,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 </div>
                 <?php endif; // end valid_fotos ?>
                 <?php endif; // end agunan_foto_all ?>
+                <?php endif; // end jaminan_tanah || jaminan_kendaraan || jaminan_emas - Main Agunan Section?>
 
                 <!-- ===== Section 5: COMPLIANCE ASSESSMENT (NEW) ===== -->
                 <?php if (!empty($compliance_items)): ?>
