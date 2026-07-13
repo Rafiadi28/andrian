@@ -278,7 +278,6 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     }
 </script>
 
-<?php if (!in_array($jenis_pekerjaan, ['pppk', 'perangkat_desa'])): ?>
 <!-- TAB 4: AGUNAN MULTI (DYNAMIC REPEATABLE) -->
 <div id="tab-agunan" class="tab-content">
     <h3 class="tab-title">4. Data Agunan</h3>
@@ -353,7 +352,6 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
     </button>
     <div id="toast-agunan" class="toast-msg"></div>
 </div>
-<?php endif; ?>
 
 <script>
     var agunanCounter = 0;

@@ -60,8 +60,9 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
             <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pribadi</a>
             <a href="#tab-penghasilan" class="nav-link-step" data-target="tab-penghasilan">2. Analisa</a>
             <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">3. Struktur Kredit</a>
-            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">4. Analisa 6C</a>
-            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">5. Review & Submit</a>
+            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">4. Agunan</a>
+            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">5. Analisa 6C</a>
+            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">6. Review & Submit</a>
         </div>
 
         <form method="POST" enctype="multipart/form-data" onsubmit="return false;">
