@@ -106,7 +106,8 @@ $neraca_data = $stmt_neraca->fetch(PDO::FETCH_ASSOC);
 
 // ===== CALCULATE FINANCIAL METRICS =====
 $monthly_income = floatval($data['omset_per_bulan'] ?? 0) + floatval($data['pendapatan_lain'] ?? 0);
-$monthly_expense = floatval($data['total_pengeluaran_tetap'] ?? 0) + floatval($data['biaya_hidup'] ?? 0);
+// NOTE: total_pengeluaran_tetap sudah termasuk biaya_hidup + cicilan_lain, jangan duplikasi
+$monthly_expense = floatval($data['total_pengeluaran_tetap'] ?? 0);
 $monthly_installment = floatval($data['angsuran_diajukan'] ?? 0);
 $loan_amount = floatval($data['jumlah_kredit'] ?? 0);
 
@@ -217,6 +218,7 @@ foreach ($pejabat_data as $p) {
     $pejabat_by_role[$p['role']] = $p;
 }
 
+$signature_roles = [];
 $hierarki_atasan = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
 
 $defaults = [

@@ -392,6 +392,14 @@ try {
                     echo json_encode(['success' => true, 'message' => 'Data pemohon berhasil diperbarui', 'id_pengajuan' => $id_pengajuan]);
                 }
                 else {
+                    // Cek NIK sudah unique sebelum INSERT
+                    try {
+                        ensureUniqueNik($pdo, $nik);
+                    } catch (Exception $ex) {
+                        echo json_encode(['success' => false, 'message' => $ex->getMessage()]);
+                        exit;
+                    }
+                    
                     // INSERT new draft
                     $sql = "INSERT INTO pengajuan_kredit 
                         (nama_debitur, id_nasabah, nik, npwp, tempat_lahir, tanggal_lahir, pekerjaan, alamat_pekerjaan,

@@ -994,6 +994,21 @@ function validatePPPKForm() {
         alert('<?= getAngsuranErrorMessage() ?>');
         isValid = false;
     }
+    
+    // Validasi setiap item angsuran: nama & nominal harus terisi
+    angsuranItems.forEach((item, idx) => {
+        const nama = item.querySelector('.pppk-angsuran-nama');
+        const nominal = item.querySelector('.pppk-angsuran-nominal');
+        
+        if (!nama || !nama.value.trim()) {
+            alert('Angsuran #' + (idx + 1) + ': Nama Produk wajib diisi');
+            isValid = false;
+        }
+        if (!nominal || parseRupiah(nominal.value) <= 0) {
+            alert('Angsuran #' + (idx + 1) + ': Nominal Angsuran harus > 0');
+            isValid = false;
+        }
+    });
 
     return isValid;
 }
