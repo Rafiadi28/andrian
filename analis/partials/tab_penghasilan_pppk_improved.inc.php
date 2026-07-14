@@ -81,15 +81,16 @@ $angsuran_helper = getAngsuranHelperText();
         <div class="pppk-form-group">
             <label class="pppk-label">Gaji Bersih / Penghasilan Tetap (Rp/bulan) <span class="pppk-required">*</span></label>
             <input 
-                type="number" 
+                type="text" 
+                inputmode="numeric" 
                 id="pppk_gaji" 
                 name="pppk_gaji" 
                 class="pppk-input pppk-currency"
-                min="0" 
                 value="0"
                 required
                 data-validate="number"
-                oninput="updatePPPKScoring()"
+                oninput="formatCurrencyInput(this); updatePPPKScoring()"
+                onblur="formatCurrencyBlur(this)"
             >
             <span class="pppk-error-msg" id="error-pppk_gaji"></span>
         </div>
@@ -98,14 +99,15 @@ $angsuran_helper = getAngsuranHelperText();
         <div class="pppk-form-group">
             <label class="pppk-label">Biaya Hidup / Kebutuhan RT (Rp/bulan)</label>
             <input 
-                type="number" 
+                type="text" 
+                inputmode="numeric" 
                 id="pppk_biaya_hidup" 
                 name="pppk_biaya_hidup" 
                 class="pppk-input pppk-currency"
-                min="0" 
                 value="0"
                 data-validate="number"
-                oninput="updatePPPKScoring()"
+                oninput="formatCurrencyInput(this); updatePPPKScoring()"
+                onblur="formatCurrencyBlur(this)"
             >
         </div>
     </div>
@@ -114,7 +116,7 @@ $angsuran_helper = getAngsuranHelperText();
          SECTION 3: JAMINAN / NO SK (OPSIONAL)
          ===================================================================== -->
     <div class="section-header pppk-section-header">
-        <span class="section-icon">🧾</span> 3. Jaminan / No SK (Opsional)
+        <span class="section-icon">🧾</span> 3. Jaminan / No SK
     </div>
 
     <div class="pppk-form-grid pppk-grid-1">
@@ -591,6 +593,23 @@ function parseRupiah(value) {
     return parseFloat(value) || 0;
 }
 
+// ===== UTILITY: Format input as Rupiah without prefix =====
+function formatCurrencyInput(field) {
+    if (!field) return;
+    const digits = (field.value || '').replace(/\D/g, '');
+    if (digits === '') {
+        field.value = '';
+        return;
+    }
+    field.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function formatCurrencyBlur(field) {
+    if (!field) return;
+    const val = parseRupiah(field.value);
+    field.value = val ? formatRupiah(val).replace('Rp ', '') : '0';
+}
+
 // ===== UTILITY: Format ISO Date =====
 function formatISODate(date) {
     if (!date) return '';
@@ -706,10 +725,11 @@ function validateField(fieldId, fieldType) {
             }
         }
     } else if (fieldType === 'number') {
+        const numericValue = parseRupiah(value);
         if (!value) {
             errorMsg = 'Angka wajib diisi';
             isValid = false;
-        } else if (isNaN(parseFloat(value)) || parseFloat(value) < 0) {
+        } else if (isNaN(numericValue) || numericValue < 0) {
             errorMsg = 'Harus berupa angka positif';
             isValid = false;
         }
@@ -757,9 +777,8 @@ function clearError(fieldId) {
 // ===== FILE UPLOAD HANDLER =====
 document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('pppk_file_sk');
-    if (!fileInput) return;
-
-    fileInput.addEventListener('change', function (e) {
+    if (fileInput) {
+        fileInput.addEventListener('change', function (e) {
         const file = this.files[0];
         const previewDiv = document.getElementById('pppk_file_preview');
         const errorDiv = document.getElementById('error-pppk_file_sk');
@@ -792,6 +811,7 @@ document.addEventListener('DOMContentLoaded', function () {
         previewDiv.innerHTML = `<strong>✓ File terpilih:</strong> ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
         previewDiv.classList.add('show');
     });
+    }
 
     // Add event listeners untuk tanggal
     const tglAwalElem = document.getElementById('pppk_tgl_awal');
