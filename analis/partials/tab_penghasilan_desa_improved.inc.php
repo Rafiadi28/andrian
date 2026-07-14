@@ -135,15 +135,16 @@ $angsuran_helper = getAngsuranHelperText();
         <div class="desa-form-group">
             <label class="desa-label">Penghasilan Tetap (Rp/bulan) <span class="desa-required">*</span></label>
             <input 
-                type="number" 
+                type="text" 
+                inputmode="numeric"
                 id="desk_penghasilan_tetap" 
                 name="desk_penghasilan_tetap" 
                 class="desa-input desa-currency"
-                min="0" 
                 value="0"
                 required
                 data-validate="number"
-                oninput="updateDesaScoring()"
+                oninput="formatDesaCurrencyInput(this); updateDesaScoring()"
+                onblur="formatDesaCurrencyBlur(this)"
             >
             <span class="desa-error-msg" id="error-desk_penghasilan_tetap"></span>
         </div>
@@ -152,14 +153,15 @@ $angsuran_helper = getAngsuranHelperText();
         <div class="desa-form-group">
             <label class="desa-label">Tambahan Penghasilan (Rp/bulan)</label>
             <input 
-                type="number" 
+                type="text" 
+                inputmode="numeric"
                 id="desk_tambahan_penghasilan" 
                 name="desk_tambahan_penghasilan" 
                 class="desa-input desa-currency"
-                min="0" 
                 value="0"
                 data-validate="number"
-                oninput="updateDesaScoring()"
+                oninput="formatDesaCurrencyInput(this); updateDesaScoring()"
+                onblur="formatDesaCurrencyBlur(this)"
             >
         </div>
 
@@ -167,14 +169,15 @@ $angsuran_helper = getAngsuranHelperText();
         <div class="desa-form-group">
             <label class="desa-label">Biaya Hidup / Kebutuhan RT (Rp/bulan)</label>
             <input 
-                type="number" 
+                type="text" 
+                inputmode="numeric"
                 id="desk_biaya_hidup" 
                 name="desk_biaya_hidup" 
                 class="desa-input desa-currency"
-                min="0" 
                 value="0"
                 data-validate="number"
-                oninput="updateDesaScoring()"
+                oninput="formatDesaCurrencyInput(this); updateDesaScoring()"
+                onblur="formatDesaCurrencyBlur(this)"
             >
         </div>
     </div>
@@ -647,6 +650,23 @@ function parseDesaRupiah(value) {
     return parseRupiah(value);
 }
 
+// ===== UTILITY: Format input as Rupiah for Desa fields =====
+function formatDesaCurrencyInput(field) {
+    if (!field) return;
+    const digits = (field.value || '').replace(/\D/g, '');
+    if (digits === '') {
+        field.value = '';
+        return;
+    }
+    field.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function formatDesaCurrencyBlur(field) {
+    if (!field) return;
+    const val = parseDesaRupiah(field.value);
+    field.value = val ? formatDesaRupiah(val).replace('Rp ', '') : '0';
+}
+
 // ===== TOGGLE JABATAN FIELDS =====
 function toggleDesaJabatanFields() {
     const jabatanElem = document.getElementById('desk_jabatan');
@@ -813,10 +833,11 @@ function validateDesaField(fieldId, fieldType) {
             }
         }
     } else if (fieldType === 'number') {
+        const numericValue = parseDesaRupiah(value);
         if (!value) {
             errorMsg = 'Angka wajib diisi';
             isValid = false;
-        } else if (isNaN(parseFloat(value)) || parseFloat(value) < 0) {
+        } else if (isNaN(numericValue) || numericValue < 0) {
             errorMsg = 'Harus berupa angka positif';
             isValid = false;
         }
