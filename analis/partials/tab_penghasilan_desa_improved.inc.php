@@ -629,12 +629,22 @@ function formatRupiah(value) {
     return 'Rp ' + value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 }
 
+// Alias untuk consistency
+function formatDesaRupiah(value) {
+    return formatRupiah(value);
+}
+
 // ===== UTILITY: Parse Rupiah =====
 function parseRupiah(value) {
     if (typeof value === 'string') {
         return parseFloat(value.replace(/\D/g, '')) || 0;
     }
     return parseFloat(value) || 0;
+}
+
+// Alias untuk consistency
+function parseDesaRupiah(value) {
+    return parseRupiah(value);
 }
 
 // ===== TOGGLE JABATAN FIELDS =====
@@ -860,6 +870,9 @@ document.addEventListener('DOMContentLoaded', function () {
             validateDesaField('desk_tgl_mulai', 'date');
             calculateSisaMasaJabatan();
         });
+        tglMulaiElem.addEventListener('input', function () {
+            calculateSisaMasaJabatan();
+        });
     }
 
     if (tglAkhirElem) {
@@ -867,11 +880,17 @@ document.addEventListener('DOMContentLoaded', function () {
             validateDesaField('desk_tgl_akhir', 'date');
             calculateSisaMasaJabatan();
         });
+        tglAkhirElem.addEventListener('input', function () {
+            calculateSisaMasaJabatan();
+        });
     }
 
     if (tglLahirElem) {
         tglLahirElem.addEventListener('change', function () {
             validateDesaField('desk_tgl_lahir', 'date');
+            calculateSisaMasaJabatan();
+        });
+        tglLahirElem.addEventListener('input', function () {
             calculateSisaMasaJabatan();
         });
     }
@@ -901,6 +920,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const container = document.getElementById('desk_angsuran_container');
     if (container && container.children.length === 0) {
         // Optionally add default angsuran item
+    }
+
+    // Format currency untuk Biaya Hidup
+    const biayaHidupElem = document.getElementById('desk_biaya_hidup');
+    if (biayaHidupElem) {
+        biayaHidupElem.addEventListener('blur', function () {
+            const val = parseDesaRupiah(this.value);
+            this.value = val ? formatDesaRupiah(val).replace('Rp ', '') : 0;
+        });
+        biayaHidupElem.addEventListener('input', function () {
+            // Live formatting sebagai user type
+            if (this.value === '') return;
+            const num = this.value.replace(/\D/g, '');
+            if (num && num !== '0') {
+                this.style.color = '#059669';
+            }
+        });
+    }
+
+    // Format currency untuk Penghasilan Tetap (jika belum ada)
+    const penghasilanElem = document.getElementById('desk_penghasilan_tetap');
+    if (penghasilanElem && !penghasilanElem.hasAttribute('data-format-init')) {
+        penghasilanElem.setAttribute('data-format-init', 'true');
+        penghasilanElem.addEventListener('blur', function () {
+            const val = parseDesaRupiah(this.value);
+            this.value = val ? formatDesaRupiah(val).replace('Rp ', '') : 0;
+        });
+    }
+
+    // Format currency untuk Tambahan Penghasilan (jika belum ada)
+    const tambahanElem = document.getElementById('desk_tambahan_penghasilan');
+    if (tambahanElem && !tambahanElem.hasAttribute('data-format-init')) {
+        tambahanElem.setAttribute('data-format-init', 'true');
+        tambahanElem.addEventListener('blur', function () {
+            const val = parseDesaRupiah(this.value);
+            this.value = val ? formatDesaRupiah(val).replace('Rp ', '') : 0;
+        });
     }
 
     // Sync Tanggal Lahir dari form Pemohon

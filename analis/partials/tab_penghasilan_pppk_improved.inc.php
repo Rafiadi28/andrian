@@ -802,11 +802,17 @@ document.addEventListener('DOMContentLoaded', function () {
             validateField('pppk_tgl_awal', 'date');
             calculateSisaMasaKerja();
         });
+        tglAwalElem.addEventListener('input', function () {
+            calculateSisaMasaKerja();
+        });
     }
 
     if (tglAkhirElem) {
         tglAkhirElem.addEventListener('change', function () {
             validateField('pppk_tgl_akhir', 'date');
+            calculateSisaMasaKerja();
+        });
+        tglAkhirElem.addEventListener('input', function () {
             calculateSisaMasaKerja();
         });
     }
@@ -827,6 +833,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const container = document.getElementById('pppk_angsuran_container');
     if (container && container.children.length === 0) {
         // Optionally add default angsuran item
+    }
+
+    // Format currency untuk Biaya Hidup
+    const biayaHidupElem = document.getElementById('pppk_biaya_hidup');
+    if (biayaHidupElem) {
+        biayaHidupElem.addEventListener('blur', function () {
+            const val = parseRupiah(this.value);
+            this.value = val ? formatRupiah(val).replace('Rp ', '') : 0;
+        });
+        biayaHidupElem.addEventListener('input', function () {
+            // Live formatting sebagai user type
+            if (this.value === '') return;
+            const num = this.value.replace(/\D/g, '');
+            if (num && num !== '0') {
+                this.style.color = '#059669';
+            }
+        });
+    }
+
+    // Format currency untuk Gaji Bersih (jika belum ada)
+    const gajiElem = document.getElementById('pppk_gaji');
+    if (gajiElem && !gajiElem.hasAttribute('data-format-init')) {
+        gajiElem.setAttribute('data-format-init', 'true');
+        gajiElem.addEventListener('blur', function () {
+            const val = parseRupiah(this.value);
+            this.value = val ? formatRupiah(val).replace('Rp ', '') : 0;
+        });
     }
 });
 
