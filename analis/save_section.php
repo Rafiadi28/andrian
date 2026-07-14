@@ -43,6 +43,25 @@ if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
     exit;
 }
 
+// Ensure optional columns exist to prevent SQL errors on older schemas.
+try {
+    $col = $pdo->query("SHOW COLUMNS FROM pengajuan_kredit LIKE 'sk_avalis'")->fetch();
+    if (!$col) {
+        $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN sk_avalis VARCHAR(255) NULL AFTER jabatan");
+    }
+    $col = $pdo->query("SHOW COLUMNS FROM pengajuan_kredit LIKE 'pppk_agunan_no_sk'")->fetch();
+    if (!$col) {
+        $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN pppk_agunan_no_sk VARCHAR(100) NULL AFTER sk_avalis");
+    }
+    $col = $pdo->query("SHOW COLUMNS FROM pengajuan_kredit LIKE 'file_sk_pppk'")->fetch();
+    if (!$col) {
+        $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN file_sk_pppk VARCHAR(255) NULL AFTER file_jaminan");
+    }
+} catch (Exception $e) {
+    // Non-fatal: if DB user lacks ALTER privilege or DB engine/version incompatible,
+    // queries below will still throw but original error will be logged. Ignore here.
+}
+
 // ============================================================
 // INPUT VALIDATION FUNCTIONS
 // ============================================================
