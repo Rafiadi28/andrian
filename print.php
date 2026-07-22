@@ -1270,9 +1270,13 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     </tr>
                     <tr>
                         <td class="label">Nomor KTP</td>
-                        <td class="value"><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
-                        <td class="label">Sisa Masa Kerja</td>
-                        <td class="value"><?= htmlspecialchars($sisa_masa_kerja) ?></td>
+                        <?php if (in_array($jenis_pek, ['pppk', 'perangkat_desa'])): ?>
+                            <td class="value"><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
+                            <td class="label">Sisa Masa Kerja</td>
+                            <td class="value"><?= htmlspecialchars($sisa_masa_kerja) ?></td>
+                        <?php else: ?>
+                            <td class="value" colspan="3"><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
+                        <?php endif; ?>
                     </tr>
                     <tr>
                         <td class="label">Alamat</td>
@@ -1288,12 +1292,10 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                         <td class="label">Pekerjaan</td>
                         <td class="value" colspan="3"><?= htmlspecialchars($data['pekerjaan'] ?? '-') ?></td>
                     </tr>
-                    <?php if (!in_array($jenis_pek, ['pppk', 'perangkat_desa'])): ?>
                     <tr>
-                        <td class="label">SK / AVALIS</td>
-                        <td class="value" colspan="3"><?= htmlspecialchars($data['sk_avalis'] ?? '-') ?></td>
+                        <td class="label">Pinjaman Ke</td>
+                        <td class="value" colspan="3"><?= (int)($data['pinjaman_ke'] ?? 1) ?></td>
                     </tr>
-                    <?php endif; ?>
                 </table>
 
                 <!-- Section 2: DATA PINJAMAN -->
@@ -1548,6 +1550,13 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                                             <?= nl2br(htmlspecialchars($print_6c['catatan_5c'])) ?>
                                         </div>
                                     <?php endif; ?>
+                                    
+                                    <?php if (!empty($data['note_analis'])): ?>
+                                        <div style="margin-top: 8px; background-color: #fce7f3; padding: 8px; border-left: 3px solid #be185d; color: #831843; font-size: 11px;">
+                                            <strong>Note Analis (Kesimpulan):</strong><br>
+                                            <?= nl2br(htmlspecialchars($data['note_analis'])) ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         </table>
@@ -1765,16 +1774,10 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                                 <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_bpkb'] ?? '-') ?></td>
                             </tr>
                             <tr>
-                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. STNK</td>
-                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_stnk'] ?? '-') ?></td>
                                 <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. Rangka</td>
                                 <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_rangka'] ?? '-') ?></td>
-                            </tr>
-                            <tr>
                                 <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. Mesin</td>
                                 <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_mesin'] ?? '-') ?></td>
-                                <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">Kondisi Kendaraan</td>
-                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['kondisi'] ?? $jk['kondisi_kendaraan'] ?? '-') ?></td>
                             </tr>
                             <tr style="background:#eff6ff;">
                                 <td style="padding:5px 8px; border:1px solid #93c5fd; background:#dbeafe; font-weight:bold;">Nilai Pasar</td>

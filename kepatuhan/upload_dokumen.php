@@ -3,6 +3,9 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../helpers/credit_helper.php';
 requireSameRole('kepatuhan');
 
+// Type assertion for static analysis — $pdo is guaranteed initialized by functions.php
+/** @var PDO $pdo */
+
 // Ensure DB table exists
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS dokumen_kepatuhan (

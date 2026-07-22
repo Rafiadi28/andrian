@@ -8,6 +8,10 @@ if (!isset($jenis_pekerjaan)) {
     $jenis_pekerjaan = 'umum';
 }
 require_once __DIR__ . '/../helpers/credit_helper.php';
+
+// Type assertion for IDE static analysis - $pdo is provided by the parent file (input.php)
+/** @var PDO $pdo */
+
 $EDIT_ID_PENGAJUAN = isset($edit_id_pengajuan) ? (int) $edit_id_pengajuan : 0;
 $rpcConfigData = bootstrapRepaymentFormConfig($pdo, $jenis_pekerjaan, $EDIT_ID_PENGAJUAN > 0 ? $EDIT_ID_PENGAJUAN : null);
 $RPC_CONFIG = $rpcConfigData['RPC_CONFIG'];
@@ -372,7 +376,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
             div.className = 'neraca-row';
             div.style = 'display:flex; gap:8px; margin-bottom:6px; align-items:center;';
             div.innerHTML = '<input type="text" name="tanah_lokasi[]" placeholder="Nama Aset" style="flex:2; padding:6px;">'
-                + '<input type="number" name="tanah_luas[]" placeholder="Tahun Perolehan" style="width:130px; padding:6px;">'
+                + '<input type="text" name="tanah_luas[]" placeholder="Perolehan" style="width:130px; padding:6px;">'
                 + '<input type="number" name="tanah_nilai[]" placeholder="Nilai (Rp)" style="width:160px; padding:6px;" oninput="calcNeraca()">'
                 + '<button type="button" onclick="removeRow(this)" style="padding:6px 8px;">🗑</button>';
             return div;
@@ -2254,15 +2258,18 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         html += '  <div class="custom-form-group"><label>Tahun</label><input type="number" name="tahun[]" oninput="calcAgunanKendaraan(' + idx + ')"></div>';
                         html += '</div>';
                         html += '<div class="grid-2">';
+                        html += '  <div class="custom-form-group"><label>Warna Kendaraan</label><input type="text" name="warna[]" placeholder="Contoh: Hitam"></div>';
                         html += '  <div class="custom-form-group"><label>No Polisi</label><input type="text" name="nopol[]"></div>';
+                        html += '</div>';
+                        html += '<div class="grid-2">';
                         html += '  <div class="custom-form-group"><label>No Rangka</label><input type="text" name="norangka[]"></div>';
-                        html += '</div>';
-                        html += '<div class="grid-2">';
                         html += '  <div class="custom-form-group"><label>No Mesin</label><input type="text" name="nomesin[]"></div>';
-                        html += '  <div class="custom-form-group"><label>Pemilik BPKB</label><input type="text" name="bpkb_nama[]"></div>';
                         html += '</div>';
                         html += '<div class="grid-2">';
+                        html += '  <div class="custom-form-group"><label>Pemilik BPKB</label><input type="text" name="bpkb_nama[]"></div>';
                         html += '  <div class="custom-form-group"><label>Nomor BPKB</label><input type="text" name="no_bpkb[]" placeholder="Contoh: 1234 AB 5678"></div>';
+                        html += '</div>';
+                        html += '<div class="grid-2">';
                         html += '  <div class="custom-form-group"><label>Masa Berlaku STNK</label><input type="date" name="masa_berlaku_stnk[]"></div>';
                         html += '</div>';
                         html += '<div style="background:#e0e7ff; padding:0.75rem 1rem; border-radius:8px; margin:1rem 0;">';
@@ -3517,6 +3524,18 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         </div>
                     </div>
 
+                    <div style="margin:2rem 0; padding:1.5rem; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                        <h4 style="margin-top:0; color:var(--primary-color); border-bottom:1px solid #cbd5e1; padding-bottom:5px;">Note Analis</h4>
+                        <div class="custom-form-group" style="margin-bottom:1rem;">
+                            <textarea name="note_analis" rows="3" placeholder="Masukkan catatan tambahan / note analis di sini..." style="width:100%; border-radius:6px; padding:0.75rem; border:1px solid #cbd5e1; font-family:inherit;"></textarea>
+                        </div>
+                        <button type="button" id="btn-save-kesimpulan" class="btn-save-section" onclick="saveSection('kesimpulan')" style="width:auto; padding:0.75rem 1.5rem;">
+                            <span class="spinner"></span>
+                            <span class="btn-text">Simpan Note Analis</span>
+                        </button>
+                        <div id="toast-kesimpulan" class="toast-msg"></div>
+                    </div>
+
                     <div
                         style="background:#fff7ed; padding:1.5rem; border-radius:8px; border-left:4px solid #f97316; margin:2rem 0;">
                         <p>Pastikan semua data di semua Tab telah terisi dengan benar sebelum menyimpan.</p>
@@ -3635,6 +3654,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                         setN('tipe[]', row.tipe);
                         setN('tahun[]', row.tahun_pembuatan);
                         setN('nopol[]', row.no_polisi);
+                        setN('warna[]', row.warna);
                         setN('norangka[]', row.no_rangka);
                         setN('nomesin[]', row.no_mesin);
                         setN('bpkb_nama[]', row.nama_pemilik);

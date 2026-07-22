@@ -1,0 +1,9 @@
+1. pada print pada jenis kredit umum tidak pakai SK AVALIS 
+2. tambahkan form pinjaman ke diambil dari data pemohon dan mucul saat di cetak 
+3. pada kesimulan tambahkan form untuk note analis dan muncul saat di cetak tambahkan pada semua jenis kredit 
+4. pada saat cetak  no stnk dganti no bpkb dan no bpkb yang tidak berfungsi di hasil cetakan di hapus 
+5. tambahkan form warna pada inputan agunan kendaraan dan muncul saat cetak 
+6. kondisi kendaraan pada hasil cetak di hapus 
+7. pada hasil cetakan nilai pengikatan dan coverage dihhapus 
+8. pada jenis kredit umum hapus sisa masa kerja pada hasil cetakan
+9. pada data keuangan untuk jenis kredit umum form rincian tanah dan bangunan form tahun perolahan dibuat huruf dan dan angka 

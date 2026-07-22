@@ -57,6 +57,14 @@ try {
     if (!$col) {
         $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN file_sk_pppk VARCHAR(255) NULL AFTER file_jaminan");
     }
+    $col = $pdo->query("SHOW COLUMNS FROM pengajuan_kredit LIKE 'note_analis'")->fetch();
+    if (!$col) {
+        $pdo->exec("ALTER TABLE pengajuan_kredit ADD COLUMN note_analis TEXT NULL");
+    }
+    $col = $pdo->query("SHOW COLUMNS FROM jaminan_kendaraan LIKE 'warna'")->fetch();
+    if (!$col) {
+        $pdo->exec("ALTER TABLE jaminan_kendaraan ADD COLUMN warna VARCHAR(50) NULL");
+    }
 } catch (Exception $e) {
     // Non-fatal: if DB user lacks ALTER privilege or DB engine/version incompatible,
     // queries below will still throw but original error will be logged. Ignore here.
@@ -1391,6 +1399,7 @@ try {
                         $norangka = $_POST['norangka'][$i] ?? '';
                         $nomesin = $_POST['nomesin'][$i] ?? '';
                         $bpkb_nama = $_POST['bpkb_nama'][$i] ?? '';
+                        $warna = $_POST['warna'][$i] ?? '';
                         $nilai_pasar = floatval($_POST['nilai_pasar'][$i] ?? 0);
                         // Skip jika data kunci kosong (defensive)
                         if (empty($merk) && empty($nopol) && $nilai_pasar <= 0) {
@@ -1451,23 +1460,23 @@ try {
                         if ($current_id) {
                             $stmt = $pdo->prepare("UPDATE jaminan_kendaraan SET 
                                 merk=?, tipe=?, tahun_pembuatan=?, no_polisi=?, no_rangka=?, no_mesin=?, nama_pemilik=?, 
-                                nilai_pasar=?, nilai_taksasi=?, nilai_likuidasi=?, tipe_valuasi=?, nilai_taksasi_manual=?, persentase_taksasi=?, no_stnk=?, masa_berlaku_stnk=?
+                                nilai_pasar=?, nilai_taksasi=?, nilai_likuidasi=?, tipe_valuasi=?, nilai_taksasi_manual=?, persentase_taksasi=?, no_stnk=?, masa_berlaku_stnk=?, warna=?
                                 WHERE id_jaminan=?");
                             $stmt->execute([
                                 $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
                                 $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
-                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $current_id
+                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $warna, $current_id
                             ]);
                             $id_jaminan = $current_id;
                         } else {
                             $stmt = $pdo->prepare("INSERT INTO jaminan_kendaraan 
                                 (id_pengajuan, merk, tipe, tahun_pembuatan, no_polisi, no_rangka, no_mesin, nama_pemilik, 
-                                 nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual, persentase_taksasi, no_stnk, masa_berlaku_stnk) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                 nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual, persentase_taksasi, no_stnk, masa_berlaku_stnk, warna) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                             $stmt->execute([
                                 $id_pengajuan, $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
                                 $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
-                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null
+                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $warna
                             ]);
                             $id_jaminan = $pdo->lastInsertId();
                         }
@@ -1984,6 +1993,28 @@ try {
                 $pdo->rollBack();
                 logError('save_section cc_agunan error', ['message' => $e->getMessage()]);
                 echo json_encode(['success' => false, 'message' => '❌ Gagal menyimpan agunan: ' . $e->getMessage()]);
+            }
+            break;
+
+        // ============================================================
+        // SECTION 9: Note Analis (Kesimpulan)
+        // ============================================================
+        case 'kesimpulan':
+            if ($id_pengajuan <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Simpan Data Pemohon terlebih dahulu!']);
+                exit;
+            }
+            $note_analis = trim($_POST['note_analis'] ?? '');
+            
+            try {
+                $pdo->prepare("UPDATE pengajuan_kredit SET note_analis = ? WHERE id_pengajuan = ? AND " . getAnalisEditableCondition())
+                    ->execute([$note_analis, $id_pengajuan]);
+                
+                log_activity($pdo, $_SESSION['user_id'] ?? 0, "Menyimpan Note Analis pada Kesimpulan (ID Pengajuan: $id_pengajuan)");
+                echo json_encode(['success' => true, 'message' => '✅ Note Analis berhasil disimpan!']);
+            } catch (Exception $e) {
+                logError('save_section kesimpulan error', ['message' => $e->getMessage()]);
+                echo json_encode(['success' => false, 'message' => '❌ Gagal menyimpan Note Analis: ' . $e->getMessage()]);
             }
             break;
 
