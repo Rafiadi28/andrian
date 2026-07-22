@@ -611,10 +611,10 @@ $timeline = $stmt->fetchAll();
                                     <td style="color:#64748B;">No Mesin</td>
                                     <td>: <?= htmlspecialchars($jk['no_mesin'] ?? '-') ?></td>
                                 </tr>
-                                <?php if (isset($jk['no_bpkb']) && !is_null($jk['no_bpkb']) && $jk['no_bpkb'] !== ''): ?>
+                                <?php if ((isset($jk['no_bpkb']) && $jk['no_bpkb'] !== '') || (isset($jk['no_stnk']) && $jk['no_stnk'] !== '')): ?>
                                 <tr style="background:#f0f9ff; border-top:1px solid #bfdbfe;">
                                     <td style="color:#0369a1; font-weight:600;">No BPKB</td>
-                                    <td>: <?= htmlspecialchars($jk['no_bpkb']) ?></td>
+                                    <td>: <?= htmlspecialchars($jk['no_bpkb'] ?? $jk['no_stnk']) ?></td>
                                 </tr>
                                 <?php if (isset($jk['masa_berlaku_stnk']) && !is_null($jk['masa_berlaku_stnk']) && $jk['masa_berlaku_stnk'] !== ''): ?>
                                 <tr style="background:#f0f9ff;">

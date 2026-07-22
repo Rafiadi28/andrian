@@ -1771,7 +1771,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                                 <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. Polisi</td>
                                 <td style="padding:5px 8px; border:1px solid #ddd; font-weight:bold;"><?= htmlspecialchars($jk['no_polisi'] ?? '-') ?></td>
                                 <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. BPKB</td>
-                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_bpkb'] ?? '-') ?></td>
+                                <td style="padding:5px 8px; border:1px solid #ddd;"><?= htmlspecialchars($jk['no_bpkb'] ?? $jk['no_stnk'] ?? '-') ?></td>
                             </tr>
                             <tr>
                                 <td style="padding:5px 8px; border:1px solid #ddd; background:#f9fafb; font-weight:bold;">No. Rangka</td>

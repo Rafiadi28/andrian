@@ -1460,23 +1460,23 @@ try {
                         if ($current_id) {
                             $stmt = $pdo->prepare("UPDATE jaminan_kendaraan SET 
                                 merk=?, tipe=?, tahun_pembuatan=?, no_polisi=?, no_rangka=?, no_mesin=?, nama_pemilik=?, 
-                                nilai_pasar=?, nilai_taksasi=?, nilai_likuidasi=?, tipe_valuasi=?, nilai_taksasi_manual=?, persentase_taksasi=?, no_stnk=?, masa_berlaku_stnk=?, warna=?
+                                nilai_pasar=?, nilai_taksasi=?, nilai_likuidasi=?, tipe_valuasi=?, nilai_taksasi_manual=?, persentase_taksasi=?, no_bpkb=?, no_stnk=?, masa_berlaku_stnk=?, warna=?
                                 WHERE id_jaminan=?");
                             $stmt->execute([
                                 $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
                                 $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
-                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $warna, $current_id
+                                $no_bpkb ?: null, $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $warna, $current_id
                             ]);
                             $id_jaminan = $current_id;
                         } else {
                             $stmt = $pdo->prepare("INSERT INTO jaminan_kendaraan 
                                 (id_pengajuan, merk, tipe, tahun_pembuatan, no_polisi, no_rangka, no_mesin, nama_pemilik, 
-                                 nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual, persentase_taksasi, no_stnk, masa_berlaku_stnk, warna) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                 nilai_pasar, nilai_taksasi, nilai_likuidasi, tipe_valuasi, nilai_taksasi_manual, persentase_taksasi, no_bpkb, no_stnk, masa_berlaku_stnk, warna) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                             $stmt->execute([
                                 $id_pengajuan, $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
                                 $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
-                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $warna
+                                $no_bpkb ?: null, $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $warna
                             ]);
                             $id_jaminan = $pdo->lastInsertId();
                         }
