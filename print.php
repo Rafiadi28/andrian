@@ -366,7 +366,8 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             font-family: 'Times New Roman', 'Calibri', serif;
             background-color: #f5f5f5;
             padding: 20px;
-            line-height: 1.3;
+            line-height: 1.4;
+            font-size: 12px;
             color: #000;
         }
         
@@ -535,6 +536,16 @@ if ($from === 'dashboard' || $from === 'riwayat') {
         .data-table td.value {
             width: 65%;
             vertical-align: top;
+            word-break: break-word;
+        }
+
+        .data-table img,
+        .photo-card img,
+        .agunan-photo img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
         }
         
         /* Summary Table */
@@ -1009,7 +1020,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             }
             
             @page {
-                size: A4 portrait; /* Paksa kertas A4 Portrait */
+                size: <?= $paper_size ?> portrait;
                 margin: 20mm 15mm 15mm 15mm; /* Atas 20mm, Kiri/Kanan/Bawah 15mm */
             }
             
@@ -1032,9 +1043,24 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 padding: 0; /* Margin sepenuhnya dikendalikan oleh @page */
             }
             
-            /* Hindari pemotongan tabel dan elemen penting */
-            table, tr, td, th, tbody, thead, tfoot {
+            /* Improve table pagination behavior */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                page-break-inside: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tfoot {
+                display: table-footer-group;
+            }
+
+            tr {
                 page-break-inside: avoid;
+                page-break-after: auto;
             }
             
             .section, .approval-timeline, .signature-section, .executive-summary, .collateral-section {
