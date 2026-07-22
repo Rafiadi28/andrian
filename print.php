@@ -1872,6 +1872,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 </div>
                 <?php endif; // end valid_fotos ?>
                 <?php endif; // end agunan_foto_all ?>
+                <?php endif; // end jaminan_tanah || jaminan_kendaraan || jaminan_emas - Main Agunan Section?>
 
                 <?php
                     $usaha_foto_files = [];
@@ -1911,8 +1912,6 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
-
-                <?php endif; // end jaminan_tanah || jaminan_kendaraan || jaminan_emas - Main Agunan Section?>
 
                 <!-- ===== Section 5: COMPLIANCE ASSESSMENT (NEW) ===== -->
                 <?php if (!empty($compliance_items)): ?>
