@@ -148,7 +148,7 @@ if (isset($_POST['submit_agunan'])) {
             }
 
             // STNK fields (optional for kendaraan)
-            $no_stnk = trim($_POST['no_stnk'] ?? '');
+            $no_bpkb = trim($_POST['no_bpkb'] ?? '');
             $masa_berlaku_stnk = trim($_POST['masa_berlaku_stnk'] ?? '');
             
             // Validate date format if provided
@@ -174,7 +174,7 @@ if (isset($_POST['submit_agunan'])) {
                 $nilai_likuidasi,
                 $tipe_valuasi,
                 $nilai_taksasi_manual,
-                $no_stnk ?: null,
+                $no_bpkb ?: null,
                 $masa_berlaku_stnk ?: null
             ]);
         }

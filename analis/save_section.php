@@ -1434,7 +1434,7 @@ try {
                         }
 
                         // STNK fields (optional)
-                        $no_stnk = trim($_POST['no_stnk'][$i] ?? '');
+                        $no_bpkb = trim($_POST['no_bpkb'][$i] ?? '');
                         $masa_berlaku_stnk = trim($_POST['masa_berlaku_stnk'][$i] ?? '');
                         
                         // Validate date format if provided
@@ -1456,7 +1456,7 @@ try {
                             $stmt->execute([
                                 $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
                                 $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
-                                $no_stnk ?: null, $masa_berlaku_stnk ?: null, $current_id
+                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null, $current_id
                             ]);
                             $id_jaminan = $current_id;
                         } else {
@@ -1467,7 +1467,7 @@ try {
                             $stmt->execute([
                                 $id_pengajuan, $merk, $tipe_kend, $tahun, $nopol, $norangka, $nomesin, $bpkb_nama,
                                 $nilai_pasar, $nilai_taksasi, $nilai_likuidasi, $tipe_valuasi_kendaraan, $nilai_taksasi_manual_kendaraan, $persen_taksasi_kendaraan,
-                                $no_stnk ?: null, $masa_berlaku_stnk ?: null
+                                $no_bpkb ?: null, $masa_berlaku_stnk ?: null
                             ]);
                             $id_jaminan = $pdo->lastInsertId();
                         }

@@ -310,10 +310,10 @@ function bankKreditEnsureSchema(PDO $pdo)
 
         // Add STNK columns for kendaraan (BPKB)
         try {
-            $colNoStnk = $pdo->query("SHOW COLUMNS FROM jaminan_kendaraan LIKE 'no_stnk'")->rowCount();
-            if ($colNoStnk == 0) {
-                $pdo->exec("ALTER TABLE jaminan_kendaraan ADD COLUMN no_stnk VARCHAR(50) DEFAULT NULL COMMENT 'Nomor BPKB (untuk BPKB)' AFTER nilai_taksasi_manual");
-                $pdo->exec("ALTER TABLE jaminan_kendaraan ADD COLUMN masa_berlaku_stnk DATE DEFAULT NULL COMMENT 'Masa berlaku STNK (untuk BPKB)' AFTER no_stnk");
+            $colNobpkb = $pdo->query("SHOW COLUMNS FROM jaminan_kendaraan LIKE 'no_bpkb'")->rowCount();
+            if ($colNobpkb == 0) {
+                $pdo->exec("ALTER TABLE jaminan_kendaraan ADD COLUMN no_bpkb VARCHAR(50) DEFAULT NULL COMMENT 'Nomor BPKB (untuk BPKB)' AFTER nilai_taksasi_manual");
+                $pdo->exec("ALTER TABLE jaminan_kendaraan ADD COLUMN masa_berlaku_stnk DATE DEFAULT NULL COMMENT 'Masa berlaku STNK (untuk BPKB)' AFTER no_bpkb");
             }
         } catch (Exception $e) {}
 
