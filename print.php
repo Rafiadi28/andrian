@@ -1872,6 +1872,46 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 </div>
                 <?php endif; // end valid_fotos ?>
                 <?php endif; // end agunan_foto_all ?>
+
+                <?php
+                    $usaha_foto_files = [];
+                    if (!empty($data['foto_usaha'])) {
+                        foreach (explode('|', $data['foto_usaha']) as $fotoUsahaName) {
+                            $fotoUsahaName = trim($fotoUsahaName);
+                            if ($fotoUsahaName === '') continue;
+
+                            $file_path = __DIR__ . '/assets/uploads/' . $fotoUsahaName;
+                            if (!file_exists($file_path)) continue;
+
+                            $usaha_foto_files[] = [
+                                'file_name' => $fotoUsahaName,
+                                '_file_path' => 'assets/uploads/' . $fotoUsahaName,
+                            ];
+                        }
+                    }
+                ?>
+
+                <?php if (!empty($usaha_foto_files)): ?>
+                <div style="page-break-inside:avoid; margin-top:10px;">
+                    <div style="background:#1f2937; color:white; padding:5px 10px; font-size:10px; font-weight:bold; -webkit-print-color-adjust:exact; print-color-adjust:exact;">📸 E. FOTO USAHA (<?= count($usaha_foto_files) ?> Foto)</div>
+                    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:8px; border:1px solid #d1d5db; background:#f9fafb;">
+                        <?php foreach (array_slice($usaha_foto_files, 0, 8) as $idx2 => $foto): ?>
+                        <div style="border:1px solid #e5e7eb; border-radius:4px; overflow:hidden; background:white;">
+                            <img src="<?= htmlspecialchars($foto['_file_path']) ?>"
+                                 style="width:100%; aspect-ratio:1; object-fit:cover; display:block;"
+                                 alt="Foto Usaha <?= $idx2+1 ?>" />
+                            <div style="font-size:7px; color:#6b7280; text-align:center; padding:2px;">Foto <?= $idx2+1 ?></div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if (count($usaha_foto_files) > 8): ?>
+                    <div style="font-size:9px; color:#6b7280; padding:4px 8px; background:#f3f4f6; border:1px solid #d1d5db; border-top:none;">
+                        ⚠️ Menampilkan 8 dari <?= count($usaha_foto_files) ?> foto usaha. Silakan lihat sistem untuk foto selengkapnya.
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+
                 <?php endif; // end jaminan_tanah || jaminan_kendaraan || jaminan_emas - Main Agunan Section?>
 
                 <!-- ===== Section 5: COMPLIANCE ASSESSMENT (NEW) ===== -->
