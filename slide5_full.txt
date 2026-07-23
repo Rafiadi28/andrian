@@ -1,0 +1,145 @@
+Slide: 12191695x6858000
+Shape 0: type=AUTO_SHAPE (1), L=731520, T=457200, W=914400, H=914400, R=1645920, B=1371600
+  P0: "2"
+
+Shape 1: type=TEXT_BOX (17), L=1828800, T=457200, W=9144000, H=548640, R=10972800, B=1005840
+  P0: "CARA KERJA ANALIS (INPUT KREDIT)"
+
+Shape 2: type=TEXT_BOX (17), L=1828800, T=1005840, W=9144000, H=365760, R=10972800, B=1371600
+  P0: "Proses Input Data Pengajuan Kredit oleh Analis"
+
+Shape 3: type=AUTO_SHAPE (1), L=731520, T=1554480, W=10698480, H=36576, R=11430000, B=1591056
+  P0: ""
+
+Shape 4: type=TEXT_BOX (17), L=731520, T=1828800, W=10058400, H=365760, R=10789920, B=2194560
+  P0: "JENIS KREDIT YANG TERSEDIA:"
+
+Shape 5: type=AUTO_SHAPE (1), L=731520, T=2286000, W=1737360, H=1005840, R=2468880, B=3291840
+  P0: "Umum"
+  P1: "Kredit umum untuknasabah perorangan"
+
+Shape 6: type=AUTO_SHAPE (1), L=2606039, T=2286000, W=1737360, H=1005840, R=4343399, B=3291840
+  P0: "PPPK"
+  P1: "Kredit untuk PegawaiPemerintah (PPPK)"
+
+Shape 7: type=AUTO_SHAPE (1), L=4480558, T=2286000, W=1737360, H=1005840, R=6217918, B=3291840
+  P0: "Perangkat Desa"
+  P1: "Kredit khususPerangkat Desa"
+
+Shape 8: type=AUTO_SHAPE (1), L=6355077, T=2286000, W=1737360, H=1005840, R=8092437, B=3291840
+  P0: "KPR"
+  P1: "Kredit PemilikanRumah"
+
+Shape 9: type=AUTO_SHAPE (1), L=8229596, T=2286000, W=1737360, H=1005840, R=9966956, B=3291840
+  P0: "Kretamas"
+  P1: "Kredit Emas(Gold Loan)"
+
+Shape 10: type=AUTO_SHAPE (1), L=10104115, T=2286000, W=1737360, H=1005840, R=11841475, B=3291840
+  P0: "Cash Collateral"
+  P1: "Kredit denganjaminan deposito"
+
+Shape 11: type=TEXT_BOX (17), L=731520, T=3566160, W=10058400, H=365760, R=10789920, B=3931920
+  P0: "6 TAHAP INPUT DATA KREDIT:"
+
+Shape 12: type=AUTO_SHAPE (1), L=731519, T=4023360, W=3291840, H=882913, R=4023359, B=4906273
+  P0: ""
+
+Shape 13: type=AUTO_SHAPE (1), L=868680, T=4160519, W=365760, H=365760, R=1234440, B=4526279
+  P0: "1"
+
+Shape 14: type=TEXT_BOX (17), L=1325880, T=4160519, W=2697480, H=320040, R=4023360, B=4480559
+  P0: "Data Pemohon"
+
+Shape 15: type=TEXT_BOX (17), L=868680, T=4526280, W=3200760, H=396599, R=4069440, B=4922879
+  P0: "NIK, Nama, Alamat, Pekerjaan,Tanggal Lahir, Status Perkawinan"
+
+Shape 16: type=AUTO_SHAPE (1), L=4480558, T=4023360, W=3195195, H=882913, R=7675753, B=4906273
+  P0: ""
+
+Shape 17: type=AUTO_SHAPE (1), L=4617719, T=4160519, W=365760, H=365760, R=4983479, B=4526279
+  P0: "2"
+
+Shape 18: type=TEXT_BOX (17), L=5074919, T=4160519, W=2697480, H=320040, R=7772399, B=4480559
+  P0: "Penghasilan"
+
+Shape 19: type=TEXT_BOX (17), L=4617718, T=4526280, W=3200760, H=396599, R=7818478, B=4922879
+  P0: "Gaji pokok, tunjangan, penghasilanlain, analisa repayment capacity"
+
+Shape 20: type=AUTO_SHAPE (1), L=8229598, T=4023360, W=3474720, H=1097280, R=11704318, B=5120640
+  P0: ""
+
+Shape 21: type=AUTO_SHAPE (1), L=8366758, T=4160519, W=365760, H=365760, R=8732518, B=4526279
+  P0: "3"
+
+Shape 22: type=TEXT_BOX (17), L=8823958, T=4160519, W=2697480, H=320040, R=11521438, B=4480559
+  P0: "Agunan / Jaminan"
+
+Shape 23: type=TEXT_BOX (17), L=8366758, T=4526280, W=3200400, H=502920, R=11567158, B=5029200
+  P0: "Data kendaraan/tanah/bangunan,foto agunan, taksasi nilai"
+
+Shape 24: type=AUTO_SHAPE (1), L=731520, T=5257800, W=3474720, H=1097280, R=4206240, B=6355080
+  P0: ""
+
+Shape 25: type=AUTO_SHAPE (1), L=868680, T=5394960, W=365760, H=365760, R=1234440, B=5760720
+  P0: "4"
+
+Shape 26: type=TEXT_BOX (17), L=1325880, T=5394960, W=2697480, H=320040, R=4023360, B=5715000
+  P0: "Struktur Kredit"
+
+Shape 27: type=TEXT_BOX (17), L=868680, T=5760720, W=3200400, H=502920, R=4069080, B=6263640
+  P0: "Plafond, jangka waktu, suku bunga,tujuan penggunaan kredit"
+
+Shape 28: type=AUTO_SHAPE (1), L=4480559, T=5257800, W=3474720, H=1097280, R=7955279, B=6355080
+  P0: ""
+
+Shape 29: type=AUTO_SHAPE (1), L=4617719, T=5394960, W=365760, H=365760, R=4983479, B=5760720
+  P0: "5"
+
+Shape 30: type=TEXT_BOX (17), L=5074919, T=5394960, W=2697480, H=320040, R=7772399, B=5715000
+  P0: "Neraca Keuangan"
+
+Shape 31: type=TEXT_BOX (17), L=4617719, T=5760720, W=3200400, H=502920, R=7818119, B=6263640
+  P0: "Aset, kewajiban, modal bersih(untuk kredit usaha/umum)"
+
+Shape 32: type=AUTO_SHAPE (1), L=8229598, T=5257800, W=3474720, H=1097280, R=11704318, B=6355080
+  P0: ""
+
+Shape 33: type=AUTO_SHAPE (1), L=8366758, T=5394960, W=365760, H=365760, R=8732518, B=5760720
+  P0: "6"
+
+Shape 34: type=TEXT_BOX (17), L=8823958, T=5394960, W=2697480, H=320040, R=11521438, B=5715000
+  P0: "Analisa 6C & Verifikasi"
+
+Shape 35: type=TEXT_BOX (17), L=8366758, T=5760720, W=3200400, H=502920, R=11567158, B=6263640
+  P0: "Character, Capacity, Capital,Collateral, Condition, Constraint"
+
+Shape 36: type=TEXT_BOX (17), L=731520, T=3291840, W=10698480, H=274320, R=11430000, B=3566160
+  P0: "⚠️ PENTING: Jenis kredit di atas terbatas untuk maksimal plafond kredit Rp 50.000.000 (lima puluh juta rupiah)"
+
+Shape 37: type=TEXT_BOX (17), L=731520, T=6492240, W=10058400, H=365760, R=10789920, B=6858000
+  P0: "STATUS PENGAJUAN KREDIT (TERMASUK KEPATUHAN):"
+
+Shape 38: type=AUTO_SHAPE (1), L=731520, T=6858000, W=1737360, H=640080, R=2468880, B=7498080 *** OFFSIDE ***
+  P0: "DRAFT"
+  P1: "Analis buat pengajuan baru"
+
+Shape 39: type=AUTO_SHAPE (1), L=2606040, T=6858000, W=1737360, H=640080, R=4343400, B=7498080 *** OFFSIDE ***
+  P0: "DIAJUKAN"
+  P1: "Dikirim ke rantai approval"
+
+Shape 40: type=AUTO_SHAPE (1), L=4480560, T=6858000, W=1737360, H=640080, R=6217920, B=7498080 *** OFFSIDE ***
+  P0: "KEPATUHAN"
+  P1: "Review kepatuhan & SOP"
+
+Shape 41: type=AUTO_SHAPE (1), L=6355080, T=6858000, W=1737360, H=640080, R=8092440, B=7498080 *** OFFSIDE ***
+  P0: "PROSES"
+  P1: "Ditinjau pejabat berwenang"
+
+Shape 42: type=AUTO_SHAPE (1), L=8229600, T=6858000, W=1737360, H=640080, R=9966960, B=7498080 *** OFFSIDE ***
+  P0: "DISETUJUI"
+  P1: "Kredit disetujui"
+
+Shape 43: type=AUTO_SHAPE (1), L=10104120, T=6858000, W=1737360, H=640080, R=11841480, B=7498080 *** OFFSIDE ***
+  P0: "DITOLAK"
+  P1: "Kredit ditolak"
+

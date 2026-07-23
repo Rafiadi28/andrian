@@ -1,0 +1,465 @@
+--- Slide 1 ---
+SISTEM APLIKASI KREDIT
+PT BPR BANK WONOSOBO
+Panduan Lengkap Alur Sistem & Cara Kerja Setiap Role
+Presentasi Demo Sistem — Juli 2026
+
+--- Slide 2 ---
+DAFTAR ISI PRESENTASI
+1
+Alur Sistem
+Overview lengkap alur pengajuan hingga persetujuan
+2
+Cara Kerja Analis
+Proses input data kredit oleh analis
+3
+Cara Kerja Kepatuhan
+Penilaian kepatuhan & kelengkapan dokumen
+4
+Cara Kerja Kasubag
+Review & verifikasi awal oleh Kasubag
+5
+Cara Kerja Kabag
+Evaluasi risiko kredit oleh Kabag
+6
+Cara Kerja Kadiv
+Approval divisi & threshold keputusan
+7
+Cara Kerja Direksi
+Persetujuan final untuk kredit besar
+8
+Cara Kerja Admin
+Manajemen sistem, user & parameter
+
+--- Slide 3 ---
+1
+ALUR SISTEM APLIKASI KREDIT
+Overview Proses Pengajuan Hingga Persetujuan
+ANALIS
+(Input)
+KEPATUHAN
+(Review)
+KASUBAG
+(Review)
+KABAG
+(Evaluasi)
+KADIV
+(Approval)
+DIREKSI
+(Final)
+STATUS PENGAJUAN KREDIT:
+DRAFT
+Analis membuat pengajuan kredit baru
+DIAJUKAN
+Pengajuan dikirim ke rantai approval
+PROSES
+Sedang ditinjau oleh pejabat berwenang
+DISETUJUI
+Kredit disetujui oleh pejabat terakhir
+DITOLAK
+Kredit ditolak, dikembalikan ke analis
+REVISI
+Perlu perbaikan data oleh analis
+⚡ FITUR AUTO-SKIP & THRESHOLD AMOUNT
+• Jika pejabat sedang cuti/sakit/berhalangan, sistem otomatis melompati ke pejabat aktif berikutnya
+• Kredit < Rp 500 Juta: Approval final di level KADIV (tidak perlu ke Direksi)
+• Kredit ≥ Rp 500 Juta: Harus mendapat persetujuan DIREKSI sebagai level tertinggi
+
+--- Slide 4 ---
+DIAGRAM ALUR APPROVAL KREDIT
+
+--- Slide 5 ---
+2
+CARA KERJA ANALIS (INPUT KREDIT)
+Proses Input Data Pengajuan Kredit oleh Analis
+JENIS KREDIT YANG TERSEDIA:
+Umum
+Kredit umum untuk
+nasabah perorangan
+PPPK
+Kredit untuk Pegawai
+Pemerintah (PPPK)
+Perangkat Desa
+Kredit khusus
+Perangkat Desa
+KPR
+Kredit Pemilikan
+Rumah
+Kretamas
+Kredit Emas
+(Gold Loan)
+Cash Collateral
+Kredit dengan
+jaminan deposito
+6 TAHAP INPUT DATA KREDIT:
+1
+Data Pemohon
+NIK, Nama, Alamat, Pekerjaan,
+Tanggal Lahir, Status Perkawinan
+2
+Penghasilan
+Gaji pokok, tunjangan, penghasilan
+lain, analisa repayment capacity
+3
+Agunan / Jaminan
+Data kendaraan/tanah/bangunan,
+foto agunan, taksasi nilai
+4
+Struktur Kredit
+Plafond, jangka waktu, suku bunga,
+tujuan penggunaan kredit
+5
+Neraca Keuangan
+Aset, kewajiban, modal bersih
+(untuk kredit usaha/umum)
+6
+Analisa 6C & Verifikasi
+Character, Capacity, Capital,
+Collateral, Condition, Constraint
+
+--- Slide 6 ---
+WORKFLOW INPUT DATA ANALIS
+
+--- Slide 7 ---
+DETAIL PROSES KERJA ANALIS
+1
+Login ke Sistem
+Analis login menggunakan akun yang terdaftar
+dengan role 'analis'
+2
+Pilih Jenis Kredit
+Memilih jenis produk kredit sesuai kebutuhan
+nasabah (Umum/PPPK/Desa/dll)
+3
+Input Data Lengkap
+Mengisi form data pemohon, penghasilan,
+agunan, struktur kredit, neraca, & analisa 6C
+4
+Upload Dokumen
+Upload foto agunan, dokumen pendukung,
+dan kelengkapan administrasi
+5
+Simpan Draft
+Data dapat disimpan sebagai draft untuk
+dilengkapi kemudian
+6
+Submit Pengajuan
+Kirim pengajuan ke rantai approval.
+Status berubah menjadi 'Diajukan'
+FITUR KHUSUS ANALIS:
+📝 Revisi
+Jika pengajuan dikembalikan untuk revisi,
+analis dapat mengedit data dan mengirim ulang.
+Sistem langsung mengirim ke level yang
+mengembalikan (skip level sebelumnya).
+📊 Kalkulasi Otomatis
+Repayment capacity, taksasi agunan,
+dan rasio plafond dihitung otomatis
+berdasarkan parameter yang dikonfigurasi.
+📋 Riwayat
+Melihat seluruh riwayat pengajuan yang
+pernah dibuat beserta status terkini.
+🔄 Resubmit
+Pengajuan yang ditolak dapat diperbaiki
+dan diajukan kembali sebagai pengajuan baru.
+
+--- Slide 8 ---
+3
+CARA KERJA KEPATUHAN
+Singkronisasi & Penilaian Dokumen Kepatuhan
+ALUR KERJA KEPATUHAN:
+1
+Terima Data Analis
+Sistem auto-populate form dari
+data input awal Analis
+2
+Review Kepatuhan
+Periksa dokumen, checklist SOP,
+dan validasi syarat kredit
+3
+Singkronisasi Data
+Melengkapi fasilitas kredit,
+catatan, & kesimpulan final
+4
+Simpan Assessment
+Data tersimpan di database,
+siap direview oleh Komite
+FITUR UTAMA PENILAIAN KEPATUHAN:
+📝
+Auto-Populate Data
+Data dari Analis langsung muncul
+di form Kepatuhan (tidak perlu
+input ulang).
+🔄
+AJAX Submission
+Penyimpanan data real-time
+tanpa loading ulang halaman.
+🔍
+Validasi Dokumen
+Memastikan semua syarat legal,
+agunan, dan administrasi telah
+sesuai SOP Bank.
+📊
+Tersentralisasi
+Hasil assessment langsung
+terhubung ke pengajuan kredit
+dan bisa dilihat Kasubag/Kabag.
+
+--- Slide 9 ---
+4
+CARA KERJA KASUBAG ANALIS
+Review & Verifikasi Awal Pengajuan Kredit
+ALUR KERJA KASUBAG ANALIS:
+1
+Buka Dashboard
+Login dan lihat daftar pengajuan
+yang menunggu review di inbox
+2
+Review Detail
+Klik pengajuan untuk melihat
+seluruh data yang diinput analis
+3
+Verifikasi Dokumen
+Periksa kelengkapan data pemohon,
+kesesuaian dokumen pendukung
+4
+Cek Perhitungan
+Verifikasi kalkulasi repayment
+capacity dan taksasi agunan
+KEPUTUSAN YANG DAPAT DIAMBIL:
+✅ SETUJU
+Pengajuan diteruskan ke
+KABAG KREDIT
+untuk evaluasi lebih lanjut
+Status: posisi_saat_ini → 'kabag_kredit'
+🔄 REVISI
+Pengajuan dikembalikan ke
+ANALIS
+untuk perbaikan data/dokumen
+Status: posisi_saat_ini → 'analis' | status → 'revisi'
+❌ TOLAK
+Pengajuan DITOLAK dan
+dikembalikan ke ANALIS
+dengan alasan penolakan
+Status: posisi_saat_ini → 'analis' | status → 'ditolak'
+
+--- Slide 10 ---
+5
+CARA KERJA KABAG KREDIT
+Evaluasi Risiko Kredit & Penilaian Agunan
+ALUR KERJA KABAG KREDIT:
+1
+Dashboard Inbox
+Menerima pengajuan yang sudah
+disetujui oleh Kasubag Analis
+2
+Evaluasi Risiko
+Analisis mendalam terhadap risiko
+kredit, kelayakan usaha nasabah
+3
+Review Agunan
+Verifikasi nilai taksasi agunan
+dan kecukupan jaminan
+4
+Keputusan
+Memberikan keputusan: Setuju,
+Revisi, atau Tolak
+FOKUS EVALUASI KABAG KREDIT:
+💰
+Analisis Keuangan
+Mengevaluasi rasio keuangan nasabah,
+Debt Service Ratio (DSR), dan
+Repayment Capacity sesuai standar bank
+🏠
+Penilaian Agunan
+Memverifikasi nilai taksasi agunan,
+rasio Loan to Value (LTV),
+dan kelayakan jaminan yang diajukan
+📊
+Risiko Kredit
+Menilai risiko kredit berdasarkan
+analisa 6C yang dilakukan analis,
+kelayakan struktur kredit
+📋
+Kepatuhan
+Memastikan kesesuaian dengan
+kebijakan internal bank dan
+regulasi OJK yang berlaku
+
+--- Slide 11 ---
+PROSES KEPUTUSAN APPROVAL (Kasubag / Kabag)
+Tampilan halaman review dan aksi keputusan yang tersedia pada setiap level approval:
+
+--- Slide 12 ---
+6
+CARA KERJA KADIV BISNIS
+Approval Divisi & Threshold Keputusan Kredit
+⚡ ATURAN THRESHOLD JUMLAH KREDIT:
+Kredit < Rp 500 Juta → KADIV = FINAL APPROVAL
+Kredit ≥ Rp 500 Juta → Eskalasi ke DIREKSI
+ALUR KERJA KADIV BISNIS:
+1
+Terima Pengajuan
+Menerima pengajuan dari Kabag
+Kredit yang sudah disetujui
+2
+Review Menyeluruh
+Evaluasi kelayakan bisnis, risiko
+divisi, dan dampak portfolio
+3
+Cek Threshold
+Periksa jumlah kredit untuk
+menentukan apakah Kadiv
+adalah level approval terakhir
+4
+Keputusan
+Setuju (final jika <500Jt),
+Revisi, atau Tolak.
+Jika ≥500Jt: eskalasi ke Direksi
+OPSI KEPUTUSAN:  ✅ Setuju (lanjut/final)  |  🔄 Revisi (kembali ke Analis)  |  ❌ Tolak (ditolak ke Analis)
+
+--- Slide 13 ---
+DIAGRAM KEPUTUSAN KADIV BISNIS
+
+--- Slide 14 ---
+7
+CARA KERJA DIREKSI
+Persetujuan Final untuk Kredit Bernilai Besar (≥ Rp 500 Juta)
+⚠️  PENTING: Direksi hanya menerima pengajuan kredit dengan nilai ≥ Rp 500.000.000
+Direksi TIDAK memiliki opsi REVISI — hanya dapat MENYETUJUI atau MENOLAK (keputusan bersifat FINAL)
+ALUR KERJA DIREKSI:
+1
+Dashboard Direksi
+Melihat pengajuan kredit bernilai
+besar (≥500Jt) yang menunggu
+keputusan eksekutif
+2
+Review Executive
+Evaluasi final terhadap kelayakan
+bisnis, risiko bank, dan dampak
+terhadap portfolio keseluruhan
+3
+Keputusan FINAL
+Hanya 2 pilihan:
+✅ SETUJU → Kredit Disetujui
+❌ TOLAK → Kredit Ditolak
+HASIL KEPUTUSAN DIREKSI:
+✅ SETUJU — APPROVAL FINAL
+status_pengajuan → 'disetujui' | posisi → 'selesai'
+❌ TOLAK — PENOLAKAN FINAL
+status_pengajuan → 'ditolak' | posisi → 'analis'
+
+--- Slide 15 ---
+DIAGRAM WORKFLOW DIREKSI
+
+--- Slide 16 ---
+8
+CARA KERJA ADMIN / SUPERADMIN
+Manajemen Sistem, User, Parameter & Monitoring
+👥
+Manajemen User
+Membuat, mengedit, dan mengatur akun pengguna.
+Mengatur role (Analis, Kasubag, Kabag, Kadiv, Direksi).
+Mengatur status jabatan (Aktif, Cuti, Sakit, Izin, Berhalangan).
+🏛️
+Master Pejabat
+Konfigurasi jabatan dan tanda tangan pejabat
+yang tampil pada dokumen cetak.
+Menentukan urutan hierarki approval.
+⚙️
+Parameter Repayment
+Konfigurasi formula Repayment Capacity.
+Atur parameter DSR (Debt Service Ratio),
+biaya hidup, dan threshold perhitungan.
+💾
+Backup Database
+Backup dan restore database sistem.
+Menjaga keamanan data dan
+memastikan ketersediaan data.
+🔍
+Audit Log
+Memonitor log aktivitas sistem.
+Melacak perubahan parameter.
+Audit trail untuk kepatuhan.
+📊
+Riwayat & Monitoring
+Melihat seluruh riwayat pengajuan kredit.
+Monitor status pengajuan secara real-time.
+Laporan statistik dan aktivitas.
+
+--- Slide 17 ---
+FITUR ADMIN / SUPERADMIN
+
+--- Slide 18 ---
+MANAJEMEN STATUS JABATAN & AUTO-SKIP
+Admin mengatur status jabatan setiap pejabat. Sistem secara otomatis melompati pejabat yang tidak aktif
+dan mengirim pengajuan ke pejabat aktif berikutnya dalam rantai approval.
+AKTIF
+Pejabat aktif bertugas dan
+dapat menerima pengajuan kredit
+CUTI
+Pejabat sedang cuti,
+pengajuan di-skip otomatis
+SAKIT
+Pejabat sedang sakit,
+pengajuan di-skip otomatis
+IZIN
+Pejabat sedang izin,
+pengajuan di-skip otomatis
+BERHALANGAN
+Pejabat berhalangan,
+pengajuan di-skip otomatis
+CONTOH SKENARIO AUTO-SKIP:
+ANALIS
+✅ Submit
+→
+KASUBAG
+❌ CUTI
+SKIP →
+KABAG
+✅ AKTIF
+→
+KADIV
+❌ SAKIT
+SKIP →
+DIREKSI
+✅ AKTIF
+Pada contoh di atas:
+• Analis submit pengajuan → Kasubag sedang CUTI → Sistem otomatis SKIP ke Kabag
+• Kabag AKTIF → Review & Setuju → Kadiv sedang SAKIT → Sistem otomatis SKIP ke Direksi
+• Direksi AKTIF → Review & memberikan keputusan FINAL
+• Setiap auto-skip dicatat dalam audit trail untuk transparansi
+
+--- Slide 19 ---
+RINGKASAN PERAN & TANGGUNG JAWAB
+ANALIS
+Input & Submit
+Input data kredit, upload dokumen,
+submit & resubmit pengajuan
+KASUBAG
+Review Awal
+Verifikasi awal, cek kelengkapan,
+review data analis
+KABAG
+Evaluasi Risiko
+Evaluasi risiko kredit, penilaian
+agunan, analisis keuangan
+KADIV
+Approval Divisi
+Approval divisi, final untuk <500Jt,
+eskalasi untuk ≥500Jt
+DIREKSI
+Final Approval
+Keputusan final untuk kredit ≥500Jt,
+hanya Setuju atau Tolak
+ADMIN
+Sistem Admin
+Manajemen user, parameter,
+backup, audit & monitoring
+
+--- Slide 20 ---
+TERIMA KASIH
+Sistem Aplikasi Kredit — PT BPR Bank Wonosobo
+Presentasi Demo Sistem untuk Manajemen
+Siap untuk sesi tanya jawab & demo live
+

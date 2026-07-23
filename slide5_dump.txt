@@ -1,0 +1,115 @@
+=== SLIDE 5 ===
+Shape 0: type=AUTO_SHAPE (1), left=731520, top=457200, width=914400, height=914400
+  P0: "2"
+
+Shape 1: type=TEXT_BOX (17), left=1828800, top=457200, width=9144000, height=548640
+  P0: "CARA KERJA ANALIS (INPUT KREDIT)"
+
+Shape 2: type=TEXT_BOX (17), left=1828800, top=1005840, width=9144000, height=365760
+  P0: "Proses Input Data Pengajuan Kredit oleh Analis"
+
+Shape 3: type=AUTO_SHAPE (1), left=731520, top=1554480, width=10698480, height=36576
+  P0: ""
+
+Shape 4: type=TEXT_BOX (17), left=731520, top=1828800, width=10058400, height=365760
+  P0: "JENIS KREDIT YANG TERSEDIA:"
+
+Shape 5: type=AUTO_SHAPE (1), left=731520, top=2286000, width=1737360, height=1005840
+  P0: "Umum"
+  P1: "Kredit umum untuknasabah perorangan"
+
+Shape 6: type=AUTO_SHAPE (1), left=2606039, top=2286000, width=1737360, height=1005840
+  P0: "PPPK"
+  P1: "Kredit untuk PegawaiPemerintah (PPPK)"
+
+Shape 7: type=AUTO_SHAPE (1), left=4480558, top=2286000, width=1737360, height=1005840
+  P0: "Perangkat Desa"
+  P1: "Kredit khususPerangkat Desa"
+
+Shape 8: type=AUTO_SHAPE (1), left=6355077, top=2286000, width=1737360, height=1005840
+  P0: "KPR"
+  P1: "Kredit PemilikanRumah"
+
+Shape 9: type=AUTO_SHAPE (1), left=8229596, top=2286000, width=1737360, height=1005840
+  P0: "Kretamas"
+  P1: "Kredit Emas(Gold Loan)"
+
+Shape 10: type=AUTO_SHAPE (1), left=10104115, top=2286000, width=1737360, height=1005840
+  P0: "Cash Collateral"
+  P1: "Kredit denganjaminan deposito"
+
+Shape 11: type=TEXT_BOX (17), left=731520, top=3566160, width=10058400, height=365760
+  P0: "6 TAHAP INPUT DATA KREDIT:"
+
+Shape 12: type=AUTO_SHAPE (1), left=731520, top=4023360, width=3474720, height=1097280
+  P0: ""
+
+Shape 13: type=AUTO_SHAPE (1), left=868680, top=4160519, width=365760, height=365760
+  P0: "1"
+
+Shape 14: type=TEXT_BOX (17), left=1325880, top=4160519, width=2697480, height=320040
+  P0: "Data Pemohon"
+
+Shape 15: type=TEXT_BOX (17), left=868680, top=4526280, width=3200400, height=502920
+  P0: "NIK, Nama, Alamat, Pekerjaan,Tanggal Lahir, Status Perkawinan"
+
+Shape 16: type=AUTO_SHAPE (1), left=4480559, top=4023360, width=3474720, height=1097280
+  P0: ""
+
+Shape 17: type=AUTO_SHAPE (1), left=4617719, top=4160519, width=365760, height=365760
+  P0: "2"
+
+Shape 18: type=TEXT_BOX (17), left=5074919, top=4160519, width=2697480, height=320040
+  P0: "Penghasilan"
+
+Shape 19: type=TEXT_BOX (17), left=4617719, top=4526280, width=3200400, height=502920
+  P0: "Gaji pokok, tunjangan, penghasilanlain, analisa repayment capacity"
+
+Shape 20: type=AUTO_SHAPE (1), left=8229598, top=4023360, width=3474720, height=1097280
+  P0: ""
+
+Shape 21: type=AUTO_SHAPE (1), left=8366758, top=4160519, width=365760, height=365760
+  P0: "3"
+
+Shape 22: type=TEXT_BOX (17), left=8823958, top=4160519, width=2697480, height=320040
+  P0: "Agunan / Jaminan"
+
+Shape 23: type=TEXT_BOX (17), left=8366758, top=4526280, width=3200400, height=502920
+  P0: "Data kendaraan/tanah/bangunan,foto agunan, taksasi nilai"
+
+Shape 24: type=AUTO_SHAPE (1), left=731520, top=5257800, width=3474720, height=1097280
+  P0: ""
+
+Shape 25: type=AUTO_SHAPE (1), left=868680, top=5394960, width=365760, height=365760
+  P0: "4"
+
+Shape 26: type=TEXT_BOX (17), left=1325880, top=5394960, width=2697480, height=320040
+  P0: "Struktur Kredit"
+
+Shape 27: type=TEXT_BOX (17), left=868680, top=5760720, width=3200400, height=502920
+  P0: "Plafond, jangka waktu, suku bunga,tujuan penggunaan kredit"
+
+Shape 28: type=AUTO_SHAPE (1), left=4480559, top=5257800, width=3474720, height=1097280
+  P0: ""
+
+Shape 29: type=AUTO_SHAPE (1), left=4617719, top=5394960, width=365760, height=365760
+  P0: "5"
+
+Shape 30: type=TEXT_BOX (17), left=5074919, top=5394960, width=2697480, height=320040
+  P0: "Neraca Keuangan"
+
+Shape 31: type=TEXT_BOX (17), left=4617719, top=5760720, width=3200400, height=502920
+  P0: "Aset, kewajiban, modal bersih(untuk kredit usaha/umum)"
+
+Shape 32: type=AUTO_SHAPE (1), left=8229598, top=5257800, width=3474720, height=1097280
+  P0: ""
+
+Shape 33: type=AUTO_SHAPE (1), left=8366758, top=5394960, width=365760, height=365760
+  P0: "6"
+
+Shape 34: type=TEXT_BOX (17), left=8823958, top=5394960, width=2697480, height=320040
+  P0: "Analisa 6C & Verifikasi"
+
+Shape 35: type=TEXT_BOX (17), left=8366758, top=5760720, width=3200400, height=502920
+  P0: "Character, Capacity, Capital,Collateral, Condition, Constraint"
+

@@ -933,6 +933,32 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
             $log = $pdo->prepare("INSERT INTO approval_kredit (id_pengajuan, id_user, level_approval, keputusan, catatan) VALUES (?, ?, ?, 'kirim_ulang', ?)");
             $log->execute([$id_pengajuan, $user_id, 'analis', $catatan]);
 
+            // ===== CREATE NOTIFICATIONS FOR NEXT ROLE (KIRIM ULANG) =====
+            $stmtNotif = $pdo->prepare("SELECT id_user, nama FROM users WHERE role = ? AND status_jabatan = 'aktif'");
+            $stmtNotif->execute([$resumeTo]);
+            $nextRoleUsers = $stmtNotif->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (!empty($nextRoleUsers)) {
+                $stmtPK = $pdo->prepare("SELECT nama_debitur, jumlah_kredit FROM pengajuan_kredit WHERE id_pengajuan = ?");
+                $stmtPK->execute([$id_pengajuan]);
+                $pkInfo = $stmtPK->fetch(PDO::FETCH_ASSOC);
+                
+                if ($pkInfo) {
+                    $next_role_display = getRoleDisplay($resumeTo);
+                    foreach ($nextRoleUsers as $u) {
+                        createNotification(
+                            $u['id_user'],
+                            $id_pengajuan,
+                            'submitted', // Bisa pakai 'submitted' atau 'auto_routed'
+                            "Pengajuan Dikirim Ulang ke " . $next_role_display,
+                            "Pengajuan kredit a.n {$pkInfo['nama_debitur']} (Rp " . number_format($pkInfo['jumlah_kredit'], 0, ',', '.') . ") telah direvisi dan dikirim ulang oleh Analis.",
+                            'analis',
+                            $resumeTo
+                        );
+                    }
+                }
+            }
+
             auditLog($pdo, $user_id, "Mengirim ulang pengajuan (ID: $id_pengajuan) ke $resumeTo");
             $pdo->commit();
             return ['success' => true, 'message' => 'Pengajuan dikirim ulang dan dilanjutkan ke ' . strtoupper($resumeTo)];

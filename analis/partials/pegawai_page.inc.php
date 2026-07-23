@@ -164,13 +164,8 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                     // Tanggal kontrak (stored in lama_usaha & departemen_bagian)
                     if (pg.lama_usaha) setId('desk_tgl_mulai', pg.lama_usaha);
                     
-                    // Set tanggal akhir/lahir berdasarkan jabatan
-                    if (jabatan === 'KEPALA DESA') {
-                        if (pg.departemen_bagian) setId('desk_tgl_akhir', pg.departemen_bagian);
-                    } else if (['SEKRETARIS DESA', 'KEPALA DUSUN', 'KAUR'].indexOf(jabatan) !== -1) {
-                        if (pg.departemen_bagian) setId('desk_tgl_lahir', pg.departemen_bagian);
-                    }
-                    
+                    // Set tanggal akhir untuk semua jabatan
+                    if (pg.departemen_bagian) setId('desk_tgl_akhir', pg.departemen_bagian);
                     if (pg.lama_usaha || (pg.departemen_bagian && jabatan)) {
                         setTimeout(function() {
                             if (typeof toggleDesaJabatanFields === 'function') toggleDesaJabatanFields();
@@ -281,53 +276,6 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 if (typeof calc6C === 'function') calc6C();
                 if (typeof recalcAgunanTotals === 'function') recalcAgunanTotals();
                 if (typeof updateScoringSummary === 'function') updateScoringSummary();
-                
-                // ===== LINK TANGGAL LAHIR: Tab Pemohon → Tab Penghasilan (Desa) =====
-                syncTanggalLahirToDesa();
             });
         })();
         
-        /**
-         * Function: Link tanggal lahir dari Tab Pemohon ke Tab Penghasilan (Perangkat Desa)
-         * Sehingga user tidak perlu input tanggal lahir 2 kali
-         */
-        function syncTanggalLahirToDesa() {
-            var tanggalLahirInput = document.querySelector('[name="tanggal_lahir"]');
-            var deskTglLahirHidden = document.getElementById('desk_tgl_lahir');
-            var deskTglLahirDisplay = document.getElementById('desk_tgl_lahir_display');
-            
-            if (!tanggalLahirInput || !deskTglLahirHidden) return;
-            
-            // Function untuk update display dan hidden value
-            var updateDeskTglLahir = function() {
-                var value = tanggalLahirInput.value;
-                deskTglLahirHidden.value = value;
-                
-                if (value) {
-                    // Format tampilan: DD Bulan YYYY
-                    var date = new Date(value + 'T00:00:00');
-                    var bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
-                                 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                    var formatted = ('0' + date.getDate()).slice(-2) + ' ' + 
-                                  bulan[date.getMonth()] + ' ' + 
-                                  date.getFullYear();
-                    deskTglLahirDisplay.textContent = formatted;
-                } else {
-                    deskTglLahirDisplay.textContent = '-';
-                }
-                
-                // Trigger perhitungan usia jika jabatan sudah dipilih
-                if (typeof calculateSisaMasaJabatan === 'function') {
-                    setTimeout(function() {
-                        calculateSisaMasaJabatan();
-                    }, 50);
-                }
-            };
-            
-            // Sync on initial load
-            updateDeskTglLahir();
-            
-            // Sync ketika tanggal_lahir berubah
-            tanggalLahirInput.addEventListener('change', updateDeskTglLahir);
-            tanggalLahirInput.addEventListener('input', updateDeskTglLahir);
-        }

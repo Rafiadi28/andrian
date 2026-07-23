@@ -1,0 +1,121 @@
+=== SLIDE 7 ===
+Shape 0: type=AUTO_SHAPE (1), left=0, top=0, width=73152, height=6858000
+  P0: ""
+
+Shape 1: type=TEXT_BOX (17), left=731520, top=274320, width=10058400, height=457200
+  P0: "DETAIL PROSES KERJA ANALIS"
+
+Shape 2: type=AUTO_SHAPE (1), left=731520, top=822960, width=2743200, height=36576
+  P0: ""
+
+Shape 3: type=AUTO_SHAPE (1), left=457200, top=1188720, width=5303520, height=777240
+  P0: ""
+
+Shape 4: type=AUTO_SHAPE (1), left=594360, top=1325880, width=365760, height=365760
+  P0: "1"
+
+Shape 5: type=TEXT_BOX (17), left=1051560, top=1325880, width=4526280, height=320040
+  P0: "Login ke Sistem"
+
+Shape 6: type=TEXT_BOX (17), left=594360, top=1691640, width=5029200, height=182880
+  P0: "Analis login menggunakan akun yang terdaftardengan role 'analis'"
+
+Shape 7: type=AUTO_SHAPE (1), left=457200, top=2057400, width=5303520, height=777240
+  P0: ""
+
+Shape 8: type=AUTO_SHAPE (1), left=594360, top=2194560, width=365760, height=365760
+  P0: "2"
+
+Shape 9: type=TEXT_BOX (17), left=1051560, top=2194560, width=4526280, height=320040
+  P0: "Pilih Jenis Kredit"
+
+Shape 10: type=TEXT_BOX (17), left=594360, top=2560320, width=5029200, height=182880
+  P0: "Memilih jenis produk kredit sesuai kebutuhannasabah (Umum/PPPK/Desa/dll)"
+
+Shape 11: type=AUTO_SHAPE (1), left=457200, top=2926080, width=5303520, height=777240
+  P0: ""
+
+Shape 12: type=AUTO_SHAPE (1), left=594360, top=3063240, width=365760, height=365760
+  P0: "3"
+
+Shape 13: type=TEXT_BOX (17), left=1051560, top=3063240, width=4526280, height=320040
+  P0: "Input Data Lengkap"
+
+Shape 14: type=TEXT_BOX (17), left=594360, top=3429000, width=5029200, height=182880
+  P0: "Mengisi form data pemohon, penghasilan,agunan, struktur kredit, neraca, & analisa 6C"
+
+Shape 15: type=AUTO_SHAPE (1), left=457200, top=3794760, width=5303520, height=777240
+  P0: ""
+
+Shape 16: type=AUTO_SHAPE (1), left=594360, top=3931920, width=365760, height=365760
+  P0: "4"
+
+Shape 17: type=TEXT_BOX (17), left=1051560, top=3931920, width=4526280, height=320040
+  P0: "Upload Dokumen"
+
+Shape 18: type=TEXT_BOX (17), left=594360, top=4297680, width=5029200, height=182880
+  P0: "Upload foto agunan, dokumen pendukung,dan kelengkapan administrasi"
+
+Shape 19: type=AUTO_SHAPE (1), left=457200, top=4663440, width=5303520, height=777240
+  P0: ""
+
+Shape 20: type=AUTO_SHAPE (1), left=594360, top=4800600, width=365760, height=365760
+  P0: "5"
+
+Shape 21: type=TEXT_BOX (17), left=1051560, top=4800600, width=4526280, height=320040
+  P0: "Simpan Draft"
+
+Shape 22: type=TEXT_BOX (17), left=594360, top=5166360, width=5029200, height=182880
+  P0: "Data dapat disimpan sebagai draft untukdilengkapi kemudian"
+
+Shape 23: type=AUTO_SHAPE (1), left=457200, top=5532120, width=5303520, height=777240
+  P0: ""
+
+Shape 24: type=AUTO_SHAPE (1), left=594360, top=5669280, width=365760, height=365760
+  P0: "6"
+
+Shape 25: type=TEXT_BOX (17), left=1051560, top=5669280, width=4526280, height=320040
+  P0: "Submit Pengajuan"
+
+Shape 26: type=TEXT_BOX (17), left=594360, top=6035039, width=5029200, height=182880
+  P0: "Kirim pengajuan ke rantai approval.Status berubah menjadi 'Diajukan'"
+
+Shape 27: type=TEXT_BOX (17), left=6217920, top=1188720, width=5486400, height=365760
+  P0: "FITUR KHUSUS ANALIS:"
+
+Shape 28: type=AUTO_SHAPE (1), left=6217920, top=1645920, width=5303520, height=1051560
+  P0: ""
+
+Shape 29: type=TEXT_BOX (17), left=6400800, top=1737360, width=4937760, height=274320
+  P0: "📝 Revisi"
+
+Shape 30: type=TEXT_BOX (17), left=6400800, top=2011680, width=4937760, height=640080
+  P0: "Jika pengajuan dikembalikan untuk revisi,analis dapat mengedit data dan mengirim ulang.Sistem langsung mengirim ke level yangmengembalikan (skip level sebelumnya)."
+
+Shape 31: type=AUTO_SHAPE (1), left=6217920, top=2834640, width=5303520, height=1051560
+  P0: ""
+
+Shape 32: type=TEXT_BOX (17), left=6400800, top=2926080, width=4937760, height=274320
+  P0: "📊 Kalkulasi Otomatis"
+
+Shape 33: type=TEXT_BOX (17), left=6400800, top=3200400, width=4937760, height=640080
+  P0: "Repayment capacity, taksasi agunan,dan rasio plafond dihitung otomatisberdasarkan parameter yang dikonfigurasi."
+
+Shape 34: type=AUTO_SHAPE (1), left=6217920, top=4023360, width=5303520, height=1051560
+  P0: ""
+
+Shape 35: type=TEXT_BOX (17), left=6400800, top=4114800, width=4937760, height=274320
+  P0: "📋 Riwayat"
+
+Shape 36: type=TEXT_BOX (17), left=6400800, top=4389120, width=4937760, height=640080
+  P0: "Melihat seluruh riwayat pengajuan yangpernah dibuat beserta status terkini."
+
+Shape 37: type=AUTO_SHAPE (1), left=6217920, top=5212080, width=5303520, height=1051560
+  P0: ""
+
+Shape 38: type=TEXT_BOX (17), left=6400800, top=5303520, width=4937760, height=274320
+  P0: "🔄 Resubmit"
+
+Shape 39: type=TEXT_BOX (17), left=6400800, top=5577840, width=4937760, height=640080
+  P0: "Pengajuan yang ditolak dapat diperbaikidan diajukan kembali sebagai pengajuan baru."
+

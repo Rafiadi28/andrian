@@ -80,36 +80,19 @@ $angsuran_helper = getAngsuranHelperText();
             <span class="desa-error-msg" id="error-desk_tgl_mulai"></span>
         </div>
 
-        <!-- Tanggal Akhir Jabatan (Hanya untuk Kepala Desa) -->
-        <div class="desa-form-group" id="desa-tgl-akhir-group" style="display: none;">
+        <!-- Tanggal Akhir Jabatan (Untuk semua Perangkat Desa) -->
+        <div class="desa-form-group" id="desa-tgl-akhir-group">
             <label class="desa-label">Tanggal Akhir Masa Jabatan <span class="desa-required">*</span></label>
             <input 
                 type="date" 
                 id="desk_tgl_akhir" 
                 name="desk_tgl_akhir" 
                 class="desa-input"
+                required
                 data-validate="date"
                 oninput="calculateSisaMasaJabatan()"
             >
             <span class="desa-error-msg" id="error-desk_tgl_akhir"></span>
-        </div>
-
-        <!-- Tanggal Lahir (Untuk non-Kepala Desa) - LINKED FROM TAB PEMOHON -->
-        <div class="desa-form-group" id="desa-tgl-lahir-group" style="display: none;">
-            <label class="desa-label">Tanggal Lahir <span class="desa-required">*</span></label>
-            <div class="desa-display-box" style="display: flex; align-items: center; gap: 0.75rem;">
-                <span id="desk_tgl_lahir_display">-</span>
-                <small style="color: #666; font-style: italic;">(dari Data Pribadi)</small>
-            </div>
-            <input 
-                type="hidden" 
-                id="desk_tgl_lahir" 
-                name="desk_tgl_lahir" 
-                class="desa-input"
-                data-validate="date"
-            >
-            <small class="desa-helper">Tanggal lahir diambil otomatis dari Data Pribadi untuk perhitungan usia maksimal 60 tahun</small>
-            <span class="desa-error-msg" id="error-desk_tgl_lahir"></span>
         </div>
 
         <!-- Sisa Masa Jabatan (Display) -->
@@ -670,35 +653,8 @@ function formatDesaCurrencyBlur(field) {
 // ===== TOGGLE JABATAN FIELDS =====
 function toggleDesaJabatanFields() {
     const jabatanElem = document.getElementById('desk_jabatan');
-    const tglAkhirGroupElem = document.getElementById('desa-tgl-akhir-group');
-    const tglLahirGroupElem = document.getElementById('desa-tgl-lahir-group');
-    const sisaJabatanNoteElem = document.getElementById('desa-sisa-jabatan-note');
-    const tglAkhirElem = document.getElementById('desk_tgl_akhir');
-    const tglLahirElem = document.getElementById('desk_tgl_lahir');
-    
-    const jabatan = jabatanElem.value;
-    
-    if (jabatan === 'KEPALA DESA') {
-        // Kepala Desa: Tampilkan tanggal akhir jabatan, sembunyikan tanggal lahir
-        tglAkhirGroupElem.style.display = 'flex';
-        tglLahirGroupElem.style.display = 'none';
-        tglAkhirElem.required = true;
-        tglLahirElem.required = false;
-        sisaJabatanNoteElem.textContent = 'Dihitung otomatis berdasarkan tanggal akhir jabatan';
-    } else if (['SEKRETARIS DESA', 'KEPALA DUSUN', 'KAUR'].includes(jabatan)) {
-        // Sekretaris Desa, Kepala Dusun, Kaur: Tampilkan tanggal lahir, sembunyikan tanggal akhir
-        tglAkhirGroupElem.style.display = 'none';
-        tglLahirGroupElem.style.display = 'flex';
-        tglAkhirElem.required = false;
-        tglLahirElem.required = true;
-        sisaJabatanNoteElem.textContent = 'Dihitung otomatis dari usia maksimal 60 tahun';
-    } else {
-        // Default: sembunyikan keduanya
-        tglAkhirGroupElem.style.display = 'none';
-        tglLahirGroupElem.style.display = 'none';
-        tglAkhirElem.required = false;
-        tglLahirElem.required = false;
-    }
+    // Semua Perangkat Desa menggunakan form yang sama sekarang
+    // Hitung ulang sisa masa jabatan
     
     // Hitung ulang sisa masa jabatan
     calculateSisaMasaJabatan();
@@ -709,98 +665,43 @@ function calculateSisaMasaJabatan() {
     const jabatanElem = document.getElementById('desk_jabatan');
     const tglMulaiElem = document.getElementById('desk_tgl_mulai');
     const tglAkhirElem = document.getElementById('desk_tgl_akhir');
-    const tglLahirElem = document.getElementById('desk_tgl_lahir');
-    const displayElem = document.getElementById('desk_sisa_jabatan_display');
-    const hiddenElem = document.getElementById('desk_sisa_jabatan_bulan');
-    
-    const jabatan = jabatanElem.value;
-    
-    if (jabatan === 'KEPALA DESA') {
-        // Kepala Desa: Perhitungan menggunakan tanggal akhir jabatan
-        if (!tglMulaiElem.value || !tglAkhirElem.value) {
-            displayElem.textContent = '-';
-            hiddenElem.value = 0;
-            return;
-        }
-
-        const tglMulai = new Date(tglMulaiElem.value + 'T00:00:00');
-        const tglAkhir = new Date(tglAkhirElem.value + 'T00:00:00');
-
-        // Validasi: Akhir >= Mulai
-        if (tglAkhir < tglMulai) {
-            showDesaError('desk_tgl_akhir', 'Tanggal akhir tidak boleh lebih kecil dari tanggal mulai');
-            displayElem.textContent = '-';
-            hiddenElem.value = 0;
-            return;
-        }
-
-        // Hitung selisih hari
-        const diffTime = tglAkhir - tglMulai;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        // Konversi ke bulan dan tahun
-        const bulan = Math.floor(diffDays / 30);
-        const tahun = Math.floor(bulan / 12);
-        const sisaBulan = bulan % 12;
-
-        // Format display
-        let display = '';
-        if (tahun > 0) {
-            display += tahun + ' tahun ';
-        }
-        if (sisaBulan > 0 || display === '') {
-            display += sisaBulan + ' bulan';
-        }
-
-        displayElem.textContent = display.trim();
-        hiddenElem.value = bulan;
-    } else if (['SEKRETARIS DESA', 'KEPALA DUSUN', 'KAUR'].includes(jabatan)) {
-        // Sekretaris Desa, Kepala Dusun, Kaur: Perhitungan berdasarkan usia maksimal 60 tahun
-        if (!tglLahirElem.value) {
-            displayElem.textContent = '-';
-            hiddenElem.value = 0;
-            return;
-        }
-
-        const tglLahir = new Date(tglLahirElem.value + 'T00:00:00');
-        const tglAkhirUsia = new Date(tglLahir);
-        tglAkhirUsia.setFullYear(tglAkhirUsia.getFullYear() + 60); // Usia maksimal 60 tahun
-        
-        const hariIni = new Date();
-        hariIni.setHours(0, 0, 0, 0);
-
-        // Jika sudah melampaui usia 60 tahun
-        if (hariIni > tglAkhirUsia) {
-            displayElem.textContent = '0 bulan (Sudah melampaui usia 60 tahun)';
-            hiddenElem.value = 0;
-            return;
-        }
-
-        // Hitung selisih hari dari hari ini hingga usia 60 tahun
-        const diffTime = tglAkhirUsia - hariIni;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        // Konversi ke bulan dan tahun
-        const bulan = Math.floor(diffDays / 30);
-        const tahun = Math.floor(bulan / 12);
-        const sisaBulan = bulan % 12;
-
-        // Format display
-        let display = '';
-        if (tahun > 0) {
-            display += tahun + ' tahun ';
-        }
-        if (sisaBulan > 0 || display === '') {
-            display += sisaBulan + ' bulan';
-        }
-
-        displayElem.textContent = display.trim();
-        hiddenElem.value = bulan;
-    } else {
-        // Jika jabatan belum dipilih atau tidak dikenali
+    if (!tglMulaiElem.value || !tglAkhirElem.value) {
         displayElem.textContent = '-';
         hiddenElem.value = 0;
+        return;
     }
+
+    const tglMulai = new Date(tglMulaiElem.value + 'T00:00:00');
+    const tglAkhir = new Date(tglAkhirElem.value + 'T00:00:00');
+
+    // Validasi: Akhir >= Mulai
+    if (tglAkhir < tglMulai) {
+        showDesaError('desk_tgl_akhir', 'Tanggal akhir tidak boleh lebih kecil dari tanggal mulai');
+        displayElem.textContent = '-';
+        hiddenElem.value = 0;
+        return;
+    }
+
+    // Hitung selisih hari
+    const diffTime = tglAkhir - tglMulai;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // Konversi ke bulan dan tahun
+    const bulan = Math.floor(diffDays / 30);
+    const tahun = Math.floor(bulan / 12);
+    const sisaBulan = bulan % 12;
+
+    // Format display
+    let display = '';
+    if (tahun > 0) {
+        display += tahun + ' tahun ';
+    }
+    if (sisaBulan > 0 || display === '') {
+        display += sisaBulan + ' bulan';
+    }
+
+    displayElem.textContent = display.trim();
+    hiddenElem.value = bulan;
 }
 
 // ===== VALIDASI INPUT =====
@@ -906,16 +807,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (tglLahirElem) {
-        tglLahirElem.addEventListener('change', function () {
-            validateDesaField('desk_tgl_lahir', 'date');
-            calculateSisaMasaJabatan();
-        });
-        tglLahirElem.addEventListener('input', function () {
-            calculateSisaMasaJabatan();
-        });
-    }
-
     // Add event listeners untuk text input
     ['desk_jabatan'].forEach(id => {
         const elem = document.getElementById(id);
@@ -980,36 +871,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Sync Tanggal Lahir dari form Pemohon
-    const sourceTglLahir = document.querySelector('input[name="tanggal_lahir"]');
-    if (sourceTglLahir) {
-        const syncTglLahir = function() {
-            const val = sourceTglLahir.value;
-            const tglLahirElem = document.getElementById('desk_tgl_lahir');
-            const displayElem = document.getElementById('desk_tgl_lahir_display');
-            if (tglLahirElem && displayElem) {
-                tglLahirElem.value = val;
-                
-                // Format tgl untuk display
-                if(val) {
-                    const dateObj = new Date(val);
-                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                    displayElem.textContent = dateObj.toLocaleDateString('id-ID', options);
-                } else {
-                    displayElem.textContent = '-';
-                }
-                
-                validateDesaField('desk_tgl_lahir', 'date');
-                calculateSisaMasaJabatan();
-            }
-        };
-        // Sync pada saat value form Pemohon berubah
-        sourceTglLahir.addEventListener('change', syncTglLahir);
-        sourceTglLahir.addEventListener('blur', syncTglLahir);
-        
-        // Initial sync saat halaman dimuat
-        setTimeout(syncTglLahir, 500);
-    }
+    // TglLahir listener removed as it's no longer used
 
     // Initialize jabatan fields based on current selection
     toggleDesaJabatanFields();
@@ -1101,6 +963,7 @@ function validateDesaForm() {
     const wajibFields = [
         { id: 'desk_jabatan', type: 'text' },
         { id: 'desk_tgl_mulai', type: 'date' },
+        { id: 'desk_tgl_akhir', type: 'date' },
         { id: 'desk_penghasilan_tetap', type: 'number' }
     ];
 
@@ -1109,20 +972,6 @@ function validateDesaForm() {
             isValid = false;
         }
     });
-
-    // Validasi tanggal akhir/lahir berdasarkan jabatan
-    const jabatan = document.getElementById('desk_jabatan')?.value || '';
-    if (jabatan === 'KEPALA DESA') {
-        if (!document.getElementById('desk_tgl_akhir')?.value) {
-            showDesaError('desk_tgl_akhir', 'Tanggal akhir wajib diisi untuk Kepala Desa');
-            isValid = false;
-        }
-    } else if (['SEKRETARIS DESA', 'KEPALA DUSUN', 'KAUR'].includes(jabatan)) {
-        if (!document.getElementById('desk_tgl_lahir')?.value) {
-            showDesaError('desk_tgl_lahir', 'Tanggal lahir wajib diisi');
-            isValid = false;
-        }
-    }
 
     // Validasi Jaminan opsional jika diisi
     const jaminanField = document.getElementById('desk_jaminan');

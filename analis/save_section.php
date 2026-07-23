@@ -642,43 +642,28 @@ try {
                 
                 // Validasi berdasarkan jabatan
                 $tgl_mulai = trim($_POST['desk_tgl_mulai'] ?? '');
-                $tgl_akhir = '';
+                $tgl_akhir = trim($_POST['desk_tgl_akhir'] ?? '');
                 
-                if ($jabatan === 'KEPALA DESA') {
-                    // Kepala Desa: wajib isi tgl_mulai dan tgl_akhir
-                    $tgl_akhir = trim($_POST['desk_tgl_akhir'] ?? '');
-                    if ($tgl_mulai === '' || $tgl_akhir === '') {
-                        echo json_encode(['success' => false, 'message' => 'Tanggal mulai dan tanggal akhir wajib diisi untuk Kepala Desa.']);
-                        exit;
-                    }
-                } else if (in_array($jabatan, ['SEKRETARIS DESA', 'KEPALA DUSUN', 'KAUR'], true)) {
-                    // Non-Kepala Desa: wajib isi tgl_mulai dan tgl_lahir
-                    $tgl_lahir = trim($_POST['desk_tgl_lahir'] ?? '');
-                    if ($tgl_mulai === '' || $tgl_lahir === '') {
-                        echo json_encode(['success' => false, 'message' => 'Tanggal mulai dan tanggal lahir wajib diisi untuk ' . htmlspecialchars($jabatan) . '.']);
-                        exit;
-                    }
-                    $tgl_akhir = $tgl_lahir;
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Jabatan tidak dikenali. Pilih: Kepala Desa, Sekretaris Desa, Kepala Dusun, atau Kaur.']);
+                if ($tgl_mulai === '' || $tgl_akhir === '') {
+                    echo json_encode(['success' => false, 'message' => 'Tanggal mulai dan tanggal akhir jabatan wajib diisi.']);
                     exit;
                 }
                 
-                $tetap = floatval($_POST['desk_penghasilan_tetap'] ?? 0);
-                $tambahan = floatval($_POST['desk_tambahan_penghasilan'] ?? 0);
+                $tetap = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_penghasilan_tetap'] ?? '0'));
+                $tambahan = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_tambahan_penghasilan'] ?? '0'));
                 $omset_total = $tetap + $tambahan;
                 
-                $biaya_hidup = floatval($_POST['desk_biaya_hidup'] ?? 0);
+                $biaya_hidup = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_biaya_hidup'] ?? '0'));
                 
                 // --- Angsuran Bank Wonosobo (array dinamis) ---
                 $angsuran_nominal_arr = $_POST['desk_angsuran_nominal'] ?? [];
                 if (is_array($angsuran_nominal_arr) && count($angsuran_nominal_arr) > 0) {
                     $cic = 0;
                     foreach ($angsuran_nominal_arr as $v) {
-                        $cic += floatval($v);
+                        $cic += floatval(str_replace(['Rp', '.', ' '], '', $v));
                     }
                 } else {
-                    $cic = floatval($_POST['desk_total_angsuran'] ?? $_POST['desk_angsuran_lain'] ?? 0);
+                    $cic = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_total_angsuran'] ?? $_POST['desk_angsuran_lain'] ?? '0'));
                 }
                 
                 // ⚠️ BANKING STANDARD: Repayment Capacity untuk Perangkat Desa

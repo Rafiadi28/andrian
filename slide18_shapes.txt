@@ -1,0 +1,90 @@
+Shape 0 (Type AUTO_SHAPE (1)):
+  
+
+Shape 1 (Type TEXT_BOX (17)):
+  MANAJEMEN STATUS JABATAN & AUTO-SKIP
+
+Shape 2 (Type AUTO_SHAPE (1)):
+  
+
+Shape 3 (Type TEXT_BOX (17)):
+  Admin mengatur status jabatan setiap pejabat. Sistem secara otomatis melompati pejabat yang tidak aktifdan mengirim pengajuan ke pejabat aktif berikutnya dalam rantai approval.
+
+Shape 4 (Type AUTO_SHAPE (1)):
+  
+
+Shape 5 (Type AUTO_SHAPE (1)):
+  AKTIF
+
+Shape 6 (Type TEXT_BOX (17)):
+  Pejabat aktif bertugas dandapat menerima pengajuan kredit
+
+Shape 7 (Type AUTO_SHAPE (1)):
+  
+
+Shape 8 (Type AUTO_SHAPE (1)):
+  CUTI
+
+Shape 9 (Type TEXT_BOX (17)):
+  Pejabat sedang cuti,pengajuan di-skip otomatis
+
+Shape 10 (Type AUTO_SHAPE (1)):
+  
+
+Shape 11 (Type AUTO_SHAPE (1)):
+  SAKIT
+
+Shape 12 (Type TEXT_BOX (17)):
+  Pejabat sedang sakit,pengajuan di-skip otomatis
+
+Shape 13 (Type AUTO_SHAPE (1)):
+  
+
+Shape 14 (Type AUTO_SHAPE (1)):
+  IZIN
+
+Shape 15 (Type TEXT_BOX (17)):
+  Pejabat sedang izin,pengajuan di-skip otomatis
+
+Shape 16 (Type AUTO_SHAPE (1)):
+  
+
+Shape 17 (Type AUTO_SHAPE (1)):
+  BERHALANGAN
+
+Shape 18 (Type TEXT_BOX (17)):
+  Pejabat berhalangan,pengajuan di-skip otomatis
+
+Shape 19 (Type TEXT_BOX (17)):
+  CONTOH SKENARIO AUTO-SKIP:
+
+Shape 20 (Type AUTO_SHAPE (1)):
+  ANALIS✅ Submit
+
+Shape 21 (Type TEXT_BOX (17)):
+  →
+
+Shape 22 (Type AUTO_SHAPE (1)):
+  KEPATUHAN❌ CUTI
+
+Shape 23 (Type TEXT_BOX (17)):
+  SKIP →
+
+Shape 24 (Type AUTO_SHAPE (1)):
+  KABAG ANALIS✅ AKTIF
+
+Shape 25 (Type TEXT_BOX (17)):
+  →
+
+Shape 26 (Type AUTO_SHAPE (1)):
+  KADIV❌ SAKIT
+
+Shape 27 (Type TEXT_BOX (17)):
+  SKIP →
+
+Shape 28 (Type AUTO_SHAPE (1)):
+  DIREKSI✅ AKTIF
+
+Shape 29 (Type TEXT_BOX (17)):
+  Pada contoh di atas:Analis submit pengajuan -> Kasubag AKTIF -> Kepatuhan CUTI -> Sistem otomatis SKIP ke Kabag Analis• Kabag AKTIF → Review & Setuju → Kadiv sedang SAKIT → Sistem otomatis SKIP ke Direksi• Direksi AKTIF → Review & memberikan keputusan FINAL• Setiap auto-skip dicatat dalam audit trail untuk transparansi
+
