@@ -46,7 +46,15 @@ if (!in_array($sort, $valid_sorts, true)) $sort = 'tanggal_upload';
 if (!in_array($order, ['ASC', 'DESC'], true)) $order = 'DESC';
 $toggle_order = ($order === 'ASC') ? 'DESC' : 'ASC';
 
-$allowed_kategori = ['umum','regulasi','kebijakan','laporan','pengumuman','panduan','lainnya'];
+$kategori_labels = [
+    'umum'    => 'umum',
+    'pppk'    => 'pppk',
+    'perdes'  => 'perangkat desa',
+    'kretamas'=> 'kretatamas',
+    'kpr'     => 'kpr',
+    'cashcol' => 'cashcoteral',
+];
+$allowed_kategori = array_keys($kategori_labels);
 
 // Build WHERE
 $where_parts = [];
@@ -177,7 +185,7 @@ $ext_icons = [
                     <select name="kategori">
                         <option value="">Semua Kategori</option>
                         <?php foreach ($allowed_kategori as $k): ?>
-                        <option value="<?= $k ?>" <?= $kategori === $k ? 'selected' : '' ?>><?= ucfirst($k) ?></option>
+                        <option value="<?= $k ?>" <?= $kategori === $k ? 'selected' : '' ?>><?= htmlspecialchars($kategori_labels[$k]) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -194,7 +202,7 @@ $ext_icons = [
         <a href="hasil_dokumen.php" class="chip <?= $kategori === '' ? 'active' : '' ?>">Semua</a>
         <?php foreach ($allowed_kategori as $k): ?>
         <a href="<?= build_url_docs(['kategori' => $k, 'page' => 1]) ?>" 
-           class="chip <?= $kategori === $k ? 'active' : '' ?>"><?= ucfirst($k) ?></a>
+           class="chip <?= $kategori === $k ? 'active' : '' ?>"><?= htmlspecialchars($kategori_labels[$k]) ?></a>
         <?php endforeach; ?>
     </div>
 
@@ -224,7 +232,7 @@ $ext_icons = [
                         <p class="doc-desc"><?= htmlspecialchars(mb_substr($doc['deskripsi'], 0, 150)) ?><?= mb_strlen($doc['deskripsi']) > 150 ? '...' : '' ?></p>
                     <?php endif; ?>
                     <div class="doc-info">
-                        <span><span class="badge-kategori badge-<?= htmlspecialchars($doc['kategori']) ?>"><?= ucfirst(htmlspecialchars($doc['kategori'])) ?></span></span>
+                        <span><span class="badge-kategori badge-<?= htmlspecialchars($doc['kategori']) ?>"><?= htmlspecialchars($kategori_labels[$doc['kategori']] ?? ucfirst($doc['kategori'])) ?></span></span>
                         <span>👤 <?= htmlspecialchars($doc['nama_uploader'] ?? 'Kepatuhan') ?></span>
                         <span>📅 <?= date('d M Y, H:i', strtotime($doc['tanggal_upload'])) ?></span>
                         <span>📦 <?= number_format($doc['ukuran_file'] / 1024, 1) ?> KB</span>

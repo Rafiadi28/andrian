@@ -655,6 +655,7 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR) || !isset($RPC_DASAR_LABEL)) 
                 'agunan': '#tab-agunan',
                 'neraca': '#tab-neraca',
                 '6c': '#tab-6c',
+                'kesimpulan': '#tab-scoring',
             };
 
             if (section === 'submit') {

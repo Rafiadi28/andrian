@@ -741,6 +741,7 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                 'struktur': '#tab-struktur',
                 'neraca': '#tab-neraca',
                 '6c': '#tab-6c',
+                'kesimpulan': '#tab-scoring',
             };
 
             if (section === 'submit') {

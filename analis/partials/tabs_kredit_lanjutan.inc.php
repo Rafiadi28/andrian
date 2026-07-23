@@ -1662,6 +1662,18 @@ if (!isset($RPC_PERSEN_MAKS) || !isset($RPC_DASAR_LABEL)) {
         </div>
     </div>
 
+    <div style="margin:2rem 0; padding:1.5rem; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+        <h4 style="margin-top:0; color:var(--primary-color); border-bottom:1px solid #cbd5e1; padding-bottom:5px;">Note Analis</h4>
+        <div class="custom-form-group" style="margin-bottom:1rem;">
+            <textarea name="note_analis" rows="3" placeholder="Masukkan catatan tambahan / note analis di sini..." style="width:100%; border-radius:6px; padding:0.75rem; border:1px solid #cbd5e1; font-family:inherit;"></textarea>
+        </div>
+        <button type="button" id="btn-save-kesimpulan" class="btn-save-section" onclick="saveSection('kesimpulan')" style="width:auto; padding:0.75rem 1.5rem;">
+            <span class="spinner"></span>
+            <span class="btn-text">Simpan Note Analis</span>
+        </button>
+        <div id="toast-kesimpulan" class="toast-msg"></div>
+    </div>
+
     <div style="background:#fff7ed; padding:1.5rem; border-radius:8px; border-left:4px solid #f97316; margin:2rem 0;">
         <p>Pastikan semua data di semua Tab telah terisi dengan benar sebelum menyimpan.</p>
     </div>

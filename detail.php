@@ -945,6 +945,25 @@ $timeline = $stmt->fetchAll();
                         <span style="font-size:0.8rem; color:#92400E; font-weight:600;">REKOMENDASI</span>
                         <div style="font-size:0.95rem; font-weight:700; color:#374151;"><?= $status_layak['rekomendasi'] ?></div>
                     </div>
+                    <?php
+                        $repayment_capacity = floatval($data['repayment_capacity'] ?? 0);
+                        $angsuran_diajukan = floatval($data['angsuran_diajukan'] ?? 0);
+                        $status_kelayakan_repayment = trim($data['status_kelayakan'] ?? '');
+                        if ($status_kelayakan_repayment === '') {
+                            $status_kelayakan_repayment = ($repayment_capacity >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
+                        }
+                        $rc_color = ($status_kelayakan_repayment === 'LAYAK') ? '#15803d' : '#b91c1c';
+                        $margin_keamanan = $repayment_capacity - $angsuran_diajukan;
+                    ?>
+                    <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:0.75rem 1.25rem; flex:1;">
+                        <span style="font-size:0.8rem; color:#065f46; font-weight:600;">UJI KELAYAKAN ANGSURAN</span>
+                        <div style="font-size:1.15rem; font-weight:800; color:<?= $rc_color ?>; margin-top:0.25rem;"><?= htmlspecialchars($status_kelayakan_repayment) ?></div>
+                        <div style="font-size:0.9rem; color:#334155; margin-top:0.5rem; line-height:1.4;">
+                            Repayment Capacity: <?= formatRupiah($repayment_capacity) ?><br>
+                            Angsuran Diajukan: <?= formatRupiah($angsuran_diajukan) ?><br>
+                            Margin Keamanan: <?= formatRupiah($margin_keamanan) ?>
+                        </div>
+                    </div>
                     <?php if (!empty($s6c_catatan)): ?>
                     <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:8px; padding:0.75rem 1.25rem; flex:2;">
                         <span style="font-size:0.8rem; color:#92400E; font-weight:600;">CATATAN ANALISA</span>

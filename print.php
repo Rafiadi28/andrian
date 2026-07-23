@@ -105,7 +105,12 @@ $stmt_neraca->execute([$id]);
 $neraca_data = $stmt_neraca->fetch(PDO::FETCH_ASSOC);
 
 // ===== CALCULATE FINANCIAL METRICS =====
-$monthly_income = floatval($data['omset_per_bulan'] ?? 0) + floatval($data['pendapatan_lain'] ?? 0);
+$jenis_pek = $data['jenis_pekerjaan'] ?? 'umum';
+if (($jenis_pek) === 'perangkat_desa') {
+    $monthly_income = floatval($data['omset_per_bulan'] ?? 0);
+} else {
+    $monthly_income = floatval($data['omset_per_bulan'] ?? 0) + floatval($data['pendapatan_lain'] ?? 0);
+}
 // NOTE: total_pengeluaran_tetap sudah termasuk biaya_hidup + cicilan_lain, jangan duplikasi
 $monthly_expense = floatval($data['total_pengeluaran_tetap'] ?? 0);
 $monthly_installment = floatval($data['angsuran_diajukan'] ?? 0);
@@ -221,6 +226,10 @@ foreach ($pejabat_data as $p) {
 $signature_roles = [];
 $hierarki_atasan = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
 
+$direksi_data = $pejabat_by_role['direktur_utama'] ?? null;
+$direksi_aktif = isset($direksi_data) && $direksi_data['status'] === 'aktif' && strpos($direksi_data['nama'], 'Belum Ditentukan') === false;
+$ttd_replacement_roles = [];
+
 $defaults = [
     'analis' => ['title' => 'Analis', 'full_title' => 'Analis Kredit'],
     'kasubag_analis' => ['title' => 'Kasubag Analis', 'full_title' => 'Kepala Subbagian Analis'],
@@ -233,12 +242,18 @@ foreach ($required_roles as $role) {
     // Determine the actual role to use for signature based on approval history or active status
     $approver_name = isset($approval_map[$role]) ? $approval_map[$role]['nama_approver'] : null;
     $actual_role = $role; // start with original role
+    $is_director_replacement = false;
     
     // Check if the role is currently active
     $is_active = isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['status'] === 'aktif' && strpos($pejabat_by_role[$role]['nama'], 'Belum Ditentukan') === false;
-    
+
+    // If role is not active and not yet approved, replace signature with Direksi
+    if (!$approver_name && !$is_active && $role !== 'direktur_utama' && $direksi_aktif) {
+        $actual_role = 'direktur_utama';
+        $is_director_replacement = true;
+    }
     // If NOT approved yet, AND role is not active -> Find a replacement active role!
-    if (!$approver_name && !$is_active) {
+    elseif (!$approver_name && !$is_active) {
         $pengganti_ditemukan = false;
         
         if (in_array($role, $hierarki_atasan)) {
@@ -293,8 +308,14 @@ foreach ($required_roles as $role) {
             'nama' => $p['nama'],
             'jabatan' => $jabatan_tampil,
             'tanda_tangan' => $p['tanda_tangan'],
-            'stempel' => $p['stempel']
+            'stempel' => $p['stempel'],
+            'replaced_by_director' => $is_director_replacement,
+            'original_role' => $role
         ];
+
+        if ($is_director_replacement) {
+            $ttd_replacement_roles[] = $role;
+        }
     } else {
         $signature_roles[] = [
             'id_pejabat' => null,
@@ -302,8 +323,23 @@ foreach ($required_roles as $role) {
             'nama' => '',
             'jabatan' => $defaults[$role]['full_title'] ?? '',
             'tanda_tangan' => null,
-            'stempel' => null
+            'stempel' => null,
+            'replaced_by_director' => false,
+            'original_role' => $role
         ];
+    }
+}
+
+$ttd_replacement_note = '';
+if (!empty($ttd_replacement_roles)) {
+    $role_names = array_map(function ($role) use ($defaults) {
+        return $defaults[$role]['title'] ?? ucfirst(str_replace('_', ' ', $role));
+    }, $ttd_replacement_roles);
+    $ttd_replacement_note = '⚠ Tanda tangan dan nama untuk ' . implode(', ', $role_names) . ' digantikan oleh Direktur Utama karena pejabat terkait sedang tidak aktif.';
+
+    $user_id_logging = $_SESSION['user_id'] ?? 0;
+    foreach ($ttd_replacement_roles as $role) {
+        log_activity($pdo, $user_id_logging, "Penggantian tanda tangan untuk {$defaults[$role]['title']} oleh Direktur Utama pada cetak dokumen ID #$id karena pejabat tidak aktif.");
     }
 }
 
@@ -1244,8 +1280,10 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                             }
                             $sisa_masa_kerja = date('d-m-Y', strtotime($tgl_akhir_kontrak)) . ' (' . $sisa_masa_kerja . ')';
                         } catch (Exception $e) {
-                            $sisa_masa_kerja = date('d-m-Y', strtotime($tgl_akhir_kontrak));
+                            $sisa_masa_kerja = $data['lama_usaha'] ?? '-';
                         }
+                    } else {
+                        $sisa_masa_kerja = $data['lama_usaha'] ?? '-';
                     }
                 }
 
@@ -1289,8 +1327,8 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     </tr>
                     <?php endif; ?>
                     <tr>
-                        <td class="label">Pekerjaan</td>
-                        <td class="value" colspan="3"><?= htmlspecialchars($data['pekerjaan'] ?? '-') ?></td>
+                        <td class="label"><?= in_array($jenis_pek, ['pppk', 'perangkat_desa']) ? 'Pekerjaan' : 'Pekerjaan' ?></td>
+                        <td class="value" colspan="3"><?= htmlspecialchars(in_array($jenis_pek, ['pppk', 'perangkat_desa']) ? ($data['nama_usaha'] ?? '-') : ($data['pekerjaan'] ?? '-')) ?></td>
                     </tr>
                     <tr>
                         <td class="label">Pinjaman Ke</td>
@@ -1474,6 +1512,16 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 <?php endif; ?>
 
                 <?php if ($print_6c): ?>
+                <?php
+                    $repayment_capacity = floatval($data['repayment_capacity'] ?? 0);
+                    $angsuran_diajukan = floatval($data['angsuran_diajukan'] ?? 0);
+                    $status_kelayakan_repayment = strtoupper(trim($data['status_kelayakan'] ?? ''));
+                    if ($status_kelayakan_repayment === '') {
+                        $status_kelayakan_repayment = ($repayment_capacity >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
+                    }
+                    $repayment_status_color = ($status_kelayakan_repayment === 'LAYAK') ? '#059669' : '#dc2626';
+                    $margin_keamanan = $repayment_capacity - $angsuran_diajukan;
+                ?>
                 <!-- Section 3: ANALISA 6C -->
                 <div class="section-header-formal">III. HASIL ANALISA 6C (KELAYAKAN KREDIT)</div>
                 <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 15px;">
@@ -1536,6 +1584,21 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                                 <td style="padding: 8px 6px; font-weight: bold; color: #475569; border-bottom: 1px dashed #cbd5e1;">Kelayakan Kredit</td>
                                 <td style="padding: 8px 6px; border-bottom: 1px dashed #cbd5e1; font-weight: bold; font-size: 14px; color: <?= $status_6c['warna'] ?>;">
                                     <?= strtoupper($status_6c['label']) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 6px; font-weight: bold; color: #475569; border-bottom: 1px dashed #cbd5e1;">Status Kelayakan Pembayaran</td>
+                                <td style="padding: 8px 6px; border-bottom: 1px dashed #cbd5e1; font-weight: bold; color: <?= $repayment_status_color ?>;">
+                                    <?= htmlspecialchars($status_kelayakan_repayment) ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 6px; font-weight: bold; color: #475569; border-bottom: 1px dashed #cbd5e1;">Repayment Capacity</td>
+                                <td style="padding: 8px 6px; border-bottom: 1px dashed #cbd5e1; color: #1f2937;">
+                                    <?= formatRupiah($repayment_capacity) ?> / Angsuran: <?= formatRupiah($angsuran_diajukan) ?>
+                                    <?php if ($angsuran_diajukan > 0): ?>
+                                        <br><small style="color:#6b7280;">Margin: <?= formatRupiah($margin_keamanan) ?></small>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <tr>
@@ -2187,6 +2250,11 @@ if ($from === 'dashboard' || $from === 'riwayat') {
 
                 <!-- Signature Section -->
                 <div style="margin-top: 40px; page-break-inside: avoid;">
+                    <?php if (!empty($ttd_replacement_note)): ?>
+                    <div style="margin-bottom: 12px; padding: 10px 14px; border-left: 4px solid #f59e0b; background:#fffaeb; color:#92400e; font-size:0.95rem; border-radius: 6px;">
+                        <?= htmlspecialchars($ttd_replacement_note) ?>
+                    </div>
+                    <?php endif; ?>
                     <div style="display: grid; grid-template-columns: repeat(<?= count($signature_roles) ?>, 1fr); gap: 15px;">
                         <?php foreach ($signature_roles as $index => $sig): 
                             $lvl = $sig['role'];

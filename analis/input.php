@@ -15,7 +15,9 @@ $prefill_bundle = null;
 $prefill_json = 'null';
 
 if ($edit_id > 0) {
-    $stmt = $pdo->prepare("SELECT * FROM pengajuan_kredit WHERE id_pengajuan = ? AND input_by = ? LIMIT 1");
+    // Allow analis to open the pengajuan for editing when it's in an editable state
+    // even if the current user is not the original `input_by` (e.g., revisi/diajukan ulang).
+    $stmt = $pdo->prepare("SELECT * FROM pengajuan_kredit WHERE id_pengajuan = ? AND (input_by = ? OR status_pengajuan IN ('draft','revisi','ditolak','diajukan_ulang','revisi_diajukan')) LIMIT 1");
     $stmt->execute([$edit_id, $_SESSION['user_id']]);
     $rowEdit = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$rowEdit) {
