@@ -512,37 +512,60 @@ if ($from === 'dashboard' || $from === 'riwayat') {
         
         /* Professional Letter Header */
         .letterhead {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 4px double #000;
+            width: 100%;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px double #000;
         }
         
-        .bank-logo {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 5px;
+        .letterhead-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+        }
+        
+        .letterhead-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+        
+        .letterhead-logo {
+            width: 55px;
+            padding-right: 12px;
+        }
+        
+        .letterhead-logo img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+        
+        .letterhead-info {
+            text-align: left;
+        }
+        
+        .letterhead-ref {
+            text-align: right;
+            white-space: nowrap;
         }
         
         .bank-name-letterhead {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
             color: #1e3a8a;
-            margin-bottom: 3px;
+            margin: 0;
+            line-height: 1.3;
         }
         
         .bank-address {
-            font-size: 11px;
+            font-size: 10px;
             color: #555;
-            margin: 3px 0;
+            margin: 2px 0 0 0;
         }
         
         .doc-reference {
-            margin-top: 10px;
             font-size: 11px;
-            text-align: center;
         }
         
         /* Professional Table Styling */
@@ -1131,9 +1154,34 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             
             /* Gambar agar presisi dan tidak terpotong */
             img {
+                page-break-inside: avoid;
+            }
+            
+            /* Pastikan foto/gambar konten saja yang responsive, bukan logo */
+            .data-table img,
+            .photo-card img,
+            .agunan-photo img {
                 max-width: 100% !important;
                 height: auto !important;
+            }
+            
+            /* Lock logo size saat print */
+            .letterhead-logo img {
+                width: 50px !important;
+                height: 50px !important;
+                max-width: 50px !important;
+            }
+            
+            .letterhead {
                 page-break-inside: avoid;
+            }
+            
+            .letterhead-table {
+                border: none !important;
+            }
+            
+            .letterhead-table td {
+                border: none !important;
             }
             
             .page-number {
@@ -1167,18 +1215,23 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             <div class="page-content">
                 <!-- Professional Letterhead -->
                 <div class="letterhead">
-                    <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
-                        <img src="assets/img/logo_bank.png" alt="Logo Bank Wonosobo" style="height: 50px; width: auto; object-fit: contain;">
-                        <div>
-                            <div class="bank-name-letterhead" style="font-size: 18px; font-weight: bold; color: #1e3a8a; margin-bottom: 2px;">PT BPR BANK WONOSOBO (PERSERODA)</div>
-                            <div class="bank-address" style="font-size: 11px; color: #555; margin: 0;">Jl Ahmad Yani NO.160 Wonosobo | Telp: (0286) 321293</div>
-                        </div>
-                    </div>
-                    
-                    <div class="doc-reference" style="text-align: right; margin: 0;">
-                        <span style="font-size: 12px; font-weight: bold;">Nomor: NK-<?= str_pad($id, 5, '0', STR_PAD_LEFT) ?>/<?= date('Y') ?></span><br>
-                        <span style="font-size: 11px;">Tanggal: <?= date('d F Y', time()) ?></span>
-                    </div>
+                    <table class="letterhead-table">
+                        <tr>
+                            <td class="letterhead-logo">
+                                <img src="assets/img/logo_bank.png" alt="Logo Bank Wonosobo">
+                            </td>
+                            <td class="letterhead-info">
+                                <div class="bank-name-letterhead">PT BPR BANK WONOSOBO (PERSERODA)</div>
+                                <div class="bank-address">Jl. Ahmad Yani No. 160 Wonosobo | Telp: (0286) 321293</div>
+                            </td>
+                            <td class="letterhead-ref">
+                                <div class="doc-reference">
+                                    <span style="font-size: 11px; font-weight: bold;">Nomor: NK-<?= str_pad($id, 5, '0', STR_PAD_LEFT) ?>/<?= date('Y') ?></span><br>
+                                    <span style="font-size: 10px;">Tanggal: <?= date('d F Y', time()) ?></span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
 
                 <!-- Document Title -->
@@ -2190,18 +2243,23 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             <div class="page-content">
                 <!-- Professional Letterhead (Page 2) -->
                 <div class="letterhead">
-                    <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
-                        <img src="assets/img/logo_bank.png" alt="Logo Bank Wonosobo" style="height: 50px; width: auto; object-fit: contain;">
-                        <div>
-                            <div class="bank-name-letterhead" style="font-size: 18px; font-weight: bold; color: #1e3a8a; margin-bottom: 2px;">PT BPR BANK WONOSOBO (PERSERODA)</div>
-                            <div class="bank-address" style="font-size: 11px; color: #555; margin: 0;">Jl Ahmad Yani NO.160 Wonosobo | Telp: (0286) 321293</div>
-                        </div>
-                    </div>
-                    
-                    <div class="doc-reference" style="text-align: right; margin: 0;">
-                        <span style="font-size: 12px; font-weight: bold;">Nomor: NK-<?= str_pad($id, 5, '0', STR_PAD_LEFT) ?>/<?= date('Y') ?></span><br>
-                        <span style="font-size: 11px;">Tanggal: <?= date('d F Y', time()) ?></span>
-                    </div>
+                    <table class="letterhead-table">
+                        <tr>
+                            <td class="letterhead-logo">
+                                <img src="assets/img/logo_bank.png" alt="Logo Bank Wonosobo">
+                            </td>
+                            <td class="letterhead-info">
+                                <div class="bank-name-letterhead">PT BPR BANK WONOSOBO (PERSERODA)</div>
+                                <div class="bank-address">Jl. Ahmad Yani No. 160 Wonosobo | Telp: (0286) 321293</div>
+                            </td>
+                            <td class="letterhead-ref">
+                                <div class="doc-reference">
+                                    <span style="font-size: 11px; font-weight: bold;">Nomor: NK-<?= str_pad($id, 5, '0', STR_PAD_LEFT) ?>/<?= date('Y') ?></span><br>
+                                    <span style="font-size: 10px;">Tanggal: <?= date('d F Y', time()) ?></span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
 
                 <!-- Timeline Section Title -->
