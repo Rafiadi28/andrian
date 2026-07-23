@@ -181,6 +181,7 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                                 var nominalInput = document.querySelector('.desa-angsuran-nominal');
                                 if (nominalInput) {
                                     nominalInput.value = totalAngsuranLamaDesa;
+                                    if (typeof formatDesaCurrencyInput === 'function') formatDesaCurrencyInput(nominalInput);
                                     if (typeof desaUpdateTotalAngsuran === 'function') desaUpdateTotalAngsuran();
                                 }
                             }
@@ -188,8 +189,23 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                     }
                     var om = parseFloat(pg.omset_per_bulan) || 0;
                     var tamb = parseFloat(pg.cashflow_usaha) || 0;
-                    setId('desk_penghasilan_tetap', Math.round(Math.max(0, om - tamb)));
-                    setId('desk_tambahan_penghasilan', Math.round(tamb));
+                    var biayaHidup = parseFloat(pg.biaya_hidup) || 0;
+                    
+                    var tetap = Math.round(Math.max(0, om - tamb));
+                    var tambahan = Math.round(tamb);
+                    
+                    setId('desk_penghasilan_tetap', tetap);
+                    setId('desk_tambahan_penghasilan', tambahan);
+                    setId('desk_biaya_hidup', biayaHidup);
+                    
+                    setTimeout(function() {
+                        ['desk_penghasilan_tetap', 'desk_tambahan_penghasilan', 'desk_biaya_hidup'].forEach(function(id) {
+                            var el = document.getElementById(id);
+                            if (el && typeof formatDesaCurrencyInput === 'function') {
+                                formatDesaCurrencyInput(el);
+                            }
+                        });
+                    }, 150);
                 }
 
                 if (P.neraca && P.neraca.aktiva_kas != null) {

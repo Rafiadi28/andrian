@@ -336,40 +336,22 @@ try {
                             nama_debitur=?, id_nasabah=?, nik=?, npwp=?, tempat_lahir=?, tanggal_lahir=?, pekerjaan=?, alamat_pekerjaan=?,
                             status_perkawinan=?, nama_pasangan=?, tempat_lahir_pasangan=?, tanggal_lahir_pasangan=?, pekerjaan_pasangan=?, alamat_pekerjaan_pasangan=?,
                             alamat_ktp=?, dukuh=?, desa=?, kecamatan=?, kota_kabupaten=?, alamat_domisili=?, no_hp=?, jumlah_tanggungan=?, nama_ibu_kandung=?,
-                            nib=?, nama_instansi=?, alamat_instansi=?, telepon_kantor=?, departemen_bagian=?, jabatan=?, sk_avalis=?";
-
+                            nib=?";
+                            
                     $params = [
-                        $nama,
-                        $id_nasabah,
-                        $nik,
-                        $npwp,
-                        $tempat_lahir,
-                        $tanggal_lahir,
-                        $pekerjaan,
-                        $alamat_pekerjaan,
-                        $status_kawin,
-                        $pasangan,
-                        $tempat_lahir_pasangan,
-                        $tanggal_lahir_pasangan,
-                        $pekerjaan_pasangan,
-                        $alamat_pekerjaan_pasangan,
-                        $alamat_ktp,
-                        $dukuh,
-                        $desa,
-                        $kecamatan,
-                        $kota_kabupaten,
-                        $alamat_dom,
-                        $hp,
-                        $jumlah_tanggungan,
-                        $nama_ibu_kandung,
-                        $nib,
-                        $nama_instansi,
-                        $alamat_instansi,
-                        $telepon_kantor,
-                        $departemen_bagian,
-                        $jabatan,
-                        $sk_avalis
+                        $nama, $id_nasabah, $nik, $npwp, $tempat_lahir, $tanggal_lahir, $pekerjaan, $alamat_pekerjaan,
+                        $status_kawin, $pasangan, $tempat_lahir_pasangan, $tanggal_lahir_pasangan, $pekerjaan_pasangan, $alamat_pekerjaan_pasangan,
+                        $alamat_ktp, $dukuh, $desa, $kecamatan, $kota_kabupaten, $alamat_dom, $hp, $jumlah_tanggungan, $nama_ibu_kandung,
+                        $nib
                     ];
+
+                    // Hanya update field instansi/jabatan jika bukan pppk atau perangkat_desa
+                    if (!in_array($jenis_pekerjaan_post, ['pppk', 'perangkat_desa'], true)) {
+                        $sql .= ", nama_instansi=?, alamat_instansi=?, telepon_kantor=?, departemen_bagian=?, jabatan=?, sk_avalis=?";
+                        $params = array_merge($params, [
+                            $nama_instansi, $alamat_instansi, $telepon_kantor, $departemen_bagian, $jabatan, $sk_avalis
+                        ]);
+                    }
 
                     if (in_array($curr_status, ['draft', 'revisi', 'ditolak'], true)) {
                         $sql .= ", pinjaman_ke=?";
