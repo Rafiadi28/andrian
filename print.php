@@ -1405,7 +1405,17 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     <?php endif; ?>
                     <tr>
                         <td class="label"><?= in_array($jenis_pek, ['pppk', 'perangkat_desa']) ? 'Pekerjaan' : 'Pekerjaan' ?></td>
-                        <td class="value" colspan="3"><?= htmlspecialchars(in_array($jenis_pek, ['pppk', 'perangkat_desa']) ? ($data['nama_usaha'] ?? '-') : ($data['pekerjaan'] ?? '-')) ?></td>
+                        <td class="value" colspan="3"><?php
+                            if (in_array($jenis_pek, ['pppk', 'perangkat_desa'])) {
+                                $pek_print = $data['nama_usaha'] ?? '-';
+                                if ($jenis_pek === 'perangkat_desa' && ($pek_print === '-' || $pek_print === '')) {
+                                    $pek_print = !empty($data['jabatan']) ? 'PERANGKAT DESA - ' . $data['jabatan'] : 'PERANGKAT DESA';
+                                }
+                                echo htmlspecialchars($pek_print);
+                            } else {
+                                echo htmlspecialchars($data['pekerjaan'] ?? '-');
+                            }
+                        ?></td>
                     </tr>
                     <tr>
                         <td class="label">Pinjaman Ke</td>

@@ -165,7 +165,14 @@ $timeline = $stmt->fetchAll();
                 <div style="flex: 1 1 min-content; min-width: 250px;">
                     <h2><?= htmlspecialchars($data['nama_debitur']) ?></h2>
                     <p class="text-muted">ID Nasabah: <?= htmlspecialchars($data['id_nasabah'] ?? '-') ?> | NIK: <?= htmlspecialchars($data['nik']) ?> | NPWP: <?= htmlspecialchars($data['npwp'] ?? '-') ?></p>
-                    <p class="text-muted">Pekerjaan: <?= htmlspecialchars($data['pekerjaan']) ?><?= (!empty($data['nib'])) ? " | NIB: " . htmlspecialchars($data['nib']) : '' ?></p>
+                    <p class="text-muted">Pekerjaan: <?php
+                        $pek_display = $data['pekerjaan'] ?? '';
+                        $jp = $data['jenis_pekerjaan'] ?? 'umum';
+                        if ($jp === 'perangkat_desa' && (empty($pek_display) || $pek_display === '-')) {
+                            $pek_display = !empty($data['jabatan']) ? 'PERANGKAT DESA - ' . $data['jabatan'] : 'PERANGKAT DESA';
+                        }
+                        echo htmlspecialchars($pek_display ?: '-');
+                    ?><?= (!empty($data['nib'])) ? " | NIB: " . htmlspecialchars($data['nib']) : '' ?></p>
                 </div>
                 <div style="text-align: right; flex: 1 1 min-content; min-width: 250px; display: flex; flex-direction: column; align-items: flex-end;">
                     <h2 class="text-primary" style="margin-bottom: 0.5rem;"><?= formatRupiah($data['jumlah_kredit']) ?></h2>
@@ -269,7 +276,13 @@ $timeline = $stmt->fetchAll();
                         <tr>
                             <td style="width:130px; color:#64748B; vertical-align:top;"><?= $is_pegawai ? 'Pekerjaan' : 'Nama Usaha' ?></td>
                             <td style="width:15px; vertical-align:top; color:#94a3b8;">:</td>
-                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?= htmlspecialchars($data['nama_usaha'] ?? '-') ?></td>
+                            <td style="vertical-align:top; font-weight:500; color:#334155;"><?php
+                                $nu = $data['nama_usaha'] ?? '-';
+                                if ($jenis_pek === 'perangkat_desa' && ($nu === '-' || $nu === '')) {
+                                    $nu = !empty($data['jabatan']) ? 'PERANGKAT DESA - ' . $data['jabatan'] : 'PERANGKAT DESA';
+                                }
+                                echo htmlspecialchars($nu);
+                            ?></td>
                         </tr>
                         <?php if (!$is_pegawai || !empty($data['bidang_usaha'])): ?>
                         <tr>

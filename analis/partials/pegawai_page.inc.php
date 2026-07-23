@@ -157,7 +157,7 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                             }
                         }, 200);
                     }
-                } else if (jenis === 'perangkat_desa' || marker === 'PERANGKAT_DESA') {
+                } else if (jenis === 'perangkat_desa' || marker === 'PERANGKAT_DESA' || marker.indexOf('PERANGKAT DESA') === 0) {
                     var jabatan = pg.jabatan || '';
                     setId('desk_jabatan', jabatan);
                     setId('desk_jaminan', pg.bidang_usaha);
@@ -179,6 +179,10 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                             if (typeof desaAddAngsuran === 'function') {
                                 desaAddAngsuran();
                                 var nominalInput = document.querySelector('.desa-angsuran-nominal');
+                                var namaInput = document.querySelector('.desa-angsuran-nama');
+                                if (namaInput && !namaInput.value) {
+                                    namaInput.value = 'ANGSURAN LAMA';
+                                }
                                 if (nominalInput) {
                                     nominalInput.value = totalAngsuranLamaDesa;
                                     if (typeof formatDesaCurrencyInput === 'function') formatDesaCurrencyInput(nominalInput);

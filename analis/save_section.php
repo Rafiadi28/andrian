@@ -701,8 +701,10 @@ try {
                 }
 
                 // Build UPDATE
+                // nama_usaha = 'PERANGKAT DESA' agar detail.php & print.php menampilkan pekerjaan dengan benar
+                $nama_usaha_desa = 'PERANGKAT DESA' . ($jabatan !== '' ? ' - ' . $jabatan : '');
                 $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET 
-                    jabatan=?,
+                    jabatan=?, pekerjaan=?,
                     nama_usaha=?, bidang_usaha=?, lama_usaha=?, departemen_bagian=?,
                     omset_per_bulan=?, biaya_bahan_baku=0, biaya_gaji=0, biaya_listrik=0, biaya_air=0, biaya_sewa=0, biaya_transportasi=0, biaya_lainnya=0,
                     biaya_operasional=0, laba_bersih=?, penyusutan=0, cashflow_usaha=?,
@@ -713,7 +715,8 @@ try {
                 
                 $execParams = [
                     $jabatan,               // jabatan
-                    '-',                    // nama_usaha (tidak digunakan untuk perangkat_desa)
+                    'PERANGKAT DESA',       // pekerjaan (auto-fill agar detail.php header tidak kosong)
+                    $nama_usaha_desa,       // nama_usaha (jabatan perangkat desa untuk tampil di detail & print)
                     $sk_d,                  // bidang_usaha (untuk menyimpan nomor SK)
                     $tgl_mulai, $tgl_akhir, // lama_usaha, departemen_bagian (tanggal mulai dan akhir/lahir)
                     $omset_total,           // omset_per_bulan
