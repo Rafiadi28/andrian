@@ -631,21 +631,21 @@ try {
                     exit;
                 }
                 
-                $tetap = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_penghasilan_tetap'] ?? '0'));
-                $tambahan = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_tambahan_penghasilan'] ?? '0'));
+                $tetap = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_penghasilan_tetap'] ?? '0'));
+                $tambahan = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_tambahan_penghasilan'] ?? '0'));
                 $omset_total = $tetap + $tambahan;
                 
-                $biaya_hidup = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_biaya_hidup'] ?? '0'));
+                $biaya_hidup = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_biaya_hidup'] ?? '0'));
                 
                 // --- Angsuran Bank Wonosobo (array dinamis) ---
                 $angsuran_nominal_arr = $_POST['desk_angsuran_nominal'] ?? [];
                 if (is_array($angsuran_nominal_arr) && count($angsuran_nominal_arr) > 0) {
                     $cic = 0;
                     foreach ($angsuran_nominal_arr as $v) {
-                        $cic += floatval(str_replace(['Rp', '.', ' '], '', $v));
+                        $cic += floatval(str_replace(['Rp', '.', ',', ' '], '', $v));
                     }
                 } else {
-                    $cic = floatval(str_replace(['Rp', '.', ' '], '', $_POST['desk_total_angsuran'] ?? $_POST['desk_angsuran_lain'] ?? '0'));
+                    $cic = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_total_angsuran'] ?? $_POST['desk_angsuran_lain'] ?? '0'));
                 }
                 
                 // ⚠️ BANKING STANDARD: Repayment Capacity untuk Perangkat Desa

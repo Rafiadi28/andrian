@@ -54,9 +54,11 @@ if ($edit_id > 0) {
         $catatan_revisi_display = trim((string) $rowEdit['alasan_penolakan']);
     }
     $prefill_bundle = analisLoadPrefillBundle($pdo, $edit_id);
-    $prefill_json = json_encode($prefill_bundle, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    $prefill_json = json_encode($prefill_bundle, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES);
     if ($prefill_json === false) {
         $prefill_json = 'null';
+    } else {
+        $prefill_json = str_replace(["\u{2028}", "\u{2029}"], ['\u2028', '\u2029'], $prefill_json);
     }
                             } else {
         $normalized_param = $jenis_param !== null ? normalizeJenisPekerjaan($jenis_param) : '';
