@@ -665,9 +665,12 @@ function calculateSisaMasaJabatan() {
     const jabatanElem = document.getElementById('desk_jabatan');
     const tglMulaiElem = document.getElementById('desk_tgl_mulai');
     const tglAkhirElem = document.getElementById('desk_tgl_akhir');
+    const displayElem = document.getElementById('desk_sisa_jabatan_display');
+    const hiddenElem = document.getElementById('desk_sisa_jabatan_bulan');
+    
     if (!tglMulaiElem.value || !tglAkhirElem.value) {
-        displayElem.textContent = '-';
-        hiddenElem.value = 0;
+        if (displayElem) displayElem.textContent = '-';
+        if (hiddenElem) hiddenElem.value = 0;
         return;
     }
 
@@ -677,8 +680,8 @@ function calculateSisaMasaJabatan() {
     // Validasi: Akhir >= Mulai
     if (tglAkhir < tglMulai) {
         showDesaError('desk_tgl_akhir', 'Tanggal akhir tidak boleh lebih kecil dari tanggal mulai');
-        displayElem.textContent = '-';
-        hiddenElem.value = 0;
+        if (displayElem) displayElem.textContent = '-';
+        if (hiddenElem) hiddenElem.value = 0;
         return;
     }
 
@@ -700,8 +703,8 @@ function calculateSisaMasaJabatan() {
         display += sisaBulan + ' bulan';
     }
 
-    displayElem.textContent = display.trim();
-    hiddenElem.value = bulan;
+    if (displayElem) displayElem.textContent = display.trim();
+    if (hiddenElem) hiddenElem.value = bulan;
 }
 
 // ===== VALIDASI INPUT =====
