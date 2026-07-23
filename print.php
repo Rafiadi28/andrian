@@ -1045,7 +1045,9 @@ if ($from === 'dashboard' || $from === 'riwayat') {
         
         /* Print Media */
         @media print {
-            body {
+            html, body {
+                width: 100% !important;
+                max-width: 100% !important;
                 background-color: white;
                 padding: 0;
                 margin: 0;
@@ -1053,22 +1055,39 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 color: #000;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                box-sizing: border-box;
+            }
+            
+            * {
+                box-sizing: border-box;
             }
             
             @page {
-                size: <?= $paper_size ?> portrait;
-                margin: 20mm 15mm 15mm 15mm; /* Atas 20mm, Kiri/Kanan/Bawah 15mm */
+                size: <?= $paper_size === 'F4' ? '210mm 330mm' : 'A4' ?> portrait;
+                margin: 15mm 10mm 15mm 10mm; /* Lebihkan area cetak agar tidak terpotong */
             }
             
             .toolbar, .print-button {
                 display: none !important;
             }
             
+            .pages-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+                height: auto !important;
+            }
+
             .page {
+                width: 100% !important;
+                max-width: 100% !important;
                 margin: 0;
                 box-shadow: none;
                 border-radius: 0;
+                border: none;
                 page-break-after: always;
+                overflow: visible !important;
+                height: auto !important;
             }
             
             .page:last-child {
@@ -1076,6 +1095,8 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             }
             
             .page-content {
+                width: 100% !important;
+                max-width: 100% !important;
                 padding: 0; /* Margin sepenuhnya dikendalikan oleh @page */
             }
             
@@ -1083,7 +1104,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             table {
                 width: 100%;
                 border-collapse: collapse;
-                page-break-inside: auto;
+                page-break-inside: auto !important;
             }
 
             thead {
@@ -1094,12 +1115,24 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 display: table-footer-group;
             }
 
-            tr {
+            tr, td, th {
                 page-break-inside: avoid;
                 page-break-after: auto;
             }
             
-            .section, .approval-timeline, .signature-section, .executive-summary, .collateral-section {
+            /* Menghindari terpotong pada tabel atau box tertentu */
+            .data-table {
+                page-break-inside: auto !important;
+            }
+            
+            .approval-timeline, .signature-section, .executive-summary, .summary-table, .metrics-box {
+                page-break-inside: avoid;
+            }
+            
+            /* Gambar agar presisi dan tidak terpotong */
+            img {
+                max-width: 100% !important;
+                height: auto !important;
                 page-break-inside: avoid;
             }
             

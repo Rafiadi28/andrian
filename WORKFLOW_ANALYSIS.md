@@ -337,3 +337,5 @@ If ALL users of a role are inactive, that role is auto-skipped
    - posisi: direksi → selesai
 
 5. **Approval history** = complete timeline in approval_kredit table
+
+define('BASE_URL', '/andrian/bank-kredit');
