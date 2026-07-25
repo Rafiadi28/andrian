@@ -62,22 +62,15 @@ if ($compliance_data && !empty($compliance_data['checklist_data'])) {
     }
 }
 
-// Get approval timeline - show only latest approval per level
-// Use subquery to get latest id_approval per level to avoid ONLY_FULL_GROUP_BY error
+// Get approval history for the pengajuan and keep all roles in the approval chain
 $stmt = $pdo->prepare("
     SELECT a.*, u.nama as nama_approver, u.role as role_approver 
     FROM approval_kredit a 
     LEFT JOIN users u ON a.id_user = u.id_user 
-    WHERE a.id_pengajuan = ? AND a.keputusan = 'setuju'
-    AND a.id_approval IN (
-        SELECT MAX(id_approval) 
-        FROM approval_kredit 
-        WHERE id_pengajuan = ? AND keputusan = 'setuju'
-        GROUP BY level_approval
-    )
-    ORDER BY FIELD(a.level_approval, 'analis', 'kasubag_analis', 'kabag_kredit', 'kadiv', 'kadiv_bisnis', 'direktur_utama')
+    WHERE a.id_pengajuan = ?
+    ORDER BY a.id_approval ASC
 ");
-$stmt->execute([$id, $id]);
+$stmt->execute([$id]);
 $approvals = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // ===== FETCH AGUNAN DATA =====
@@ -183,14 +176,28 @@ $normalizeApprovalRoleForPrint = static function ($role) use ($legacy_role_alias
     return $legacy_role_aliases[$role] ?? $role;
 };
 
+$approval_latest = [];
+$approval_approved = [];
+
 foreach ((array)$approvals as $a) {
-    if ($a['keputusan'] === 'setuju') {
-        $normalized_role = $normalizeApprovalRoleForPrint($a['level_approval'] ?? '');
-        if ($normalized_role !== '') {
-            $approval_map[$normalized_role] = $a;
+    $normalized_role = $normalizeApprovalRoleForPrint($a['level_approval'] ?? '');
+    if ($normalized_role === '') {
+        continue;
+    }
+
+    if (!isset($approval_latest[$normalized_role]) || (int)($a['id_approval'] ?? 0) > (int)($approval_latest[$normalized_role]['id_approval'] ?? 0)) {
+        $approval_latest[$normalized_role] = $a;
+    }
+
+    if (($a['keputusan'] ?? '') === 'setuju') {
+        if (!isset($approval_approved[$normalized_role]) || (int)($a['id_approval'] ?? 0) > (int)($approval_approved[$normalized_role]['id_approval'] ?? 0)) {
+            $approval_approved[$normalized_role] = $a;
         }
     }
 }
+
+// Use approved-only map for status/timeline
+$approval_map = $approval_approved;
 
 // ===== DETERMINE SIGNATURE APPROVAL LEVELS BASED ON LOAN AMOUNT =====
 $loan_threshold = 500000000; // 500 juta threshold
@@ -226,7 +233,7 @@ if ($semua_disetujui) {
     $bg_status_formal = 'background-color: #fff3cd; padding: 4px 8px; border-radius: 4px; display: inline-block;';
 }
 
-// Fetch master pejabat data for the required roles
+// Fetch master pejabat data for all roles
 $stmt_pejabat = $pdo->prepare("
     SELECT id_pejabat, role, nama, jabatan, tanda_tangan, stempel, status 
     FROM master_pejabat 
@@ -241,8 +248,6 @@ foreach ($pejabat_data as $p) {
 }
 
 $signature_roles = [];
-$hierarki_atasan = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
-
 $defaults = [
     'analis' => ['title' => 'Analis', 'full_title' => 'Analis Kredit'],
     'kasubag_analis' => ['title' => 'Kasubag Analis', 'full_title' => 'Kepala Subbagian Analis'],
@@ -251,48 +256,81 @@ $defaults = [
     'direktur_utama' => ['title' => 'Direktur Utama', 'full_title' => 'Direktur Utama']
 ];
 
+$active_user_count_cache = [];
+$getActiveUserCount = static function (PDO $pdo, string $role) use (&$active_user_count_cache) {
+    if (isset($active_user_count_cache[$role])) {
+        return $active_user_count_cache[$role];
+    }
+    $stmtActive = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = ? AND status_jabatan = 'aktif'");
+    $stmtActive->execute([$role]);
+    return $active_user_count_cache[$role] = (int)$stmtActive->fetchColumn();
+};
+
+$hasSkippedPejabat = false;
+$included_roles = [];
+
 foreach ($required_roles as $role) {
-    $approval_entry = $approval_map[$role] ?? null;
-    $approver_name = $approval_entry['nama_approver'] ?? null;
-    $actual_role = $role;
+    $role_info = $pejabat_by_role[$role] ?? null;
+    $approval_entry = $approval_latest[$role] ?? null;
+    $has_active_user = !$role_info ? ($getActiveUserCount($pdo, $role) > 0) : false;
 
-    if ($approver_name) {
-        foreach ($pejabat_by_role as $r => $p) {
-            if (($p['nama'] ?? '') === $approver_name) {
-                $actual_role = $r;
-                break;
-            }
-        }
+    if ($role === 'kasubag_analis' && !$role_info && !$approval_entry && !$has_active_user) {
+        continue;
     }
 
-    $p = $pejabat_by_role[$actual_role] ?? null;
-    if (!$p && isset($pejabat_by_role[$role])) {
-        $p = $pejabat_by_role[$role];
+    $is_active = false;
+    if ($role_info !== null) {
+        $is_active = strtolower((string)$role_info['status']) === 'aktif';
+    } elseif ($has_active_user) {
+        $is_active = true;
+    } else {
+        $is_active = false;
     }
 
-    $jabatan_tampil = $p['jabatan'] ?? ($defaults[$role]['full_title'] ?? ucwords(str_replace('_', ' ', $role)));
-    $nama_tampil = $p['nama'] ?? '';
-    if (empty($nama_tampil) && $approver_name) {
-        $nama_tampil = $approver_name;
+    if (!$is_active) {
+        $hasSkippedPejabat = true;
+        continue;
     }
 
-    if (empty($nama_tampil)) {
-        $nama_tampil = '';
+    $jabatan_tampil = $role_info['jabatan'] ?? ($defaults[$role]['full_title'] ?? ucwords(str_replace('_', ' ', $role)));
+    $nama_tampil = $role_info['nama'] ?? '';
+    if (empty($nama_tampil) && !empty($approval_entry['nama_approver'])) {
+        $nama_tampil = $approval_entry['nama_approver'];
     }
 
     $signature_roles[] = [
-        'id_pejabat' => $p['id_pejabat'] ?? null,
+        'id_pejabat' => $role_info['id_pejabat'] ?? null,
         'role' => $role,
         'nama' => $nama_tampil,
         'jabatan' => $jabatan_tampil,
-        'tanda_tangan' => $p['tanda_tangan'] ?? null,
-        'stempel' => $p['stempel'] ?? null,
+        'tanda_tangan' => $role_info['tanda_tangan'] ?? null,
+        'stempel' => $role_info['stempel'] ?? null,
         'replaced_by_director' => false,
         'original_role' => $role
+    ];
+    $included_roles[] = $role;
+}
+
+if ($hasSkippedPejabat && !in_array('direktur_utama', $included_roles, true)) {
+    $director_info = $pejabat_by_role['direktur_utama'] ?? null;
+    $director_approval_entry = $approval_latest['direktur_utama'] ?? null;
+
+    $signature_roles[] = [
+        'id_pejabat' => $director_info['id_pejabat'] ?? null,
+        'role' => 'direktur_utama',
+        'nama' => $director_info['nama'] ?? ($director_approval_entry['nama_approver'] ?? ''),
+        'jabatan' => $director_info['jabatan'] ?? $defaults['direktur_utama']['full_title'],
+        'tanda_tangan' => $director_info['tanda_tangan'] ?? null,
+        'stempel' => $director_info['stempel'] ?? null,
+        'replaced_by_director' => true,
+        'original_role' => 'direktur_utama'
     ];
 }
 
 $ttd_replacement_note = '';
+if ($hasSkippedPejabat) {
+    $ttd_replacement_note = '⚠ Tanda tangan pejabat yang sedang cuti/tidak aktif digantikan oleh Direktur Utama sesuai ketentuan sistem.';
+}
 
 // Paper styles
 $paper_styles = [
@@ -2223,16 +2261,6 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 <div class="section-header-formal">V. TIMELINE PROSES PERSETUJUAN</div>
 
                 <?php
-                $approval_map = [];
-                if (!empty($approvals)) {
-                    foreach ($approvals as $app) {
-                        $normalized_role = $normalizeApprovalRoleForPrint($app['level_approval'] ?? '');
-                        if ($app['keputusan'] === 'setuju' && $normalized_role !== '') {
-                            $approval_map[$normalized_role] = $app;
-                        }
-                    }
-                }
-
                 $status_overall = strtolower($data['status'] ?? 'pending');
                 $found_blocking = false;
                 ?>
