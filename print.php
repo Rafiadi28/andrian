@@ -242,44 +242,22 @@ foreach ($required_roles as $role) {
     // Determine the actual role to use for signature based on approval history or active status
     $approver_name = isset($approval_map[$role]) ? $approval_map[$role]['nama_approver'] : null;
     $actual_role = $role; // start with original role
-    $is_director_replacement = false;
     
     // Check if the role is currently active
     $is_active = isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['status'] === 'aktif' && strpos($pejabat_by_role[$role]['nama'], 'Belum Ditentukan') === false;
 
-    // If role is not active and not yet approved, replace signature with Direksi
-    if (!$approver_name && !$is_active && $role !== 'direktur_utama' && $direksi_aktif) {
-        $actual_role = 'direktur_utama';
-        $is_director_replacement = true;
+    // JIKA CUTI (tidak aktif dan belum diapprove): SKIP role ini dari form cetak
+    $is_cuti = !$approver_name && !$is_active;
+
+    if ($is_cuti) {
+        // Track the skipped role to show a note later
+        $ttd_replacement_roles[] = $role;
+        // Skip adding this role's signature box entirely
+        continue;
     }
-    // If NOT approved yet, AND role is not active -> Find a replacement active role!
-    elseif (!$approver_name && !$is_active) {
-        $pengganti_ditemukan = false;
-        
-        if (in_array($role, $hierarki_atasan)) {
-            $idx_current = array_search($role, $hierarki_atasan);
-            for ($i = $idx_current + 1; $i < count($hierarki_atasan); $i++) {
-                $check_role = $hierarki_atasan[$i];
-                if (isset($pejabat_by_role[$check_role]) && $pejabat_by_role[$check_role]['status'] === 'aktif' && strpos($pejabat_by_role[$check_role]['nama'], 'Belum Ditentukan') === false) {
-                    $actual_role = $check_role;
-                    $pengganti_ditemukan = true;
-                    break;
-                }
-            }
-            if (!$pengganti_ditemukan) {
-                for ($i = $idx_current - 1; $i >= 0; $i--) {
-                    $check_role = $hierarki_atasan[$i];
-                    if (isset($pejabat_by_role[$check_role]) && $pejabat_by_role[$check_role]['status'] === 'aktif' && strpos($pejabat_by_role[$check_role]['nama'], 'Belum Ditentukan') === false) {
-                        $actual_role = $check_role;
-                        $pengganti_ditemukan = true;
-                        break;
-                    }
-                }
-            }
-        }
-    } 
+
     // If ALREADY APPROVED, we should ideally find which role matches the approver name
-    elseif ($approver_name) {
+    if ($approver_name) {
         // If the original role's name doesn't match the approver, someone else approved it
         if (isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['nama'] !== $approver_name) {
             // Find who actually approved it among all master_pejabat
@@ -309,13 +287,9 @@ foreach ($required_roles as $role) {
             'jabatan' => $jabatan_tampil,
             'tanda_tangan' => $p['tanda_tangan'],
             'stempel' => $p['stempel'],
-            'replaced_by_director' => $is_director_replacement,
+            'replaced_by_director' => false,
             'original_role' => $role
         ];
-
-        if ($is_director_replacement) {
-            $ttd_replacement_roles[] = $role;
-        }
     } else {
         $signature_roles[] = [
             'id_pejabat' => null,
@@ -327,6 +301,45 @@ foreach ($required_roles as $role) {
             'replaced_by_director' => false,
             'original_role' => $role
         ];
+    }
+}
+
+// JIKA ADA YANG CUTI: Tambahkan Direktur Utama ke blok TTD jika belum ada
+if (!empty($ttd_replacement_roles) && $direksi_aktif) {
+    $direktur_exists = false;
+    foreach ($signature_roles as $sr) {
+        if ($sr['role'] === 'direktur_utama' || $sr['original_role'] === 'direktur_utama') {
+            $direktur_exists = true;
+            break;
+        }
+    }
+
+    if (!$direktur_exists) {
+        $role = 'direktur_utama';
+        if (isset($pejabat_by_role[$role])) {
+            $p = $pejabat_by_role[$role];
+            $signature_roles[] = [
+                'id_pejabat' => $p['id_pejabat'],
+                'role' => $role,
+                'nama' => $p['nama'],
+                'jabatan' => $p['jabatan'],
+                'tanda_tangan' => $p['tanda_tangan'],
+                'stempel' => $p['stempel'],
+                'replaced_by_director' => true,
+                'original_role' => $role
+            ];
+        } else {
+            $signature_roles[] = [
+                'id_pejabat' => null,
+                'role' => $role,
+                'nama' => '',
+                'jabatan' => $defaults[$role]['full_title'] ?? '',
+                'tanda_tangan' => null,
+                'stempel' => null,
+                'replaced_by_director' => true,
+                'original_role' => $role
+            ];
+        }
     }
 }
 

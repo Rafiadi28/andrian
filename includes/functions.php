@@ -450,8 +450,7 @@ function getHierarchy()
 {
     // Approval hierarchy chain - must align with posisi_saat_ini column values
     // NOTE: 'selesai' is added by the system when chain ends
-    // UPDATED: Kepatuhan now INTEGRATED into approval chain (not parallel)
-    return ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
+    return ['analis', 'kasubag_analis', 'kepatuhan', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
 }
 
 /**
@@ -615,8 +614,8 @@ function formatRupiah($angka)
 function statusPengajuanForPipelinePosition($role_posisi)
 {
     $map = [
-        // 'kepatuhan' removed from pipeline — no longer an approval step
         'kasubag_analis' => 'kasubag',
+        'kepatuhan' => 'kepatuhan',
         'kabag_kredit' => 'kabag',
         'kadiv_bisnis' => 'kadiv',
         'direktur_utama' => 'direksi',
@@ -630,8 +629,7 @@ function statusPengajuanForPipelinePosition($role_posisi)
  */
 function pengajuanStatusesActivePipeline()
 {
-    // 'kepatuhan' removed from pipeline — no longer blocks approval routing
-    return ['proses', 'diajukan', 'kasubag', 'kabag', 'kadiv', 'direksi'];
+    return ['proses', 'diajukan', 'kasubag', 'kepatuhan', 'kabag', 'kadiv', 'direksi'];
 }
 
 /** Untuk disisipkan aman ke SQL IN (...) — nilai berasal dari kode, bukan input pengguna. */
@@ -826,10 +824,27 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
         }
 
         if ($k === 'revisi') {
-            // Mark for revision and return to analis. Preserve old data.
+            // Logika baru: Revisi dari Kabag/Kadiv akan turun ke kasubag_analis.
+            // Namun, jika kasubag_analis sedang cuti/tidak aktif, langsung lompat ke analis.
+            $targetPosisi = 'analis';
+            $targetStatus = 'revisi';
+            
+            if ($role === 'kabag_kredit' || $role === 'kadiv_bisnis' || $role === 'direktur_utama') {
+                // Cek apakah kasubag_analis aktif
+                $stmtKasubag = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = 'kasubag_analis' AND status_jabatan = 'aktif'");
+                $stmtKasubag->execute();
+                $isKasubagAktif = (int)$stmtKasubag->fetchColumn() > 0;
+                
+                if ($isKasubagAktif) {
+                    $targetPosisi = 'kasubag_analis';
+                    $targetStatus = 'kasubag';
+                }
+            }
+
+            // Mark for revision. Preserve old data.
             if (enumAllows($pdo, 'pengajuan_kredit', 'status_pengajuan', 'revisi')) {
-                $upd = $pdo->prepare("UPDATE pengajuan_kredit SET status_pengajuan = 'revisi', posisi_saat_ini = 'analis', revision_count = COALESCE(revision_count,0) + 1, last_revision_at = NOW(), last_revision_by = ? , last_reject_level = ? WHERE id_pengajuan = ?");
-                $upd->execute([$user_id, $role, $id_pengajuan]);
+                $upd = $pdo->prepare("UPDATE pengajuan_kredit SET status_pengajuan = ?, posisi_saat_ini = ?, revision_count = COALESCE(revision_count,0) + 1, last_revision_at = NOW(), last_revision_by = ? , last_reject_level = ? WHERE id_pengajuan = ?");
+                $upd->execute([$targetStatus, $targetPosisi, $user_id, $role, $id_pengajuan]);
             } else {
                 $pdo->rollBack();
                 return ['success' => false, 'message' => 'Kolom status_pengajuan tidak mendukung nilai revisi'];
@@ -845,32 +860,40 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                 // ignore if column not exists
             }
 
-            // ===== CREATE NOTIFICATION FOR ANALIS (REVISION) =====
-            $stmtAnalis = $pdo->prepare("
-                SELECT DISTINCT u.id_user 
-                FROM users u
-                LEFT JOIN approval_kredit ak ON u.id_user = ak.id_user AND ak.id_pengajuan = ?
-                WHERE u.role = 'analis' AND ak.level_approval = 'analis' LIMIT 1
-            ");
-            $stmtAnalis->execute([$id_pengajuan]);
-            $analisId = $stmtAnalis->fetchColumn();
+            // ===== CREATE NOTIFICATION FOR TARGET REVISION =====
+            if ($targetPosisi === 'analis') {
+                $stmtTarget = $pdo->prepare("
+                    SELECT DISTINCT u.id_user 
+                    FROM users u
+                    LEFT JOIN approval_kredit ak ON u.id_user = ak.id_user AND ak.id_pengajuan = ?
+                    WHERE u.role = 'analis' AND ak.level_approval = 'analis' LIMIT 1
+                ");
+                $stmtTarget->execute([$id_pengajuan]);
+                $targetUsers = [$stmtTarget->fetchColumn()];
+            } else {
+                $stmtTarget = $pdo->prepare("SELECT id_user FROM users WHERE role = ? AND status_jabatan = 'aktif'");
+                $stmtTarget->execute([$targetPosisi]);
+                $targetUsers = $stmtTarget->fetchAll(PDO::FETCH_COLUMN);
+            }
             
-            if ($analisId) {
-                $stmtPK = $pdo->prepare("SELECT nama_debitur FROM pengajuan_kredit WHERE id_pengajuan = ?");
-                $stmtPK->execute([$id_pengajuan]);
-                $pkInfo = $stmtPK->fetch(PDO::FETCH_ASSOC);
-                
-                if ($pkInfo) {
-                    $role_display = getRoleDisplay($role);
-                    createNotification(
-                        $analisId,
-                        $id_pengajuan,
-                        'revised',
-                        "Pengajuan Perlu Revisi dari " . $role_display,
-                        "Pengajuan kredit a.n {$pkInfo['nama_debitur']} perlu dilakukan revisi oleh {$role_display}. Catatan revisi: " . substr($catatan, 0, 100) . "...",
-                        $role,
-                        'analis'
-                    );
+            foreach ($targetUsers as $targetUserId) {
+                if ($targetUserId) {
+                    $stmtPK = $pdo->prepare("SELECT nama_debitur FROM pengajuan_kredit WHERE id_pengajuan = ?");
+                    $stmtPK->execute([$id_pengajuan]);
+                    $pkInfo = $stmtPK->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($pkInfo) {
+                        $role_display = getRoleDisplay($role);
+                        createNotification(
+                            $targetUserId,
+                            $id_pengajuan,
+                            'revised',
+                            "Pengajuan Perlu Revisi dari " . $role_display,
+                            "Pengajuan kredit a.n {$pkInfo['nama_debitur']} perlu dilakukan revisi oleh {$role_display}. Catatan revisi: " . substr($catatan, 0, 100) . "...",
+                            $role,
+                            $targetPosisi
+                        );
+                    }
                 }
             }
 

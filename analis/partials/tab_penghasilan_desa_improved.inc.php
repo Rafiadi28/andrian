@@ -102,7 +102,7 @@ $angsuran_helper = getAngsuranHelperText();
                 <span id="desk_sisa_jabatan_display">-</span>
             </div>
             <input type="hidden" id="desk_sisa_jabatan_bulan" name="desk_sisa_jabatan_bulan" value="0">
-            <small class="desa-helper" id="desa-sisa-jabatan-note">Dihitung otomatis berdasarkan tanggal akhir jabatan</small>
+            <small class="desa-helper" id="desa-sisa-jabatan-note">Kepala Desa: Tgl Akhir - Tgl Mulai. Lainnya: Tgl Akhir (Umur 60) - Hari ini.</small>
         </div>
     </div>
 
@@ -653,10 +653,46 @@ function formatDesaCurrencyBlur(field) {
 // ===== TOGGLE JABATAN FIELDS =====
 function toggleDesaJabatanFields() {
     const jabatanElem = document.getElementById('desk_jabatan');
-    // Semua Perangkat Desa menggunakan form yang sama sekarang
-    // Hitung ulang sisa masa jabatan
+    const tglAkhirElem = document.getElementById('desk_tgl_akhir');
+    const tglLahirElem = document.querySelector('input[name="tanggal_lahir"]');
     
-    // Hitung ulang sisa masa jabatan
+    if (jabatanElem && tglAkhirElem) {
+        if (jabatanElem.value !== 'KEPALA DESA' && jabatanElem.value !== '') {
+            // Perangkat Desa selain Kades: Tgl Akhir = Hari Ini + (60 - Umur Sekarang)
+            if (tglLahirElem && tglLahirElem.value) {
+                let tglLahir = new Date(tglLahirElem.value);
+                let today = new Date();
+                
+                // Hitung umur secara presisi
+                let age = today.getFullYear() - tglLahir.getFullYear();
+                let mDiff = today.getMonth() - tglLahir.getMonth();
+                if (mDiff < 0 || (mDiff === 0 && today.getDate() < tglLahir.getDate())) {
+                    age--;
+                }
+                
+                let sisaTahun = 60 - age;
+                if (sisaTahun < 0) sisaTahun = 0;
+                
+                let tglAkhir = new Date(today);
+                tglAkhir.setFullYear(today.getFullYear() + sisaTahun);
+                
+                let y = tglAkhir.getFullYear();
+                let mStr = String(tglAkhir.getMonth() + 1).padStart(2, '0');
+                let dStr = String(tglAkhir.getDate()).padStart(2, '0');
+                
+                tglAkhirElem.value = `${y}-${mStr}-${dStr}`;
+            }
+            tglAkhirElem.setAttribute('readonly', 'readonly');
+            tglAkhirElem.style.backgroundColor = '#f3f4f6';
+            tglAkhirElem.style.pointerEvents = 'none';
+        } else {
+            // Kepala Desa: Input manual
+            tglAkhirElem.removeAttribute('readonly');
+            tglAkhirElem.style.backgroundColor = '';
+            tglAkhirElem.style.pointerEvents = 'auto';
+        }
+    }
+    
     calculateSisaMasaJabatan();
 }
 
@@ -674,12 +710,18 @@ function calculateSisaMasaJabatan() {
         return;
     }
 
-    const tglMulai = new Date(tglMulaiElem.value + 'T00:00:00');
-    const tglAkhir = new Date(tglAkhirElem.value + 'T00:00:00');
+    let tglMulai = new Date(tglMulaiElem.value + 'T00:00:00');
+    let tglAkhir = new Date(tglAkhirElem.value + 'T00:00:00');
+    
+    if (jabatanElem && jabatanElem.value !== 'KEPALA DESA' && jabatanElem.value !== '') {
+        // Untuk selain Kepala Desa, dihitung dari tanggal saat input (hari ini)
+        tglMulai = new Date();
+        tglMulai.setHours(0,0,0,0);
+    }
 
     // Validasi: Akhir >= Mulai
     if (tglAkhir < tglMulai) {
-        showDesaError('desk_tgl_akhir', 'Tanggal akhir tidak boleh lebih kecil dari tanggal mulai');
+        showDesaError('desk_tgl_akhir', 'Sisa masa jabatan sudah habis (tanggal akhir < tanggal mulai/hari ini)');
         if (displayElem) displayElem.textContent = '-';
         if (hiddenElem) hiddenElem.value = 0;
         return;
@@ -808,6 +850,11 @@ document.addEventListener('DOMContentLoaded', function () {
         tglAkhirElem.addEventListener('input', function () {
             calculateSisaMasaJabatan();
         });
+    }
+
+    const inputTglLahir = document.querySelector('input[name="tanggal_lahir"]');
+    if (inputTglLahir) {
+        inputTglLahir.addEventListener('change', toggleDesaJabatanFields);
     }
 
     // Add event listeners untuk text input

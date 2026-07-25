@@ -21,12 +21,13 @@ require_once __DIR__ . '/functions.php';
  */
 function resolve_next_active_role(PDO $pdo, string $desiredRole): ?string
 {
-    // Ordered chain for escalation after kepatuhan
-    $chain = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
+    // Ordered chain for escalation
+    $chain = ['kasubag_analis', 'kepatuhan', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
 
     // Explicit fallback mapping when role is unavailable
     $fallback = [
-        'kasubag_analis' => 'analis',
+        'kasubag_analis' => 'kepatuhan',
+        'kepatuhan' => 'kabag_kredit',
         'kabag_kredit' => 'kadiv_bisnis',
         'kadiv_bisnis' => 'direktur_utama'
     ];

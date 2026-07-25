@@ -285,9 +285,13 @@ function sort_link_proses($column, $label) {
                 <div class="form-group">
                     <label>Keputusan</label>
                     <select name="keputusan" required class="w-full">
-                        <option value="setuju">SETUJUI & TERUSKAN</option>
-                        <option value="revisi">KEMBALIKAN / REVISI (minta perbaikan ke analis)</option>
-                        <option value="tolak">TOLAK</option>
+                        <?php if ($my_role === 'kepatuhan'): ?>
+                            <option value="setuju">LENGKAPI & TERUSKAN</option>
+                        <?php else: ?>
+                            <option value="setuju">SETUJUI & TERUSKAN</option>
+                            <option value="revisi">KEMBALIKAN / REVISI</option>
+                            <option value="tolak">TOLAK</option>
+                        <?php endif; ?>
                     </select>
                 </div>
                 <div class="modal-footer">
