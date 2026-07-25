@@ -75,7 +75,7 @@ $stmt = $pdo->prepare("
         WHERE id_pengajuan = ? AND keputusan = 'setuju'
         GROUP BY level_approval
     )
-    ORDER BY FIELD(a.level_approval, 'analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama')
+    ORDER BY FIELD(a.level_approval, 'analis', 'kasubag_analis', 'kabag_kredit', 'kadiv', 'kadiv_bisnis', 'direktur_utama')
 ");
 $stmt->execute([$id, $id]);
 $approvals = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -169,9 +169,26 @@ if ($debt_income_ratio > 50 || $ltv_ratio > 80 || $remaining_capacity < 0) {
 
 // Build approval map from query results
 $approval_map = [];
+$legacy_role_aliases = [
+    'kabag' => 'kabag_kredit',
+    'kasubag' => 'kasubag_analis',
+    'kabag_analis' => 'kabag_kredit',
+    'kadiv' => 'kadiv_bisnis',
+    'kadiv_kredit' => 'kadiv_bisnis',
+    'direksi' => 'direktur_utama'
+];
+
+$normalizeApprovalRoleForPrint = static function ($role) use ($legacy_role_aliases) {
+    $role = strtolower(trim((string) $role));
+    return $legacy_role_aliases[$role] ?? $role;
+};
+
 foreach ((array)$approvals as $a) {
     if ($a['keputusan'] === 'setuju') {
-        $approval_map[$a['level_approval']] = $a;
+        $normalized_role = $normalizeApprovalRoleForPrint($a['level_approval'] ?? '');
+        if ($normalized_role !== '') {
+            $approval_map[$normalized_role] = $a;
+        }
     }
 }
 
@@ -226,10 +243,6 @@ foreach ($pejabat_data as $p) {
 $signature_roles = [];
 $hierarki_atasan = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
 
-$direksi_data = $pejabat_by_role['direktur_utama'] ?? null;
-$direksi_aktif = isset($direksi_data) && $direksi_data['status'] === 'aktif' && strpos($direksi_data['nama'], 'Belum Ditentukan') === false;
-$ttd_replacement_roles = [];
-
 $defaults = [
     'analis' => ['title' => 'Analis', 'full_title' => 'Analis Kredit'],
     'kasubag_analis' => ['title' => 'Kasubag Analis', 'full_title' => 'Kepala Subbagian Analis'],
@@ -239,122 +252,47 @@ $defaults = [
 ];
 
 foreach ($required_roles as $role) {
-    // Determine the actual role to use for signature based on approval history or active status
-    $approver_name = isset($approval_map[$role]) ? $approval_map[$role]['nama_approver'] : null;
-    $actual_role = $role; // start with original role
-    
-    // Check if the role is currently active
-    $is_active = isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['status'] === 'aktif' && strpos($pejabat_by_role[$role]['nama'], 'Belum Ditentukan') === false;
+    $approval_entry = $approval_map[$role] ?? null;
+    $approver_name = $approval_entry['nama_approver'] ?? null;
+    $actual_role = $role;
 
-    // JIKA CUTI (tidak aktif dan belum diapprove): SKIP role ini dari form cetak
-    $is_cuti = !$approver_name && !$is_active;
-
-    if ($is_cuti) {
-        // Track the skipped role to show a note later
-        $ttd_replacement_roles[] = $role;
-        // Skip adding this role's signature box entirely
-        continue;
-    }
-
-    // If ALREADY APPROVED, we should ideally find which role matches the approver name
     if ($approver_name) {
-        // If the original role's name doesn't match the approver, someone else approved it
-        if (isset($pejabat_by_role[$role]) && $pejabat_by_role[$role]['nama'] !== $approver_name) {
-            // Find who actually approved it among all master_pejabat
-            foreach ($pejabat_by_role as $r => $p) {
-                if ($p['nama'] === $approver_name) {
-                    $actual_role = $r;
-                    break;
-                }
+        foreach ($pejabat_by_role as $r => $p) {
+            if (($p['nama'] ?? '') === $approver_name) {
+                $actual_role = $r;
+                break;
             }
         }
     }
 
-    // Now populate $signature_roles using $actual_role for the data, but keep $role for the structure
-    if (isset($pejabat_by_role[$actual_role])) {
-        $p = $pejabat_by_role[$actual_role];
-        
-        $jabatan_tampil = $actual_role !== $role ? 'a.n. ' . ($defaults[$role]['full_title'] ?? $role) : ($p['jabatan']);
-        if ($approver_name && $actual_role === $role) {
-            // normal case where it was approved by original
-            $jabatan_tampil = $p['jabatan'];
-        }
-
-        $signature_roles[] = [
-            'id_pejabat' => $p['id_pejabat'],
-            'role' => $role, // Keep original position
-            'nama' => $p['nama'],
-            'jabatan' => $jabatan_tampil,
-            'tanda_tangan' => $p['tanda_tangan'],
-            'stempel' => $p['stempel'],
-            'replaced_by_director' => false,
-            'original_role' => $role
-        ];
-    } else {
-        $signature_roles[] = [
-            'id_pejabat' => null,
-            'role' => $role,
-            'nama' => '',
-            'jabatan' => $defaults[$role]['full_title'] ?? '',
-            'tanda_tangan' => null,
-            'stempel' => null,
-            'replaced_by_director' => false,
-            'original_role' => $role
-        ];
-    }
-}
-
-// JIKA ADA YANG CUTI: Tambahkan Direktur Utama ke blok TTD jika belum ada
-if (!empty($ttd_replacement_roles) && $direksi_aktif) {
-    $direktur_exists = false;
-    foreach ($signature_roles as $sr) {
-        if ($sr['role'] === 'direktur_utama' || $sr['original_role'] === 'direktur_utama') {
-            $direktur_exists = true;
-            break;
-        }
+    $p = $pejabat_by_role[$actual_role] ?? null;
+    if (!$p && isset($pejabat_by_role[$role])) {
+        $p = $pejabat_by_role[$role];
     }
 
-    if (!$direktur_exists) {
-        $role = 'direktur_utama';
-        if (isset($pejabat_by_role[$role])) {
-            $p = $pejabat_by_role[$role];
-            $signature_roles[] = [
-                'id_pejabat' => $p['id_pejabat'],
-                'role' => $role,
-                'nama' => $p['nama'],
-                'jabatan' => $p['jabatan'],
-                'tanda_tangan' => $p['tanda_tangan'],
-                'stempel' => $p['stempel'],
-                'replaced_by_director' => true,
-                'original_role' => $role
-            ];
-        } else {
-            $signature_roles[] = [
-                'id_pejabat' => null,
-                'role' => $role,
-                'nama' => '',
-                'jabatan' => $defaults[$role]['full_title'] ?? '',
-                'tanda_tangan' => null,
-                'stempel' => null,
-                'replaced_by_director' => true,
-                'original_role' => $role
-            ];
-        }
+    $jabatan_tampil = $p['jabatan'] ?? ($defaults[$role]['full_title'] ?? ucwords(str_replace('_', ' ', $role)));
+    $nama_tampil = $p['nama'] ?? '';
+    if (empty($nama_tampil) && $approver_name) {
+        $nama_tampil = $approver_name;
     }
+
+    if (empty($nama_tampil)) {
+        $nama_tampil = '';
+    }
+
+    $signature_roles[] = [
+        'id_pejabat' => $p['id_pejabat'] ?? null,
+        'role' => $role,
+        'nama' => $nama_tampil,
+        'jabatan' => $jabatan_tampil,
+        'tanda_tangan' => $p['tanda_tangan'] ?? null,
+        'stempel' => $p['stempel'] ?? null,
+        'replaced_by_director' => false,
+        'original_role' => $role
+    ];
 }
 
 $ttd_replacement_note = '';
-if (!empty($ttd_replacement_roles)) {
-    $role_names = array_map(function ($role) use ($defaults) {
-        return $defaults[$role]['title'] ?? ucfirst(str_replace('_', ' ', $role));
-    }, $ttd_replacement_roles);
-    $ttd_replacement_note = '⚠ Tanda tangan dan nama untuk ' . implode(', ', $role_names) . ' digantikan oleh Direktur Utama karena pejabat terkait sedang tidak aktif.';
-
-    $user_id_logging = $_SESSION['user_id'] ?? 0;
-    foreach ($ttd_replacement_roles as $role) {
-        log_activity($pdo, $user_id_logging, "Penggantian tanda tangan untuk {$defaults[$role]['title']} oleh Direktur Utama pada cetak dokumen ID #$id karena pejabat tidak aktif.");
-    }
-}
 
 // Paper styles
 $paper_styles = [
@@ -2288,7 +2226,10 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 $approval_map = [];
                 if (!empty($approvals)) {
                     foreach ($approvals as $app) {
-                        $approval_map[$app['level_approval']] = $app;
+                        $normalized_role = $normalizeApprovalRoleForPrint($app['level_approval'] ?? '');
+                        if ($app['keputusan'] === 'setuju' && $normalized_role !== '') {
+                            $approval_map[$normalized_role] = $app;
+                        }
                     }
                 }
 
@@ -2348,7 +2289,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     <div style="flex: 1; border: 1px solid <?= $box_border ?>; border-radius: 6px; background-color: <?= $box_bg ?>; padding: 10px 8px; display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
                             <div style="font-size: 9px; font-weight: bold; color: #475569; margin-bottom: 4px; border-bottom: 1px dashed <?= $box_border ?>; padding-bottom: 4px; text-transform: uppercase;"><?= htmlspecialchars($pejabat_jabatan) ?></div>
-                            <div style="font-size: 11px; font-weight: bold; color: #1e293b; margin-bottom: 8px;"><?= htmlspecialchars($pejabat_nama) ?></div>
+                            <div style="font-size: 11px; font-weight: bold, color: #1e293b; margin-bottom: 8px;"><?= htmlspecialchars($pejabat_nama) ?></div>
                         </div>
                         <div style="background: rgba(255,255,255,0.6); padding: 4px; border-radius: 4px; margin-top: auto;">
                             <div style="font-size: 10px; font-weight: bold; color: <?= $status_color ?>; margin-bottom: 2px;"><?= $status_text ?></div>
