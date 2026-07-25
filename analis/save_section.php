@@ -2058,8 +2058,12 @@ try {
                 throw new Exception("Role name exceeds maximum length (100 chars)");
             }
             
+            // Resolve target role considering cuti/fallback rules
+            require_once __DIR__ . '/../includes/approval_routing.php';
+            $resolvedTarget = resolve_next_active_role($pdo, $targetRole) ?? $targetRole;
+
             $stmt = $pdo->prepare("UPDATE pengajuan_kredit SET status_pengajuan=?, posisi_saat_ini=?, last_revision_at=NULL, last_revision_by=NULL, last_reject_level=NULL WHERE id_pengajuan=? AND " . ANALIS_DRAFT_LIKE);
-            $stmt->execute([$newSubmitStatus, $targetRole, $id_pengajuan]);
+            $stmt->execute([$newSubmitStatus, $resolvedTarget, $id_pengajuan]);
 
             if ($stmt->rowCount() == 0) {
                 $pdo->rollBack();
@@ -2091,10 +2095,8 @@ try {
             }
 
             // ===== CREATE NOTIFICATIONS FOR NEXT ROLE =====
-            // Get users of target role
-            $stmtNotif = $pdo->prepare("SELECT id_user, nama FROM users WHERE role = ? AND status_jabatan = 'aktif'");
-            $stmtNotif->execute([$targetRole]);
-            $targetRoleUsers = $stmtNotif->fetchAll(PDO::FETCH_ASSOC);
+            // Get users of resolved target role
+            $targetRoleUsers = get_active_users_for_role($pdo, $resolvedTarget);
             
             // Create notification for each user in target role
             if (!empty($targetRoleUsers)) {
@@ -2106,8 +2108,19 @@ try {
                         'Pengajuan Kredit Baru dari Analis',
                         "Pengajuan kredit a.n {$preSubmit['nama_debitur']} (Rp " . number_format($preSubmit['jumlah_kredit'], 0, ',', '.') . ") telah dikirimkan dari Analis. Silakan lakukan pengecekan dan assessment.",
                         'analis',
-                        $targetRole
+                        $resolvedTarget
                     );
+                }
+            }
+
+            // Log auto-skip if resolved differs from preferred target
+            if ($resolvedTarget !== $targetRole) {
+                logActivity($_SESSION['user_id'] ?? 0, "Auto-skip on submit: preferred={$targetRole}, routed_to={$resolvedTarget}, pengajuan_id={$id_pengajuan}");
+                try {
+                    $stmtAuto = $pdo->prepare("INSERT INTO approval_kredit (id_pengajuan, level_approval, keputusan, catatan, is_auto_skip) VALUES (?, ?, 'eskalasi_otomatis', ?, 1)");
+                    $stmtAuto->execute([$id_pengajuan, $targetRole, "Auto-skip on submit: routed to {$resolvedTarget}"]);
+                } catch (Exception $e) {
+                    error_log('Failed to insert auto-skip approval_kredit in save_section: ' . $e->getMessage());
                 }
             }
 

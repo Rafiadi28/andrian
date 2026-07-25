@@ -211,27 +211,51 @@ try {
         $log_msg = "Assessment kepatuhan dibuat oleh " . ($_SESSION['role'] ?? 'unknown') . " untuk pengajuan #" . $id_pengajuan;
         logActivity($_SESSION['user_id'], $log_msg);
 
-        // ===== CREATE NOTIFICATIONS FOR NEXT ROLE (KASUBAG ANALIS) =====
+        // ===== CREATE NOTIFICATIONS FOR NEXT ROLE (determine with fallback rules) =====
+        require_once __DIR__ . '/../includes/approval_routing.php';
+
         $stmtPK = $pdo->prepare("SELECT nama_debitur, jumlah_kredit, posisi_saat_ini FROM pengajuan_kredit WHERE id_pengajuan = ?");
         $stmtPK->execute([$id_pengajuan]);
         $pkInfo = $stmtPK->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($pkInfo && isset($pkInfo['posisi_saat_ini'])) {
-            // Get users of next role (should be kasubag_analis after kepatuhan)
-            $stmtNextRole = $pdo->prepare("SELECT id_user, nama FROM users WHERE role = 'kasubag_analis' AND status_jabatan = 'aktif'");
-            $stmtNextRole->execute();
-            $nextRoleUsers = $stmtNextRole->fetchAll(PDO::FETCH_ASSOC);
-            
-            foreach ($nextRoleUsers as $user) {
-                createNotification(
-                    $user['id_user'],
-                    $id_pengajuan,
-                    'auto_routed',
-                    'Assessment Kepatuhan Selesai - Siap untuk Kasubag Analis',
-                    "Pengajuan kredit a.n {$pkInfo['nama_debitur']} (Rp " . number_format($pkInfo['jumlah_kredit'], 0, ',', '.') . ") telah selesai di-assess oleh Dept. Kepatuhan dan siap untuk ditinjau oleh Kasubag Analis.",
-                    'kepatuhan',
-                    'kasubag_analis'
-                );
+            // determine target role using fallback rules; preferred role after kepatuhan is kasubag_analis
+            $preferred = 'kasubag_analis';
+            $targetRole = resolve_next_active_role($pdo, $preferred);
+
+            if ($targetRole) {
+                // update posisi_saat_ini pada pengajuan
+                $stmtUpd = $pdo->prepare("UPDATE pengajuan_kredit SET posisi_saat_ini = ? WHERE id_pengajuan = ?");
+                $stmtUpd->execute([$targetRole, $id_pengajuan]);
+
+                // notify all active users of target role
+                $nextRoleUsers = get_active_users_for_role($pdo, $targetRole);
+                foreach ($nextRoleUsers as $user) {
+                    createNotification(
+                        $user['id_user'],
+                        $id_pengajuan,
+                        'auto_routed',
+                        'Assessment Kepatuhan Selesai - Siap untuk Tinjauan',
+                        "Pengajuan kredit a.n {$pkInfo['nama_debitur']} (Rp " . number_format($pkInfo['jumlah_kredit'], 0, ',', '.') . ") telah selesai di-assess oleh Dept. Kepatuhan dan siap ditinjau oleh {$targetRole}.",
+                        'kepatuhan',
+                        $targetRole
+                    );
+                }
+
+                // Log auto-skip when target differs from preferred
+                if ($targetRole !== $preferred) {
+                    $msg = "Auto-skip routing: preferred={$preferred} unavailable, routed to={$targetRole} for pengajuan #{$id_pengajuan}";
+                    logActivity($_SESSION['user_id'], $msg);
+                    try {
+                        $s = $pdo->prepare("INSERT INTO approval_kredit (id_pengajuan, level_approval, keputusan, catatan, is_auto_skip) VALUES (?, ?, 'eskalasi_otomatis', ?, 1)");
+                        $s->execute([$id_pengajuan, $preferred, "Auto-skip: routed to {$targetRole}"]);
+                    } catch (Exception $e) {
+                        error_log('Failed to insert auto-skip in save_assessment_kepatuhan: ' . $e->getMessage());
+                    }
+                }
+            } else {
+                // No active role found - log and leave posisi_saat_ini unchanged
+                logActivity($_SESSION['user_id'], "No active approver found after kepatuhan for pengajuan #{$id_pengajuan}");
             }
         }
 

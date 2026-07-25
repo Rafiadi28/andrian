@@ -736,8 +736,12 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                 $newPos = $targetRole;
             }
 
+            // Resolve final position considering cuti/fallback rules
+            require_once __DIR__ . '/approval_routing.php';
+            $finalPos = $newPos === 'selesai' ? 'selesai' : (resolve_next_active_role($pdo, $newPos) ?? $newPos);
+
             $u = $pdo->prepare("UPDATE pengajuan_kredit SET status_pengajuan = ?, posisi_saat_ini = ? WHERE id_pengajuan = ?");
-            $u->execute([$newStatus, $newPos, $id_pengajuan]);
+            $u->execute([$newStatus, $finalPos, $id_pengajuan]);
 
             $log = $pdo->prepare("INSERT INTO approval_kredit (id_pengajuan, id_user, level_approval, keputusan, catatan) VALUES (?, ?, ?, 'setuju', ?)");
             $log->execute([$id_pengajuan, $user_id, $role, $catatan]);
@@ -749,22 +753,20 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
             }
 
             // ===== CREATE NOTIFICATIONS FOR NEXT ROLE(S) =====
-            if ($newPos !== 'selesai') {
-                // Get users of next role
-                $stmtNotif = $pdo->prepare("SELECT id_user, nama FROM users WHERE role = ? AND status_jabatan = 'aktif'");
-                $stmtNotif->execute([$newPos]);
-                $nextRoleUsers = $stmtNotif->fetchAll(PDO::FETCH_ASSOC);
-                
+            if ($finalPos !== 'selesai') {
+                // Get users of next role (resolved with fallback)
+                $nextRoleUsers = get_active_users_for_role($pdo, $finalPos);
+
                 // Get pengajuan info for notification message
                 $stmtPK = $pdo->prepare("SELECT nama_debitur, jumlah_kredit FROM pengajuan_kredit WHERE id_pengajuan = ?");
                 $stmtPK->execute([$id_pengajuan]);
                 $pkInfo = $stmtPK->fetch(PDO::FETCH_ASSOC);
-                
+
                 // Create notification for each user in next role
                 if (!empty($nextRoleUsers) && $pkInfo) {
                     $role_display = getRoleDisplay($role);
-                    $next_role_display = getRoleDisplay($newPos);
-                    
+                    $next_role_display = getRoleDisplay($finalPos);
+
                     foreach ($nextRoleUsers as $user) {
                         createNotification(
                             $user['id_user'],
@@ -773,8 +775,20 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                             "Pengajuan Dikirim ke " . $next_role_display,
                             "Pengajuan kredit a.n {$pkInfo['nama_debitur']} (Rp " . number_format($pkInfo['jumlah_kredit'], 0, ',', '.') . ") telah disetujui oleh {$role_display} dan siap untuk proses {$next_role_display}.",
                             $role,
-                            $newPos
+                            $finalPos
                         );
+                    }
+                }
+                // Log auto-skip if final differs from preferred
+                if ($finalPos !== $newPos) {
+                    $msg = "Auto-skip routing in approval: preferred={$newPos}, routed_to={$finalPos}, pengajuan_id={$id_pengajuan}";
+                    logActivity($_SESSION['user_id'] ?? $user_id, $msg);
+                    try {
+                        $stmtAuto = $pdo->prepare("INSERT INTO approval_kredit (id_pengajuan, level_approval, keputusan, catatan, is_auto_skip) VALUES (?, ?, 'eskalasi_otomatis', ?, 1)");
+                        $stmtAuto->execute([$id_pengajuan, $newPos, "Auto-skip: routed to {$finalPos}"]);
+                    } catch (Exception $e) {
+                        // don't break flow for logging failures
+                        error_log('Failed to insert auto-skip approval_kredit: ' . $e->getMessage());
                     }
                 }
             } else {
@@ -926,17 +940,19 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
             $last = $stmt2->fetchColumn();
             $resumeTo = $last ?: 'kasubag_analis';
 
+            // Resolve resume target with fallback
+            require_once __DIR__ . '/approval_routing.php';
+            $resolvedResume = resolve_next_active_role($pdo, $resumeTo) ?? $resumeTo;
+
             $resumeStatus = enumAllows($pdo, 'pengajuan_kredit', 'status_pengajuan', 'diajukan') ? 'diajukan' : 'proses';
             $upd = $pdo->prepare("UPDATE pengajuan_kredit SET status_pengajuan = ?, posisi_saat_ini = ?, last_revision_at = NULL, last_revision_by = NULL, last_reject_level = NULL WHERE id_pengajuan = ?");
-            $upd->execute([$resumeStatus, $resumeTo, $id_pengajuan]);
+            $upd->execute([$resumeStatus, $resolvedResume, $id_pengajuan]);
 
             $log = $pdo->prepare("INSERT INTO approval_kredit (id_pengajuan, id_user, level_approval, keputusan, catatan) VALUES (?, ?, ?, 'kirim_ulang', ?)");
             $log->execute([$id_pengajuan, $user_id, 'analis', $catatan]);
 
             // ===== CREATE NOTIFICATIONS FOR NEXT ROLE (KIRIM ULANG) =====
-            $stmtNotif = $pdo->prepare("SELECT id_user, nama FROM users WHERE role = ? AND status_jabatan = 'aktif'");
-            $stmtNotif->execute([$resumeTo]);
-            $nextRoleUsers = $stmtNotif->fetchAll(PDO::FETCH_ASSOC);
+            $nextRoleUsers = get_active_users_for_role($pdo, $resolvedResume);
             
             if (!empty($nextRoleUsers)) {
                 $stmtPK = $pdo->prepare("SELECT nama_debitur, jumlah_kredit FROM pengajuan_kredit WHERE id_pengajuan = ?");
@@ -944,7 +960,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                 $pkInfo = $stmtPK->fetch(PDO::FETCH_ASSOC);
                 
                 if ($pkInfo) {
-                    $next_role_display = getRoleDisplay($resumeTo);
+                    $next_role_display = getRoleDisplay($resolvedResume);
                     foreach ($nextRoleUsers as $u) {
                         createNotification(
                             $u['id_user'],
@@ -953,7 +969,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                             "Pengajuan Dikirim Ulang ke " . $next_role_display,
                             "Pengajuan kredit a.n {$pkInfo['nama_debitur']} (Rp " . number_format($pkInfo['jumlah_kredit'], 0, ',', '.') . ") telah direvisi dan dikirim ulang oleh Analis.",
                             'analis',
-                            $resumeTo
+                            $resolvedResume
                         );
                     }
                 }

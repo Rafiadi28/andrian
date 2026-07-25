@@ -115,11 +115,18 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 if (!el || el.type === 'file') return;
                 el.value = value;
             }
+            function normalizeJenisSlug(value) {
+                return String(value || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[_\s]+/g, ' ');
+            }
+
             document.addEventListener('DOMContentLoaded', function () {
                 var P = window.__ANALIS_PREFILL__;
                 if (!P || !P.pengajuan) return;
                 var pg = P.pengajuan;
-                var jenis = (pg.jenis_pekerjaan || '').toString().trim();
+                var jenis = normalizeJenisSlug(pg.jenis_pekerjaan || '');
 
                 Object.keys(pg).forEach(function (k) {
                     if (k.indexOf('[') !== -1) return;
@@ -129,9 +136,9 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 if (selStat && pg.status_perkawinan) selStat.value = pg.status_perkawinan;
                 if (typeof togglePasangan === 'function' && selStat) togglePasangan(selStat.value);
 
-                var marker = (pg.nama_usaha || '').toString().trim().toUpperCase();
+                var marker = normalizeJenisSlug(pg.nama_usaha || '');
 
-                if (jenis === 'pppk' || marker === 'PPPK') {
+                if (jenis === 'pppk' || marker.indexOf('pppk') !== -1) {
                     setId('pppk_no_sk', pg.bidang_usaha || pg.pppk_agunan_no_sk || '');
                     setId('pppk_gaji', pg.omset_per_bulan);
                     setId('pppk_biaya_hidup', pg.biaya_operasional);
@@ -157,7 +164,7 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                             }
                         }, 200);
                     }
-                } else if (jenis === 'perangkat_desa' || marker === 'PERANGKAT_DESA' || marker.indexOf('PERANGKAT DESA') === 0) {
+                } else if (jenis.indexOf('perangkat desa') !== -1 || marker.indexOf('perangkat desa') !== -1) {
                     var jabatan = pg.jabatan || '';
                     setId('desk_jabatan', jabatan);
                     setId('desk_jaminan', pg.bidang_usaha);
