@@ -264,15 +264,18 @@ function sort_link_proses($column, $label) {
 
     <!-- Modal Decision -->
     <div id="modal-approve" class="modal-overlay" style="display:none;">
-        <div class="modal-content px-4 py-4">
+        <div class="modal-content px-4 py-4" style="max-width:720px; width:100%;">
             <h3 class="modal-header">Proses Pengajuan</h3>
             
-            <div class="modal-info">
-                <p>Debitur</p>
-                <strong id="p_nama"></strong>
-                
-                <p class="mt-4">Nominal Pengajuan</p>
-                <strong id="p_nominal"></strong>
+            <div class="modal-info" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:start;">
+                <div>
+                    <p style="margin:0 0 4px 0; color:#334155; font-size:0.85rem;">Debitur</p>
+                    <strong id="p_nama" style="display:block; font-size:1rem; color:#0f172a;"></strong>
+                </div>
+                <div>
+                    <p style="margin:0 0 4px 0; color:#334155; font-size:0.85rem;">Nominal Pengajuan</p>
+                    <strong id="p_nominal" style="display:block; font-size:1rem; color:#0f172a;"></strong>
+                </div>
             </div>
 
             <form method="POST">
@@ -286,7 +289,8 @@ function sort_link_proses($column, $label) {
                     <label>Keputusan</label>
                     <select name="keputusan" required class="w-full">
                         <?php if ($my_role === 'kepatuhan'): ?>
-                            <option value="setuju">LENGKAPI & TERUSKAN</option>
+                            <option value="revisi">LENGKAPI (Kembalikan untuk Revisi)</option>
+                            <option value="setuju">TERUSKAN ke Atasan</option>
                         <?php else: ?>
                             <option value="setuju">SETUJUI & TERUSKAN</option>
                             <option value="revisi">KEMBALIKAN / REVISI</option>
