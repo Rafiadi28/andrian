@@ -912,9 +912,10 @@ $timeline = $stmt->fetchAll();
             }
             ?>
             <div style="background: #FEF3C7; padding: 1.5rem; border-left: 4px solid #F59E0B; margin-bottom: 2rem; border-radius:0 0.5rem 0.5rem 0; clear: both;">
-                <h3 style="color:#B45309; margin-bottom:1rem;">VI. Hasil Analisa 6C</h3>
+                <h3 style="color:#B45309; margin-bottom:1rem; font-size:1.1rem;">VI. Hasil Analisa 6C</h3>
 
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom:1rem;">
+                <!-- Grid 6C Items - Responsive -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom:1.5rem;">
                     <?php
                     $sixc_items = [
                         ['label'=>'Character',  'score'=>$s6c_char,  'note'=>$analisa_6c['catatan_character']??''],
@@ -927,63 +928,67 @@ $timeline = $stmt->fetchAll();
                     foreach ($sixc_items as $ci):
                         $clr = scoreColor6C($ci['score']);
                     ?>
-                    <div style="background:#fff; padding:0.75rem; border-radius:0.5rem; border:1px solid #FDE68A;">
-                        <span style="display:block; font-size:0.78rem; color:#92400E; font-weight:700; text-transform:uppercase;"><?= $ci['label'] ?></span>
-                        <div style="display:flex; align-items:baseline; gap:0.5rem; margin:0.25rem 0;">
-                            <span style="font-size:1.8rem; font-weight:800; color:<?= $clr ?>;"><?= $ci['score'] ?></span>
-                            <span style="font-size:0.75rem; color:<?= $clr ?>; font-weight:600;"><?= gradeLabel6C($ci['score']) ?></span>
+                    <div style="background:#fff; padding:0.6rem; border-radius:0.4rem; border:1px solid #FDE68A; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                        <span style="display:block; font-size:0.7rem; color:#92400E; font-weight:700; text-transform:uppercase; margin-bottom:0.3rem;"><?= $ci['label'] ?></span>
+                        <div style="display:flex; align-items:baseline; gap:0.3rem; margin:0.2rem 0;">
+                            <span style="font-size:1.6rem; font-weight:800; color:<?= $clr ?>;"><?= $ci['score'] ?></span>
+                            <span style="font-size:0.65rem; color:<?= $clr ?>; font-weight:600;"><?= gradeLabel6C($ci['score']) ?></span>
                         </div>
                         <?php if (!empty($ci['note'])): ?>
-                        <p style="font-size:0.78rem; color:#6B7280; margin:0; line-height:1.4;"><?= htmlspecialchars($ci['note']) ?></p>
+                        <p style="font-size:0.7rem; color:#6B7280; margin:0.3rem 0 0 0; line-height:1.3; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;"><?= htmlspecialchars($ci['note']) ?></p>
                         <?php endif; ?>
                     </div>
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Total & Rekomendasi -->
-                <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
-                    <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:8px; padding:0.75rem 1.25rem; flex:1;">
-                        <span style="font-size:0.8rem; color:#92400E; font-weight:600;">TOTAL SKOR 6C</span>
-                        <div style="font-size:1.5rem; font-weight:800; color:#B45309;"><?= $s6c_total ?> <span style="font-size:0.85rem; color:#92400E;">/5</span></div>
+                <!-- Total & Rekomendasi - Responsive Grid -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom:1rem;">
+                    <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:6px; padding:0.65rem 0.9rem; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                        <span style="font-size:0.75rem; color:#92400E; font-weight:600; display:block;">TOTAL SKOR 6C</span>
+                        <div style="font-size:1.3rem; font-weight:800; color:#B45309; margin-top:0.2rem;"><?= $s6c_total ?> <span style="font-size:0.75rem; color:#92400E;">/5</span></div>
                     </div>
-                    <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:8px; padding:0.75rem 1.25rem; flex:1;">
-                        <span style="font-size:0.8rem; color:#92400E; font-weight:600;">STATUS KELAYAKAN</span>
+                    <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:6px; padding:0.65rem 0.9rem; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                        <span style="font-size:0.75rem; color:#92400E; font-weight:600; display:block;">STATUS KELAYAKAN</span>
                         <?php 
                             $status_layak = tentukan_status_kelayakan($s6c_total);
                             $label_layak = get_status_kelayakan_label($s6c_total);
                         ?>
-                        <div style="font-size:1.1rem; font-weight:800; color:<?= $status_layak['warna'] ?>;"><?= $label_layak ?></div>
+                        <div style="font-size:0.95rem; font-weight:800; color:<?= $status_layak['warna'] ?>; margin-top:0.2rem; word-break:break-word;"><?= $label_layak ?></div>
                     </div>
-                    <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:8px; padding:0.75rem 1.25rem; flex:1;">
-                        <span style="font-size:0.8rem; color:#92400E; font-weight:600;">REKOMENDASI</span>
-                        <div style="font-size:0.95rem; font-weight:700; color:#374151;"><?= $status_layak['rekomendasi'] ?></div>
+                    <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:6px; padding:0.65rem 0.9rem; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                        <span style="font-size:0.75rem; color:#92400E; font-weight:600; display:block;">REKOMENDASI</span>
+                        <div style="font-size:0.8rem; font-weight:700; color:#374151; margin-top:0.2rem; line-height:1.3;"><?= $status_layak['rekomendasi'] ?></div>
                     </div>
-                    <?php
-                        $repayment_capacity = floatval($data['repayment_capacity'] ?? 0);
-                        $angsuran_diajukan = floatval($data['angsuran_diajukan'] ?? 0);
-                        $status_kelayakan_repayment = trim($data['status_kelayakan'] ?? '');
-                        if ($status_kelayakan_repayment === '') {
-                            $status_kelayakan_repayment = ($repayment_capacity >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
-                        }
-                        $rc_color = ($status_kelayakan_repayment === 'LAYAK') ? '#15803d' : '#b91c1c';
-                        $margin_keamanan = $repayment_capacity - $angsuran_diajukan;
-                    ?>
-                    <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:0.75rem 1.25rem; flex:1;">
-                        <span style="font-size:0.8rem; color:#065f46; font-weight:600;">UJI KELAYAKAN ANGSURAN</span>
-                        <div style="font-size:1.15rem; font-weight:800; color:<?= $rc_color ?>; margin-top:0.25rem;"><?= htmlspecialchars($status_kelayakan_repayment) ?></div>
-                        <div style="font-size:0.9rem; color:#334155; margin-top:0.5rem; line-height:1.4;">
-                            Repayment Capacity: <?= formatRupiah($repayment_capacity) ?><br>
-                            Angsuran Diajukan: <?= formatRupiah($angsuran_diajukan) ?><br>
-                            Margin Keamanan: <?= formatRupiah($margin_keamanan) ?>
-                        </div>
-                    </div>
-                    <?php if (!empty($s6c_catatan)): ?>
-                    <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:8px; padding:0.75rem 1.25rem; flex:2;">
-                        <span style="font-size:0.8rem; color:#92400E; font-weight:600;">CATATAN ANALISA</span>
-                        <p style="margin:0.25rem 0 0 0; font-size:0.9rem; color:#374151; line-height:1.5;"><?= nl2br(htmlspecialchars($s6c_catatan)) ?></p>
-                    </div>
-                    <?php endif; ?>
                 </div>
+
+                <!-- Repayment Capacity - Full Width -->
+                <?php
+                    $repayment_capacity = floatval($data['repayment_capacity'] ?? 0);
+                    $angsuran_diajukan = floatval($data['angsuran_diajukan'] ?? 0);
+                    $status_kelayakan_repayment = trim($data['status_kelayakan'] ?? '');
+                    if ($status_kelayakan_repayment === '') {
+                        $status_kelayakan_repayment = ($repayment_capacity >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
+                    }
+                    $rc_color = ($status_kelayakan_repayment === 'LAYAK') ? '#15803d' : '#b91c1c';
+                    $margin_keamanan = $repayment_capacity - $angsuran_diajukan;
+                ?>
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; padding:0.75rem 1rem; margin-bottom:1rem; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                    <span style="font-size:0.75rem; color:#065f46; font-weight:600; display:block;">UJI KELAYAKAN ANGSURAN</span>
+                    <div style="font-size:1.1rem; font-weight:800; color:<?= $rc_color ?>; margin:0.3rem 0 0.6rem 0;"><?= htmlspecialchars($status_kelayakan_repayment) ?></div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; font-size:0.8rem; color:#334155; line-height:1.4;">
+                        <div><strong>RC:</strong> <?= formatRupiah($repayment_capacity) ?></div>
+                        <div><strong>Angsuran:</strong> <?= formatRupiah($angsuran_diajukan) ?></div>
+                        <div><strong>Margin:</strong> <?= formatRupiah($margin_keamanan) ?></div>
+                    </div>
+                </div>
+
+                <!-- Catatan Analisa - Full Width -->
+                <?php if (!empty($s6c_catatan)): ?>
+                <div style="background:#fff8e1; border:1px solid #fcd34d; border-radius:6px; padding:0.75rem 1rem; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                    <span style="font-size:0.75rem; color:#92400E; font-weight:600; display:block; margin-bottom:0.3rem;">CATATAN ANALISA</span>
+                    <p style="margin:0; font-size:0.85rem; color:#374151; line-height:1.5;"><?= nl2br(htmlspecialchars($s6c_catatan)) ?></p>
+                </div>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
 
