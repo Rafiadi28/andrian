@@ -201,12 +201,17 @@ $approval_map = $approval_approved;
 
 // ===== DETERMINE SIGNATURE APPROVAL LEVELS BASED ON LOAN AMOUNT =====
 $loan_threshold = 500000000; // 500 juta threshold
+$stmtKasubagActive = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = 'kasubag_analis' AND status_jabatan = 'aktif'");
+$stmtKasubagActive->execute();
+$isKasubagActive = ((int)$stmtKasubagActive->fetchColumn() > 0);
 
-// Base roles for all loan amounts
-$required_roles = ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'];
+$required_roles = ['analis'];
+if ($isKasubagActive) {
+    $required_roles[] = 'kasubag_analis';
+}
+$required_roles = array_merge($required_roles, ['kabag_kredit', 'kadiv_bisnis']);
 
-// Add Direktur Utama if loan >= 500 juta
-if ($loan_amount >= $loan_threshold) {
+if ($loan_amount >= $loan_threshold || !$isKasubagActive) {
     $required_roles[] = 'direktur_utama';
 }
 
@@ -266,7 +271,7 @@ $getActiveUserCount = static function (PDO $pdo, string $role) use (&$active_use
     return $active_user_count_cache[$role] = (int)$stmtActive->fetchColumn();
 };
 
-$hasSkippedPejabat = false;
+$usesDirectorAsKasubagReplacement = !$isKasubagActive;
 $included_roles = [];
 
 foreach ($required_roles as $role) {
@@ -288,7 +293,6 @@ foreach ($required_roles as $role) {
     }
 
     if (!$is_active) {
-        $hasSkippedPejabat = true;
         continue;
     }
 
@@ -305,30 +309,14 @@ foreach ($required_roles as $role) {
         'jabatan' => $jabatan_tampil,
         'tanda_tangan' => $role_info['tanda_tangan'] ?? null,
         'stempel' => $role_info['stempel'] ?? null,
-        'replaced_by_director' => false,
+        'replaced_by_director' => ($role === 'direktur_utama' && $usesDirectorAsKasubagReplacement),
         'original_role' => $role
     ];
     $included_roles[] = $role;
 }
 
-if ($hasSkippedPejabat && !in_array('direktur_utama', $included_roles, true)) {
-    $director_info = $pejabat_by_role['direktur_utama'] ?? null;
-    $director_approval_entry = $approval_latest['direktur_utama'] ?? null;
-
-    $signature_roles[] = [
-        'id_pejabat' => $director_info['id_pejabat'] ?? null,
-        'role' => 'direktur_utama',
-        'nama' => $director_info['nama'] ?? ($director_approval_entry['nama_approver'] ?? ''),
-        'jabatan' => $director_info['jabatan'] ?? $defaults['direktur_utama']['full_title'],
-        'tanda_tangan' => $director_info['tanda_tangan'] ?? null,
-        'stempel' => $director_info['stempel'] ?? null,
-        'replaced_by_director' => true,
-        'original_role' => 'direktur_utama'
-    ];
-}
-
 $ttd_replacement_note = '';
-if ($hasSkippedPejabat) {
+if ($usesDirectorAsKasubagReplacement) {
     $ttd_replacement_note = '⚠ Tanda tangan pejabat yang sedang cuti/tidak aktif digantikan oleh Direktur Utama sesuai ketentuan sistem.';
 }
 

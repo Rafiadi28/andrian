@@ -507,6 +507,29 @@ function getMaxApprovalLevel($jumlah_kredit)
     return 'direktur_utama'; // Continue to Direktur Utama for amounts >= 500M
 }
 
+function isKasubagActive(PDO $pdo): bool
+{
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = 'kasubag_analis' AND status_jabatan = 'aktif'");
+    $stmt->execute();
+    return ((int)$stmt->fetchColumn() > 0);
+}
+
+/**
+ * Determine the effective final approval level based on loan amount
+ * and Kasubag availability.
+ * If Kasubag Analis is cuti/nonaktif, loans below 500 juta still require
+ * Direktur Utama as replacement approval.
+ */
+function getEffectiveMaxApprovalLevel(PDO $pdo, $jumlah_kredit)
+{
+    $maxLevel = getMaxApprovalLevel($jumlah_kredit);
+
+    if ($maxLevel === 'kadiv_bisnis' && !isKasubagActive($pdo)) {
+        return 'direktur_utama';
+    }
+
+    return $maxLevel;
+}
 
 
 function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
@@ -520,7 +543,7 @@ function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
 
     // Check if current role is the maximum approval level allowed for this amount
     if ($jumlah_kredit !== null) {
-        $maxLevel = getMaxApprovalLevel($jumlah_kredit);
+        $maxLevel = getEffectiveMaxApprovalLevel($pdo, $jumlah_kredit);
         $maxIndex = array_search($maxLevel, $hierarchy);
         
         // If we're already at max level, stop here
@@ -535,7 +558,7 @@ function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
 
         // Check if we've reached max approval level for this amount
         if ($jumlah_kredit !== null) {
-            $maxLevel = getMaxApprovalLevel($jumlah_kredit);
+            $maxLevel = getEffectiveMaxApprovalLevel($pdo, $jumlah_kredit);
             // Skip to next iteration if this role exceeds max level
             if ($role === 'direktur_utama' && $maxLevel === 'kadiv_bisnis') {
                 return ['role' => 'selesai', 'skipped' => array_merge($skipped, array_slice($hierarchy, $i))];
