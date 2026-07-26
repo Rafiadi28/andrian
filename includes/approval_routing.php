@@ -26,7 +26,7 @@ function resolve_next_active_role(PDO $pdo, string $desiredRole): ?string
 
     // Explicit fallback mapping when role is unavailable
     $fallback = [
-        'kasubag_analis' => 'kepatuhan',
+        'kasubag_analis' => 'direktur_utama',
         'kepatuhan' => 'kabag_kredit',
         'kabag_kredit' => 'kadiv_bisnis',
         'kadiv_bisnis' => 'direktur_utama'

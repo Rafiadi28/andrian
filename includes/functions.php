@@ -514,17 +514,30 @@ function isKasubagActive(PDO $pdo): bool
     return ((int)$stmt->fetchColumn() > 0);
 }
 
+function hasInactiveApprovalSubordinate(PDO $pdo): bool
+{
+    $subordinate_roles = ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'];
+    foreach ($subordinate_roles as $role) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = ? AND status_jabatan = 'aktif'");
+        $stmt->execute([$role]);
+        if ((int)$stmt->fetchColumn() === 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Determine the effective final approval level based on loan amount
- * and Kasubag availability.
- * If Kasubag Analis is cuti/nonaktif, loans below 500 juta still require
- * Direktur Utama as replacement approval.
+ * and active approval chain coverage.
+ * If any subordinate approver in the chain is cuti/nonaktif, loans below
+ * 500 juta still require Direktur Utama as replacement approval.
  */
 function getEffectiveMaxApprovalLevel(PDO $pdo, $jumlah_kredit)
 {
     $maxLevel = getMaxApprovalLevel($jumlah_kredit);
 
-    if ($maxLevel === 'kadiv_bisnis' && !isKasubagActive($pdo)) {
+    if ($maxLevel === 'kadiv_bisnis' && hasInactiveApprovalSubordinate($pdo)) {
         return 'direktur_utama';
     }
 
