@@ -199,28 +199,12 @@ foreach ((array)$approvals as $a) {
 // Use approved-only map for status/timeline
 $approval_map = $approval_approved;
 
-// ===== DETERMINE SIGNATURE APPROVAL LEVELS BASED ON LOAN AMOUNT =====
-$loan_threshold = 500000000; // 500 juta threshold
-$required_roles = ['analis'];
-// Build the active approval chain below Direktur Utama.
-$active_chain_roles = [];
-foreach (['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'] as $role) {
-    $stmtActiveCount = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = ? AND status_jabatan = 'aktif'");
-    $stmtActiveCount->execute([$role]);
-    if ((int)$stmtActiveCount->fetchColumn() > 0) {
-        $active_chain_roles[] = $role;
-    }
-}
-$required_roles = array_merge($required_roles, $active_chain_roles);
-$requiresDirector = $loan_amount >= $loan_threshold || count($active_chain_roles) < 3;
-if ($requiresDirector) {
-    $required_roles[] = 'direktur_utama';
-}
+$approval_chain_roles = getApprovalChainRoles($pdo, $loan_amount);
 
-// Determine if all required signatures are present
+// Determine if all required approvals along the active chain are completed
 $semua_disetujui = true;
-foreach ($required_roles as $role) {
-    if (!isset($approval_map[$role])) {
+foreach ($approval_chain_roles as $role) {
+    if (!isset($approval_approved[$role])) {
         $semua_disetujui = false;
         break;
     }
@@ -273,32 +257,19 @@ $getActiveUserCount = static function (PDO $pdo, string $role) use (&$active_use
     return $active_user_count_cache[$role] = (int)$stmtActive->fetchColumn();
 };
 
-$included_roles = [];
+$timeline_roles = $approval_chain_roles;
+$signature_roles = [];
+$ttd_replacement_note = '';
 
-foreach ($required_roles as $role) {
+foreach ($timeline_roles as $role) {
+    if (!isset($approval_approved[$role])) {
+        continue;
+    }
+
     $role_info = $pejabat_by_role[$role] ?? null;
-    $approval_entry = $approval_latest[$role] ?? null;
-    $has_active_user = !$role_info ? ($getActiveUserCount($pdo, $role) > 0) : false;
-
-    if ($role === 'kasubag_analis' && !$role_info && !$approval_entry && !$has_active_user) {
-        continue;
-    }
-
-    $is_active = false;
-    if ($role_info !== null) {
-        $is_active = strtolower((string)$role_info['status']) === 'aktif';
-    } elseif ($has_active_user) {
-        $is_active = true;
-    } else {
-        $is_active = false;
-    }
-
-    if (!$is_active) {
-        continue;
-    }
-
+    $approval_entry = $approval_approved[$role];
     $jabatan_tampil = $role_info['jabatan'] ?? ($defaults[$role]['full_title'] ?? ucwords(str_replace('_', ' ', $role)));
-    $nama_tampil = $role_info['nama'] ?? '';
+    $nama_tampil = $role_info['nama'] ?? $approval_entry['nama_approver'] ?? '';
     if (empty($nama_tampil) && !empty($approval_entry['nama_approver'])) {
         $nama_tampil = $approval_entry['nama_approver'];
     }
@@ -310,15 +281,15 @@ foreach ($required_roles as $role) {
         'jabatan' => $jabatan_tampil,
         'tanda_tangan' => $role_info['tanda_tangan'] ?? null,
         'stempel' => $role_info['stempel'] ?? null,
-        'replaced_by_director' => ($role === 'direktur_utama' && $requiresDirector),
+        'replaced_by_director' => ($role === 'direktur_utama' && !isset($approval_approved['kadiv_bisnis']) && !isRoleActive($pdo, 'kadiv_bisnis')),
         'original_role' => $role
     ];
-    $included_roles[] = $role;
 }
 
-$ttd_replacement_note = '';
-if ($requiresDirector) {
-    $ttd_replacement_note = '⚠ Tanda tangan pejabat yang sedang cuti/tidak aktif digantikan oleh Direktur Utama sesuai ketentuan sistem.';
+if (isset($approval_approved['direktur_utama'])
+    && !isset($approval_approved['kadiv_bisnis'])
+    && !isRoleActive($pdo, 'kadiv_bisnis')) {
+    $ttd_replacement_note = '⚠ Tanda tangan Kadiv Bisnis digantikan oleh Direktur Utama karena Kadiv tidak aktif/tidak tersedia.';
 }
 
 // Paper styles
@@ -2255,10 +2226,10 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 ?>
                 <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: hidden;">
                     <?php 
-                    foreach ($signature_roles as $role_info): 
-                        $lvl = $role_info['role'];
-                        $pejabat_nama = !empty($role_info['nama']) ? $role_info['nama'] : 'Pejabat Belum Ditentukan';
-                        $pejabat_jabatan = !empty($role_info['jabatan']) ? $role_info['jabatan'] : ucwords(str_replace('_', ' ', $lvl));
+                    foreach ($timeline_roles as $role): 
+                        $lvl = $role;
+                        $pejabat_nama = 'Pejabat Belum Ditentukan';
+                        $pejabat_jabatan = ucwords(str_replace('_', ' ', $lvl));
                         
                         $box_bg = '#f1f5f9';
                         $box_border = '#cbd5e1';
@@ -2300,6 +2271,14 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                                 $status_color = '#94a3b8';
                                 $box_bg = '#f8fafc';
                                 $box_border = '#e2e8f0';
+                            }
+                        }
+
+                        $role_info = $pejabat_by_role[$lvl] ?? null;
+                        if ($role_info) {
+                            $pejabat_jabatan = $role_info['jabatan'] ?? $pejabat_jabatan;
+                            if (empty($pejabat_nama) || $pejabat_nama === 'Pejabat Belum Ditentukan') {
+                                $pejabat_nama = $role_info['nama'] ?? $pejabat_nama;
                             }
                         }
                     ?>

@@ -535,13 +535,36 @@ function hasInactiveApprovalSubordinate(PDO $pdo): bool
  */
 function getEffectiveMaxApprovalLevel(PDO $pdo, $jumlah_kredit)
 {
-    $maxLevel = getMaxApprovalLevel($jumlah_kredit);
+    // Approval threshold is based solely on loan amount.
+    // Kadiv cuti does not by itself escalate <500 juta applications to Direktur Utama.
+    return getMaxApprovalLevel($jumlah_kredit);
+}
 
-    if ($maxLevel === 'kadiv_bisnis' && hasInactiveApprovalSubordinate($pdo)) {
-        return 'direktur_utama';
+function isRoleActive(PDO $pdo, string $role): bool
+{
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = ? AND status_jabatan = 'aktif'");
+    $stmt->execute([$role]);
+    return ((int)$stmt->fetchColumn() > 0);
+}
+
+function getApprovalChainRoles(PDO $pdo, $jumlah_kredit)
+{
+    $chain = ['analis'];
+    $currentRole = 'analis';
+
+    while (true) {
+        $nextStep = findNextTarget($currentRole, $pdo, $jumlah_kredit);
+        if (!is_array($nextStep) || !isset($nextStep['role']) || $nextStep['role'] === 'selesai') {
+            break;
+        }
+        if (in_array($nextStep['role'], $chain, true)) {
+            break;
+        }
+        $chain[] = $nextStep['role'];
+        $currentRole = $nextStep['role'];
     }
 
-    return $maxLevel;
+    return $chain;
 }
 
 
@@ -559,7 +582,6 @@ function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
         $maxLevel = getEffectiveMaxApprovalLevel($pdo, $jumlah_kredit);
         $maxIndex = array_search($maxLevel, $hierarchy);
         
-        // If we're already at max level, stop here
         if ($currentIndex >= $maxIndex) {
             return ['role' => 'selesai', 'skipped' => []];
         }
@@ -569,25 +591,11 @@ function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
     for ($i = $currentIndex + 1; $i < count($hierarchy); $i++) {
         $role = $hierarchy[$i];
 
-        // Check if we've reached max approval level for this amount
-        if ($jumlah_kredit !== null) {
-            $maxLevel = getEffectiveMaxApprovalLevel($pdo, $jumlah_kredit);
-            // Skip to next iteration if this role exceeds max level
-            if ($role === 'direktur_utama' && $maxLevel === 'kadiv_bisnis') {
-                return ['role' => 'selesai', 'skipped' => array_merge($skipped, array_slice($hierarchy, $i))];
-            }
-        }
-
-        // Check if ANY user in this role is active
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE role = ? AND status_jabatan = 'aktif'");
-        $stmt->execute([$role]);
-        $activeCount = $stmt->fetchColumn();
-
-        if ($activeCount > 0) {
+        if (isRoleActive($pdo, $role)) {
             return ['role' => $role, 'skipped' => $skipped];
-        } else {
-            $skipped[] = $role;
         }
+
+        $skipped[] = $role;
     }
 
     return ['role' => 'selesai', 'skipped' => $skipped];
