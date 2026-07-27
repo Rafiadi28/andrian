@@ -2231,6 +2231,10 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: hidden;">
                     <?php 
                     foreach ($timeline_roles as $role): 
+                        // Skip kepatuhan from timeline
+                        if ($role === 'kepatuhan') {
+                            continue;
+                        }
                         $lvl = $role;
                         $pejabat_nama = 'Pejabat Belum Ditentukan';
                         $pejabat_jabatan = ucwords(str_replace('_', ' ', $lvl));
