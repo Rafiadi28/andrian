@@ -1554,7 +1554,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                 <?php if ($print_6c): ?>
                 <?php
                     $repayment_capacity = floatval($data['repayment_capacity'] ?? 0);
-                    $angsuran_diajukan = floatval($data['angsuran_diajukan'] ?? 0);
+                    $angsuran_diajukan = $monthly_installment; // Use calculated monthly installment
                     $status_kelayakan_repayment = strtoupper(trim($data['status_kelayakan'] ?? ''));
                     if ($status_kelayakan_repayment === '') {
                         $status_kelayakan_repayment = ($repayment_capacity >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
