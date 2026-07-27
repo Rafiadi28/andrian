@@ -148,17 +148,20 @@ function validateDate(mixed $value, string $fieldName = 'field'): ?string
 
 function ensureUniqueNik(PDO $pdo, string $nik, int $excludeId = 0): void
 {
-    $sql = "SELECT id_pengajuan FROM pengajuan_kredit WHERE nik = ? AND status_pengajuan NOT IN ('selesai', 'ditolak', 'batal')";
+    $sql = "SELECT COUNT(*) FROM pengajuan_kredit WHERE nik = ? AND status_pengajuan NOT IN ('selesai', 'ditolak', 'batal')";
     $params = [$nik];
     if ($excludeId > 0) {
         $sql .= " AND id_pengajuan <> ?";
         $params[] = $excludeId;
     }
-    $sql .= " LIMIT 1";
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    if ($stmt->fetchColumn()) {
-        throw new Exception('NIK sudah terdaftar pada pengajuan lain.');
+    $count = (int) $stmt->fetchColumn();
+
+    $maxAllowed = 5;
+    if ($count >= $maxAllowed) {
+        throw new Exception('NIK ini sudah memiliki ' . $count . ' pengajuan kredit aktif. Maksimal ' . $maxAllowed . ' pengajuan dengan NIK yang sama. Silakan selesaikan atau batalkan salah satu pengajuan terlebih dahulu.');
     }
 }
 
@@ -327,6 +330,14 @@ try {
                 $pdo->beginTransaction();
 
                 if ($id_pengajuan > 0) {
+                    // Pastikan NIK tidak melebihi kuota aktif 5 pengajuan sebelum update.
+                    try {
+                        ensureUniqueNik($pdo, $nik, $id_pengajuan);
+                    } catch (Exception $ex) {
+                        echo json_encode(['success' => false, 'message' => $ex->getMessage()]);
+                        exit;
+                    }
+
                     // Cek apakah sudah terikat akad / status disetujui, jika ya skip pinjaman_ke
                     $stmt_check = $pdo->prepare("SELECT status_pengajuan FROM pengajuan_kredit WHERE id_pengajuan = ?");
                     $stmt_check->execute([$id_pengajuan]);

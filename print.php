@@ -262,6 +262,10 @@ $signature_roles = [];
 $ttd_replacement_note = '';
 
 foreach ($timeline_roles as $role) {
+    // Kepatuhan tidak perlu muncul pada halaman tanda tangan.
+    if ($role === 'kepatuhan') {
+        continue;
+    }
     if (!isset($approval_approved[$role])) {
         continue;
     }
