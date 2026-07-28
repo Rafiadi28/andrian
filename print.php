@@ -200,6 +200,11 @@ foreach ((array)$approvals as $a) {
 $approval_map = $approval_approved;
 
 $approval_chain_roles = getApprovalChainRoles($pdo, $loan_amount);
+// Kepatuhan dinilai terpisah melalui assessment_kepatuhan.
+// Untuk cetakan status final, jangan hitung kepatuhan sebagai bagian dari approval_kredit chain.
+$approval_chain_roles = array_values(array_filter($approval_chain_roles, static function ($role) {
+    return $role !== 'kepatuhan';
+}));
 
 // Determine if all required approvals along the active chain are completed
 $semua_disetujui = true;
@@ -208,6 +213,11 @@ foreach ($approval_chain_roles as $role) {
         $semua_disetujui = false;
         break;
     }
+}
+
+if (strtolower(trim((string)($data['status_pengajuan'] ?? ''))) === 'disetujui'
+    || strtolower(trim((string)($data['posisi_saat_ini'] ?? ''))) === 'selesai') {
+    $semua_disetujui = true;
 }
 
 if ($semua_disetujui) {
