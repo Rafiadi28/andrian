@@ -19,8 +19,9 @@ if (isset($_POST['submit_decision'])) {
         $id_pengajuan = intval($_POST['id_pengajuan'] ?? 0);
         $keputusan = trim((string)($_POST['keputusan'] ?? ''));
         $catatan = trim((string)($_POST['catatan'] ?? ''));
+        $revisi_tabs = $_POST['revisi_tabs'] ?? [];
 
-        $res = processApproval($pdo, $id_pengajuan, $my_role, $_SESSION['user_id'], $keputusan, $catatan);
+        $res = processApproval($pdo, $id_pengajuan, $my_role, $_SESSION['user_id'], $keputusan, $catatan, $revisi_tabs);
         if ($res['success']) $success = $res['message']; else $error = $res['message'];
     }
 }
@@ -287,7 +288,7 @@ function sort_link_proses($column, $label) {
                 </div>
                 <div class="form-group">
                     <label>Keputusan</label>
-                    <select name="keputusan" required class="w-full">
+                    <select name="keputusan" id="select_keputusan" required class="w-full">
                         <?php if ($my_role === 'kepatuhan'): ?>
                             <option value="revisi">LENGKAPI (Kembalikan untuk Revisi)</option>
                             <option value="setuju">TERUSKAN ke Atasan</option>
@@ -298,9 +299,25 @@ function sort_link_proses($column, $label) {
                         <?php endif; ?>
                     </select>
                 </div>
+                
+                <!-- NEW: Checkbox Container for Revisi -->
+                <div id="revisi_tabs_container" style="display:none; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:8px; padding:12px; background:#f8fafc;">
+                    <label style="font-weight:600; font-size:0.9rem; color:#0f172a; margin-bottom:8px; display:block;">Pilih Tab yang Harus Diperbaiki (Wajib Centang)</label>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <label><input type="checkbox" name="revisi_tabs[]" value="pemohon"> Data Pribadi</label>
+                        <label><input type="checkbox" name="revisi_tabs[]" value="usaha"> Usaha / Neraca</label>
+                        <label><input type="checkbox" name="revisi_tabs[]" value="penghasilan"> Penghasilan</label>
+                        <label><input type="checkbox" name="revisi_tabs[]" value="struktur"> Struktur Kredit</label>
+                        <label><input type="checkbox" name="revisi_tabs[]" value="agunan"> Agunan / Jaminan</label>
+                        <label><input type="checkbox" name="revisi_tabs[]" value="6c"> Analisa 6C</label>
+                        <label><input type="checkbox" name="revisi_tabs[]" value="scoring"> Review / Scoring</label>
+                    </div>
+                    <p style="font-size:0.75rem; color:#64748b; margin-top:8px;">Tab yang <b>tidak dicentang</b> akan otomatis terkunci (Approved) bagi analis.</p>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" onclick="document.getElementById('modal-approve').style.display='none'" class="btn btn-secondary">Batal</button>
-                    <button type="submit" name="submit_decision" class="btn btn-primary">Simpan Keputusan</button>
+                    <button type="submit" name="submit_decision" id="btn_submit_decision" class="btn btn-primary">Simpan Keputusan</button>
                 </div>
             </form>
         </div>
@@ -312,7 +329,30 @@ function sort_link_proses($column, $label) {
             document.getElementById('p_id').value = id;
             document.getElementById('p_nama').innerText = nama;
             document.getElementById('p_nominal').innerText = nominal;
+            
+            // Trigger change event to set correct initial state
+            document.getElementById('select_keputusan').dispatchEvent(new Event('change'));
         }
+
+        document.getElementById('select_keputusan').addEventListener('change', function() {
+            var revCont = document.getElementById('revisi_tabs_container');
+            if (this.value === 'revisi') {
+                revCont.style.display = 'block';
+            } else {
+                revCont.style.display = 'none';
+            }
+        });
+
+        document.querySelector('#modal-approve form').addEventListener('submit', function(e) {
+            var kep = document.getElementById('select_keputusan').value;
+            if (kep === 'revisi') {
+                var checked = document.querySelectorAll('input[name="revisi_tabs[]"]:checked');
+                if (checked.length === 0) {
+                    e.preventDefault();
+                    alert('Silakan pilih minimal 1 tab yang harus diperbaiki oleh analis!');
+                }
+            }
+        });
     </script>
 </body>
 </html>

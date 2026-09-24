@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (isset($_SERVER['SCRIPT_FILENAME']) && @realpath((string) $_SERVER['SCRIPT_FILENAME']) === @realpath(__FILE__)) {
     http_response_code(403);
     exit;
@@ -775,7 +775,7 @@ function checkComplianceAssessmentStatus($pdo, $id_pengajuan)
  * Actions: 'setuju' | 'revisi' | 'tolak' | 'kirim_ulang'
  * Returns array: ['success'=>bool, 'message'=>string]
  */
-function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $catatan)
+function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $catatan, $revisi_tabs = [])
 {
     $catatan = sanitizeApprovalCatatan($catatan);
     try {
@@ -981,6 +981,28 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                         );
                     }
                 }
+            }
+
+            // ===== UPDATE CHECKPOINTS & REVISIONS =====
+            $all_tabs = ['pemohon', 'usaha', 'penghasilan', 'struktur', 'neraca', 'agunan', '6c', 'scoring'];
+            
+            if (!empty($revisi_tabs)) {
+                foreach ($all_tabs as $t) {
+                    if (in_array($t, $revisi_tabs)) {
+                        // Mark as REVISION and create PENDING revision note
+                        $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'REVISION') ON DUPLICATE KEY UPDATE status = 'REVISION'")->execute([$id_pengajuan, $t]);
+                        $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, catatan, status) VALUES (?, ?, ?, 'PENDING')")->execute([$id_pengajuan, $t, $catatan]);
+                    } else {
+                        // Mark unselected tabs as APPROVED so they are locked for the Analis
+                        $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'APPROVED') ON DUPLICATE KEY UPDATE status = 'APPROVED'")->execute([$id_pengajuan, $t]);
+                    }
+                }
+            } else {
+                // Fallback if no tabs selected (legacy or missing UI): unlock all tabs
+                foreach ($all_tabs as $t) {
+                    $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'REVISION') ON DUPLICATE KEY UPDATE status = 'REVISION'")->execute([$id_pengajuan, $t]);
+                }
+                $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, catatan, status) VALUES (?, 'pemohon', ?, 'PENDING')")->execute([$id_pengajuan, $catatan]);
             }
 
             auditLog($pdo, $user_id, "Mengirim revisi (ID: $id_pengajuan) oleh $role");
