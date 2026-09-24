@@ -651,6 +651,48 @@ function formatRupiah($angka)
     return "Rp " . number_format((float)$angka, 0, ',', '.');
 }
 
+function parseRupiahValue($value)
+{
+    if ($value === null || $value === '') {
+        return 0.0;
+    }
+
+    if (is_int($value) || is_float($value)) {
+        return (float) $value;
+    }
+
+    $str = trim((string) $value);
+    if ($str === '') {
+        return 0.0;
+    }
+
+    if (is_numeric($str)) {
+        return (float) $str;
+    }
+
+    $clean = strtoupper($str);
+    $clean = preg_replace('/\s+/', '', $clean);
+    $clean = str_replace(['RP', 'IDR', 'USD', 'EUR'], '', $clean);
+
+    if (strpos($clean, ',') !== false && strpos($clean, '.') !== false) {
+        $clean = str_replace('.', '', $clean);
+        $clean = str_replace(',', '.', $clean);
+    } 
+    elseif (strpos($clean, ',') !== false) {
+        $clean = str_replace(',', '.', $clean);
+    }
+    elseif (strpos($clean, '.') !== false) {
+        $parts = explode('.', $clean);
+        $lastPart = end($parts);
+        if (count($parts) > 2 || strlen($lastPart) === 3) {
+            $clean = str_replace('.', '', $clean);
+        }
+    }
+
+    $clean = preg_replace('/(?!^-)[^0-9.]/', '', $clean);
+    return ((float) $clean) ?: 0.0;
+}
+
 /**
  * Label status_pengajuan yang selaras dengan posisi approval (tahap workflow).
  * UPDATED: Kepatuhan role maps to 'kepatuhan' status

@@ -80,7 +80,7 @@ if (isset($_POST['submit_agunan'])) {
             $tipe_valuasi = $_POST['tipe_valuasi_tanah'] ?? 'otomatis';
             $nilai_taksasi_manual = null;
             if ($tipe_valuasi === 'manual') {
-                $nilai_taksasi_manual = floatval($_POST['nilai_taksasi_manual_tanah'] ?? 0);
+                $nilai_taksasi_manual = parseRupiahValue($_POST['nilai_taksasi_manual_tanah'] ?? 0);
                 if ($nilai_taksasi_manual > 0) {
                     $nilai_taksasi_total = $nilai_taksasi_manual;
                     $nilai_likuidasi_total = $nilai_taksasi_manual * 0.70;
@@ -140,7 +140,7 @@ if (isset($_POST['submit_agunan'])) {
             $tipe_valuasi = $_POST['tipe_valuasi_kendaraan'] ?? 'otomatis';
             $nilai_taksasi_manual = null;
             if ($tipe_valuasi === 'manual') {
-                $nilai_taksasi_manual = floatval($_POST['nilai_taksasi_manual_kendaraan'] ?? 0);
+                $nilai_taksasi_manual = parseRupiahValue($_POST['nilai_taksasi_manual_kendaraan'] ?? 0);
                 if ($nilai_taksasi_manual > 0) {
                     $nilai_taksasi = $nilai_taksasi_manual;
                     $nilai_likuidasi = $nilai_taksasi * 0.70;

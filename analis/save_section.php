@@ -495,7 +495,7 @@ try {
                 exit;
             }
 
-            $angsuran_diajukan = floatval($_POST['angsuran_diajukan'] ?? 0);
+            $angsuran_diajukan = parseRupiahValue($_POST['angsuran_diajukan'] ?? 0);
             if ($angsuran_diajukan < 0) {
                 $angsuran_diajukan = 0;
             }
@@ -527,19 +527,19 @@ try {
                     }
                 }
 
-                $gaji_pp    = floatval($_POST['pppk_gaji'] ?? 0);
-                $biaya_hidup = floatval($_POST['pppk_biaya_hidup'] ?? 0);
+                $gaji_pp    = parseRupiahValue($_POST['pppk_gaji'] ?? 0);
+                $biaya_hidup = parseRupiahValue($_POST['pppk_biaya_hidup'] ?? 0);
 
                 // --- Angsuran Bank Wonosobo (array dinamis, form baru) ---
                 $angsuran_nominal_arr = $_POST['pppk_angsuran_nominal'] ?? [];
                 if (is_array($angsuran_nominal_arr) && count($angsuran_nominal_arr) > 0) {
                     $cic = 0;
                     foreach ($angsuran_nominal_arr as $v) {
-                        $cic += floatval($v);
+                        $cic += parseRupiahValue($v);
                     }
                 } else {
                     // Fallback: pppk_total_angsuran dari hidden field, atau field lama
-                    $cic = floatval($_POST['pppk_total_angsuran'] ?? $_POST['pppk_angsuran_lain'] ?? 0);
+                    $cic = parseRupiahValue($_POST['pppk_total_angsuran'] ?? $_POST['pppk_angsuran_lain'] ?? 0);
                 }
 
                 // Repayment Capacity dari master parameter (dasar + persen per jenis kredit)
@@ -642,21 +642,21 @@ try {
                     exit;
                 }
                 
-                $tetap = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_penghasilan_tetap'] ?? '0'));
-                $tambahan = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_tambahan_penghasilan'] ?? '0'));
+                $tetap = parseRupiahValue($_POST['desk_penghasilan_tetap'] ?? '0');
+                $tambahan = parseRupiahValue($_POST['desk_tambahan_penghasilan'] ?? '0');
                 $omset_total = $tetap + $tambahan;
                 
-                $biaya_hidup = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_biaya_hidup'] ?? '0'));
+                $biaya_hidup = parseRupiahValue($_POST['desk_biaya_hidup'] ?? '0');
                 
                 // --- Angsuran Bank Wonosobo (array dinamis) ---
                 $angsuran_nominal_arr = $_POST['desk_angsuran_nominal'] ?? [];
                 if (is_array($angsuran_nominal_arr) && count($angsuran_nominal_arr) > 0) {
                     $cic = 0;
                     foreach ($angsuran_nominal_arr as $v) {
-                        $cic += floatval(str_replace(['Rp', '.', ',', ' '], '', $v));
+                        $cic += parseRupiahValue($v);
                     }
                 } else {
-                    $cic = floatval(str_replace(['Rp', '.', ',', ' '], '', $_POST['desk_total_angsuran'] ?? $_POST['desk_angsuran_lain'] ?? '0'));
+                    $cic = parseRupiahValue($_POST['desk_total_angsuran'] ?? $_POST['desk_angsuran_lain'] ?? '0');
                 }
                 
                 // ⚠️ BANKING STANDARD: Repayment Capacity untuk Perangkat Desa
@@ -859,28 +859,28 @@ try {
             $lama = strtoupper(trim($_POST['lama_usaha'] ?? '-'));
 
             // B. Omzet & Pendapatan Lain
-            $omset = floatval($_POST['omset_per_bulan'] ?? 0);
-            $pendapatan_lain = floatval($_POST['pendapatan_lain'] ?? 0);
+            $omset = parseRupiahValue($_POST['omset_per_bulan'] ?? 0);
+            $pendapatan_lain = parseRupiahValue($_POST['pendapatan_lain'] ?? 0);
             if ($omset < 0) $omset = 0;
             if ($pendapatan_lain < 0) $pendapatan_lain = 0;
 
             // C. Rincian Biaya Usaha
-            $b_bahan_baku = floatval($_POST['biaya_bahan_baku'] ?? 0);
-            $b_gaji = floatval($_POST['biaya_gaji'] ?? 0);
-            $b_listrik = floatval($_POST['biaya_listrik'] ?? 0);
-            $b_air = floatval($_POST['biaya_air'] ?? 0);
-            $b_sewa = floatval($_POST['biaya_sewa'] ?? 0);
-            $b_transportasi = floatval($_POST['biaya_transportasi'] ?? 0);
-            $b_lainnya = floatval($_POST['biaya_lainnya'] ?? 0);
+            $b_bahan_baku = parseRupiahValue($_POST['biaya_bahan_baku'] ?? 0);
+            $b_gaji = parseRupiahValue($_POST['biaya_gaji'] ?? 0);
+            $b_listrik = parseRupiahValue($_POST['biaya_listrik'] ?? 0);
+            $b_air = parseRupiahValue($_POST['biaya_air'] ?? 0);
+            $b_sewa = parseRupiahValue($_POST['biaya_sewa'] ?? 0);
+            $b_transportasi = parseRupiahValue($_POST['biaya_transportasi'] ?? 0);
+            $b_lainnya = parseRupiahValue($_POST['biaya_lainnya'] ?? 0);
             $total_biaya = $b_bahan_baku + $b_gaji + $b_listrik + $b_air + $b_sewa + $b_transportasi + $b_lainnya;
 
             // D. Laba Usaha = (Omzet + Pendapatan Lain) - Biaya Operasional
             $laba = ($omset + $pendapatan_lain) - $total_biaya;
 
             // E. Pengeluaran Tetap Debitur
-            $biaya_hidup = floatval($_POST['biaya_hidup'] ?? 0);
+            $biaya_hidup = parseRupiahValue($_POST['biaya_hidup'] ?? 0);
             
-            $cicilan_lain = floatval($_POST['cicilan_lain'] ?? 0);
+            $cicilan_lain = parseRupiahValue($_POST['cicilan_lain'] ?? 0);
             
             $total_pengeluaran = $biaya_hidup + $cicilan_lain;
 
@@ -930,7 +930,7 @@ try {
             }
 
             // H. Uji Kelayakan
-            $angsuran_diajukan = floatval($_POST['angsuran_diajukan'] ?? 0);
+            $angsuran_diajukan = parseRupiahValue($_POST['angsuran_diajukan'] ?? 0);
             $status_kelayakan = '';
             if ($angsuran_diajukan > 0) {
                 $status_kelayakan = ($rpc >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
@@ -1089,8 +1089,8 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Simpan Data Pemohon terlebih dahulu!']);
                 exit;
             }
-            $jumlah = floatval($_POST['jumlah_kredit'] ?? 0);
-            $suku_bunga = floatval($_POST['suku_bunga'] ?? 0);
+            $jumlah = parseRupiahValue($_POST['jumlah_kredit'] ?? 0);
+            $suku_bunga = parseRupiahValue($_POST['suku_bunga'] ?? 0);
             $waktu = intval($_POST['jangka_waktu'] ?? 0);
             $jangka_tempo = intval($_POST['jangka_tempo'] ?? 1);
             $grace_period = intval($_POST['grace_period'] ?? 0);
@@ -1268,13 +1268,13 @@ try {
                     if ($jenis === 'tanah_bangunan') {
                         // --- TANAH & BANGUNAN ---
                         // Safely get array values with index check
-                        $luas_tanah = floatval($_POST['luas_tanah'][$i] ?? 0);
-                        $luas_tanah_sppt = floatval($_POST['luas_tanah_sppt'][$i] ?? 0);
-                        $harga_tanah_sppt = floatval($_POST['harga_tanah_sppt'][$i] ?? 0);
-                        $harga_tanah_pasar = floatval($_POST['harga_tanah_pasar'][$i] ?? 0);
-                        $luas_bangunan_1 = floatval($_POST['luas_bangunan'][$i] ?? 0);
-                        $luas_bangunan_2 = floatval($_POST['luas_bangunan_2'][$i] ?? 0);
-                        $harga_bangunan = floatval($_POST['harga_bangunan_m2'][$i] ?? 0);
+                        $luas_tanah = parseRupiahValue($_POST['luas_tanah'][$i] ?? 0);
+                        $luas_tanah_sppt = parseRupiahValue($_POST['luas_tanah_sppt'][$i] ?? 0);
+                        $harga_tanah_sppt = parseRupiahValue($_POST['harga_tanah_sppt'][$i] ?? 0);
+                        $harga_tanah_pasar = parseRupiahValue($_POST['harga_tanah_pasar'][$i] ?? 0);
+                        $luas_bangunan_1 = parseRupiahValue($_POST['luas_bangunan'][$i] ?? 0);
+                        $luas_bangunan_2 = parseRupiahValue($_POST['luas_bangunan_2'][$i] ?? 0);
+                        $harga_bangunan = parseRupiahValue($_POST['harga_bangunan_m2'][$i] ?? 0);
                         $alamat = $_POST['alamat'][$i] ?? '';
                         $jenis_surat = $_POST['jenis_surat'][$i] ?? 'SHM';
                         $nomor_surat = $_POST['nomor_surat'][$i] ?? '';
@@ -1319,9 +1319,9 @@ try {
                         $nilai_taksasi_manual_tanah = null;
                         $persen_taksasi_tanah = null;
                         if ($tipe_valuasi_tanah === 'manual') {
-                            $nilai_taksasi_manual_tanah = floatval($_POST['nilai_taksasi_manual_tanah'][$i] ?? 0);
+                            $nilai_taksasi_manual_tanah = parseRupiahValue($_POST['nilai_taksasi_manual_tanah'][$i] ?? 0);
                             if (isset($_POST['persen_taksasi_tanah'][$i]) && $_POST['persen_taksasi_tanah'][$i] !== '') {
-                                $persen_taksasi_tanah = floatval($_POST['persen_taksasi_tanah'][$i]);
+                                $persen_taksasi_tanah = parseRupiahValue($_POST['persen_taksasi_tanah'][$i]);
                             }
                             if ($nilai_taksasi_manual_tanah > 0) {
                                 // Use manually computed taksasi value (from persen_taksasi_tanah input)
@@ -1381,7 +1381,7 @@ try {
                         $nomesin = $_POST['nomesin'][$i] ?? '';
                         $bpkb_nama = $_POST['bpkb_nama'][$i] ?? '';
                         $warna = $_POST['warna'][$i] ?? '';
-                        $nilai_pasar = floatval($_POST['nilai_pasar'][$i] ?? 0);
+                        $nilai_pasar = parseRupiahValue($_POST['nilai_pasar'][$i] ?? 0);
                         // Skip jika data kunci kosong (defensive)
                         if (empty($merk) && empty($nopol) && $nilai_pasar <= 0) {
                             continue;
@@ -1407,9 +1407,9 @@ try {
                         $nilai_taksasi_manual_kendaraan = null;
                         $persen_taksasi_kendaraan = null;
                         if ($tipe_valuasi_kendaraan === 'manual') {
-                            $nilai_taksasi_manual_kendaraan = floatval($_POST['nilai_taksasi_manual_kendaraan'][$i] ?? 0);
+                            $nilai_taksasi_manual_kendaraan = parseRupiahValue($_POST['nilai_taksasi_manual_kendaraan'][$i] ?? 0);
                             if (isset($_POST['persen_taksasi_kendaraan'][$i]) && $_POST['persen_taksasi_kendaraan'][$i] !== '') {
-                                $persen_taksasi_kendaraan = floatval($_POST['persen_taksasi_kendaraan'][$i]);
+                                $persen_taksasi_kendaraan = parseRupiahValue($_POST['persen_taksasi_kendaraan'][$i]);
                             }
                             if ($nilai_taksasi_manual_kendaraan > 0) {
                                 // Use manually computed taksasi value (from persen_taksasi_kendaraan input)
@@ -1465,8 +1465,8 @@ try {
                     }
                     else if ($jenis === 'emas') {
                         // --- EMAS ---
-                        $harga_per_gram = floatval($_POST['emas_harga_per_gram'][$i] ?? 0);
-                        $berat = floatval($_POST['emas_berat'][$i] ?? 0);
+                        $harga_per_gram = parseRupiahValue($_POST['emas_harga_per_gram'][$i] ?? 0);
+                        $berat = parseRupiahValue($_POST['emas_berat'][$i] ?? 0);
                         
                         // Skip jika data kunci kosong (defensive)
                         if ($harga_per_gram <= 0 && $berat <= 0) {
@@ -1670,38 +1670,38 @@ try {
             }
 
             // ===== NERACA SEBELUM KREDIT =====
-            $n_kas = floatval($_POST['neraca_kas'] ?? 0);
-            $n_bank = floatval($_POST['neraca_bank'] ?? 0);
+            $n_kas = parseRupiahValue($_POST['neraca_kas'] ?? 0);
+            $n_bank = parseRupiahValue($_POST['neraca_bank'] ?? 0);
 
             // Sum multiple Tanah values if provided (safe)
             $n_tanah = 0;
             if (isset($_POST['tanah_nilai']) && is_array($_POST['tanah_nilai'])) {
                 foreach ($_POST['tanah_nilai'] as $v) {
-                    $n_tanah += floatval($v);
+                    $n_tanah += parseRupiahValue($v);
                 }
             }
             else {
-                $n_tanah = floatval($_POST['neraca_tanah'] ?? 0);
+                $n_tanah = parseRupiahValue($_POST['neraca_tanah'] ?? 0);
             }
 
             // Sum multiple Kendaraan values if provided (safe)
             $n_kend = 0;
             if (isset($_POST['kendaraan_nilai']) && is_array($_POST['kendaraan_nilai'])) {
                 foreach ($_POST['kendaraan_nilai'] as $v) {
-                    $n_kend += floatval($v);
+                    $n_kend += parseRupiahValue($v);
                 }
             }
             else {
-                $n_kend = floatval($_POST['neraca_kendaraan'] ?? 0);
+                $n_kend = parseRupiahValue($_POST['neraca_kendaraan'] ?? 0);
             }
 
-            $n_stok = floatval($_POST['neraca_stok'] ?? 0);
-            $n_lain = floatval($_POST['neraca_lain'] ?? 0);
-            $pinj_bri = floatval($_POST['neraca_pinjaman_bri'] ?? 0);
-            $pinj_bawon = floatval($_POST['neraca_pinjaman_bawon'] ?? 0);
+            $n_stok = parseRupiahValue($_POST['neraca_stok'] ?? 0);
+            $n_lain = parseRupiahValue($_POST['neraca_lain'] ?? 0);
+            $pinj_bri = parseRupiahValue($_POST['neraca_pinjaman_bri'] ?? 0);
+            $pinj_bawon = parseRupiahValue($_POST['neraca_pinjaman_bawon'] ?? 0);
             $n_hutang_bank = $pinj_bri + $pinj_bawon;
             
-            $n_hutang_lain = floatval($_POST['neraca_hutang_lain'] ?? 0);
+            $n_hutang_lain = parseRupiahValue($_POST['neraca_hutang_lain'] ?? 0);
             $total_aktiva = $n_kas + $n_bank + $n_tanah + $n_kend + $n_stok + $n_lain;
             
             // Perbaikan: Hitung modal sebelum kredit secara otomatis agar selalu balance dengan Aktiva
@@ -1709,16 +1709,16 @@ try {
             $total_pasiva = $n_hutang_bank + $n_hutang_lain + $n_modal;
 
             // ===== NERACA SESUDAH KREDIT (Manual Input) =====
-            $n_kas_sesudah = floatval($_POST['neraca_kas_sesudah'] ?? 0);
-            $n_bank_sesudah = floatval($_POST['neraca_bank_sesudah'] ?? 0);
-            $n_tanah_sesudah = floatval($_POST['neraca_tanah_sesudah'] ?? 0);
-            $n_kend_sesudah = floatval($_POST['neraca_kendaraan_sesudah'] ?? 0);
-            $n_stok_sesudah = floatval($_POST['neraca_stok_sesudah'] ?? 0);
-            $n_lainnya_sesudah = floatval($_POST['neraca_lainnya_sesudah'] ?? 0);
+            $n_kas_sesudah = parseRupiahValue($_POST['neraca_kas_sesudah'] ?? 0);
+            $n_bank_sesudah = parseRupiahValue($_POST['neraca_bank_sesudah'] ?? 0);
+            $n_tanah_sesudah = parseRupiahValue($_POST['neraca_tanah_sesudah'] ?? 0);
+            $n_kend_sesudah = parseRupiahValue($_POST['neraca_kendaraan_sesudah'] ?? 0);
+            $n_stok_sesudah = parseRupiahValue($_POST['neraca_stok_sesudah'] ?? 0);
+            $n_lainnya_sesudah = parseRupiahValue($_POST['neraca_lainnya_sesudah'] ?? 0);
             
-            $n_hutang_lain_sesudah = floatval($_POST['neraca_hutang_lain_sesudah'] ?? 0);
-            $pinj_bri_sesudah = floatval($_POST['neraca_pinjaman_bri_sesudah'] ?? 0);
-            $pinj_bawon_sesudah = floatval($_POST['neraca_pinjaman_bawon_sesudah'] ?? 0);
+            $n_hutang_lain_sesudah = parseRupiahValue($_POST['neraca_hutang_lain_sesudah'] ?? 0);
+            $pinj_bri_sesudah = parseRupiahValue($_POST['neraca_pinjaman_bri_sesudah'] ?? 0);
+            $pinj_bawon_sesudah = parseRupiahValue($_POST['neraca_pinjaman_bawon_sesudah'] ?? 0);
             
             $total_aktiva_sesudah = $n_kas_sesudah + $n_bank_sesudah + $n_tanah_sesudah + $n_kend_sesudah + $n_stok_sesudah + $n_lainnya_sesudah;
             $n_hutang_bank_sesudah = $pinj_bri_sesudah + $pinj_bawon_sesudah;
