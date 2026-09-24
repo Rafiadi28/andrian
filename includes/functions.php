@@ -1468,3 +1468,26 @@ function getRoleLabel($key)
 }
 
 ?>
+ 
+ f u n c t i o n   m a r k C h e c k p o i n t ( $ p d o ,   $ i d _ p e n g a j u a n ,   $ s e c t i o n )   { 
+         i f   ( ! $ i d _ p e n g a j u a n )   r e t u r n ; 
+         i f   ( i n _ a r r a y ( $ s e c t i o n ,   [ ' p e m o h o n ' ,   ' u s a h a ' ,   ' s t r u k t u r ' ,   ' n e r a c a ' ,   ' a g u n a n ' ,   ' 6 c ' ,   ' s c o r i n g ' ] ) )   { 
+                 t r y   { 
+                         $ s t m t   =   $ p d o - > p r e p a r e ( " S E L E C T   s t a t u s   F R O M   a n a l y s i s _ c h e c k p o i n t s   W H E R E   i d _ p e n g a j u a n   =   ?   A N D   t a b _ n a m e   =   ? " ) ; 
+                         $ s t m t - > e x e c u t e ( [ $ i d _ p e n g a j u a n ,   $ s e c t i o n ] ) ; 
+                         $ r o w   =   $ s t m t - > f e t c h ( P D O : : F E T C H _ A S S O C ) ; 
+                         i f   ( $ r o w )   { 
+                                 i f   ( $ r o w [ ' s t a t u s ' ]   = = =   ' R E V I S I O N ' )   { 
+                                         $ p d o - > p r e p a r e ( " U P D A T E   a n a l y s i s _ c h e c k p o i n t s   S E T   s t a t u s   =   ' F I X E D '   W H E R E   i d _ p e n g a j u a n   =   ?   A N D   t a b _ n a m e   =   ? " ) - > e x e c u t e ( [ $ i d _ p e n g a j u a n ,   $ s e c t i o n ] ) ; 
+                                         / /   A u d i t   l o g   s h o u l d   b e   h a n d l e d   b y   f o r m   d i f f s ,   b u t   a t   l e a s t   w e   m a r k e d   i t   F I X E D 
+                                 }   e l s e i f   ( $ r o w [ ' s t a t u s ' ]   = = =   ' A P P R O V E D ' )   { 
+                                         / /   D o   n o t h i n g   o r   m a y b e   i t   s h o u l d n ' t   h a v e   b e e n   e d i t e d .   
+                                 } 
+                         }   e l s e   { 
+                                 $ p d o - > p r e p a r e ( " I N S E R T   I N T O   a n a l y s i s _ c h e c k p o i n t s   ( i d _ p e n g a j u a n ,   t a b _ n a m e ,   s t a t u s )   V A L U E S   ( ? ,   ? ,   ' F I L L E D ' )   O N   D U P L I C A T E   K E Y   U P D A T E   s t a t u s   =   ' F I L L E D ' " ) - > e x e c u t e ( [ $ i d _ p e n g a j u a n ,   $ s e c t i o n ] ) ; 
+                         } 
+                 }   c a t c h   ( E x c e p t i o n   $ e )   { } 
+         } 
+ } 
+  
+ 

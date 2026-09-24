@@ -168,6 +168,11 @@ function ensureUniqueNik(PDO $pdo, string $nik, int $excludeId = 0): void
 $section = $_POST['section'] ?? '';
 $id_pengajuan = intval($_POST['id_pengajuan'] ?? 0);
 
+require_once __DIR__ . '/../includes/checkpoint_helper.php';
+$before_snapshot_for_audit = captureAllDbState($pdo, $id_pengajuan);
+$current_user_id = $_SESSION['user_id'] ?? 0;
+register_shutdown_function('processAuditDiffAndCheckpoint', $pdo, $id_pengajuan, $section, $before_snapshot_for_audit, $current_user_id);
+
 /**
  * Helper: Get SQL condition for editable states (analis can edit these)
  * Includes: draft, revisi (from kabag), ditolak (rejected), diajukan_ulang (resubmit)
@@ -2044,23 +2049,38 @@ try {
 
             $pdo->beginTransaction();
 
-            $stmtLR = $pdo->prepare("SELECT last_reject_level, jumlah_kredit FROM pengajuan_kredit WHERE id_pengajuan = ?");
+            // Check for unresolved revisions
+            $stmtRevCheck = $pdo->prepare("SELECT COUNT(*) FROM analysis_revisions WHERE id_pengajuan = ? AND status = 'PENDING'");
+            $stmtRevCheck->execute([$id_pengajuan]);
+            $pendingRevisions = (int) $stmtRevCheck->fetchColumn();
+            
+            if ($pendingRevisions > 0) {
+                $pdo->rollBack();
+                echo json_encode(['success' => false, 'message' => "Masih ada $pendingRevisions revisi yang belum diperbaiki. Selesaikan (simpan) semua tab yang direvisi terlebih dahulu."]);
+                exit;
+            }
+
+            $stmtLR = $pdo->prepare("SELECT last_reject_level, jumlah_kredit, status_pengajuan FROM pengajuan_kredit WHERE id_pengajuan = ?");
             $stmtLR->execute([$id_pengajuan]);
             $dataRow = $stmtLR->fetch(PDO::FETCH_ASSOC);
             $lr = is_string($dataRow['last_reject_level'] ?? null) ? trim($dataRow['last_reject_level']) : '';
             $jumlah_kredit = $dataRow['jumlah_kredit'] ?? 0;
+            $currentStatus = $dataRow['status_pengajuan'] ?? '';
 
             if ($lr !== '') {
                 $targetRole = $lr;
                 $skippedRoles = [];
             } else {
-                // Pass jumlah_kredit to determine max approval level based on amount
                 $nextStep = findNextTarget('analis', $pdo, $jumlah_kredit);
                 $targetRole = $nextStep['role'];
                 $skippedRoles = $nextStep['skipped'];
             }
 
-            $newSubmitStatus = enumAllows($pdo, 'pengajuan_kredit', 'status_pengajuan', 'diajukan') ? 'diajukan' : 'proses';
+            if ($currentStatus === 'revisi' || $currentStatus === 'revisi_diajukan') {
+                $newSubmitStatus = 'revisi_diajukan';
+            } else {
+                $newSubmitStatus = enumAllows($pdo, 'pengajuan_kredit', 'status_pengajuan', 'diajukan') ? 'diajukan' : 'proses';
+            }
             
             // Validate & sanitize targetRole to prevent truncation
             $targetRole = trim($targetRole);

@@ -13,6 +13,8 @@ $catatan_revisi_display = '';
 $edit_id_pengajuan = 0;
 $prefill_bundle = null;
 $prefill_json = 'null';
+$revisions_json = '[]';
+$checkpoints_json = '{}';
 
 if ($edit_id > 0) {
     // Allow analis to open the pengajuan for editing when it's in an editable state
@@ -60,7 +62,24 @@ if ($edit_id > 0) {
     } else {
         $prefill_json = str_replace(["\u{2028}", "\u{2029}"], ['\u2028', '\u2029'], $prefill_json);
     }
-                            } else {
+    
+    // FETCH REVISIONS & CHECKPOINTS
+    $active_revisions = [];
+    $checkpoints = [];
+    try {
+        $stmtRev = $pdo->prepare("SELECT tab_name, field_name, revision_note, status FROM analysis_revisions WHERE id_pengajuan = ? AND status = 'PENDING'");
+        $stmtRev->execute([$edit_id]);
+        $active_revisions = $stmtRev->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmtChk = $pdo->prepare("SELECT tab_name, status FROM analysis_checkpoints WHERE id_pengajuan = ?");
+        $stmtChk->execute([$edit_id]);
+        foreach ($stmtChk->fetchAll(PDO::FETCH_ASSOC) as $chk) {
+            $checkpoints[$chk['tab_name']] = $chk['status'];
+        }
+    } catch(Exception $e) {}
+    $revisions_json = json_encode($active_revisions);
+    $checkpoints_json = json_encode($checkpoints);
+} else {
         $normalized_param = $jenis_param !== null ? normalizeJenisPekerjaan($jenis_param) : '';
         if ($normalized_param === '' || !in_array($normalized_param, $allowed_jenis, true)) {
             include __DIR__ . '/pilih_jenis_pekerjaan.php';
