@@ -264,8 +264,8 @@ function sort_link_proses($column, $label) {
     </div>
 
     <!-- Modal Decision -->
-    <div id="modal-approve" class="modal-overlay" style="display:none;">
-        <div class="modal-content px-4 py-4" style="max-width:720px; width:100%;">
+    <div id="modal-approve" class="modal-overlay" style="display:none; padding:15px; overflow-y:auto; align-items:center; justify-content:center;">
+        <div class="modal-content px-4 py-4" style="max-width:720px; width:100%; max-height: 95vh; overflow-y: auto;">
             <h3 class="modal-header">Proses Pengajuan</h3>
             
             <div class="modal-info" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:start;">
@@ -286,7 +286,7 @@ function sort_link_proses($column, $label) {
                     <label>Catatan Keputusan (Wajib)</label>
                     <textarea name="catatan" rows="3" required placeholder="Berikan alasan persetujuan atau penolakan..." class="w-full"></textarea>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom:10px;">
                     <label>Keputusan</label>
                     <select name="keputusan" id="select_keputusan" required class="w-full">
                         <?php if ($my_role === 'kepatuhan'): ?>
@@ -301,21 +301,21 @@ function sort_link_proses($column, $label) {
                 </div>
                 
                 <!-- NEW: Checkbox Container for Revisi -->
-                <div id="revisi_tabs_container" style="display:none; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:8px; padding:12px; background:#f8fafc;">
-                    <label style="font-weight:600; font-size:0.9rem; color:#0f172a; margin-bottom:8px; display:block;">Pilih Tab yang Harus Diperbaiki (Wajib Centang)</label>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                        <label><input type="checkbox" name="revisi_tabs[]" value="pemohon"> Data Pribadi</label>
-                        <label><input type="checkbox" name="revisi_tabs[]" value="usaha"> Usaha / Neraca</label>
-                        <label><input type="checkbox" name="revisi_tabs[]" value="penghasilan"> Penghasilan</label>
-                        <label><input type="checkbox" name="revisi_tabs[]" value="struktur"> Struktur Kredit</label>
-                        <label><input type="checkbox" name="revisi_tabs[]" value="agunan"> Agunan / Jaminan</label>
-                        <label><input type="checkbox" name="revisi_tabs[]" value="6c"> Analisa 6C</label>
-                        <label><input type="checkbox" name="revisi_tabs[]" value="scoring"> Review / Scoring</label>
+                <div id="revisi_tabs_container" style="display:none; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:8px; padding:10px; background:#f8fafc;">
+                    <label style="font-weight:600; font-size:0.85rem; color:#0f172a; margin-bottom:6px; display:block;">Pilih Tab yang Harus Diperbaiki (Wajib)</label>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:0.85rem;">
+                        <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" name="revisi_tabs[]" value="pemohon"> Data Pribadi</label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" name="revisi_tabs[]" value="usaha"> Usaha/Neraca</label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" name="revisi_tabs[]" value="penghasilan"> Penghasilan</label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" name="revisi_tabs[]" value="struktur"> Struktur Kredit</label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" name="revisi_tabs[]" value="agunan"> Agunan</label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" name="revisi_tabs[]" value="6c"> Analisa 6C</label>
+                        <label style="display:inline-flex; align-items:center; gap:4px; margin:0;"><input type="checkbox" name="revisi_tabs[]" value="scoring"> Review/Scoring</label>
                     </div>
-                    <p style="font-size:0.75rem; color:#64748b; margin-top:8px;">Tab yang <b>tidak dicentang</b> akan otomatis terkunci (Approved) bagi analis.</p>
+                    <p style="font-size:0.7rem; color:#64748b; margin:6px 0 0 0;">*Tab yang tidak dicentang akan otomatis terkunci (Approved).</p>
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer" style="margin-top:10px;">
                     <button type="button" onclick="document.getElementById('modal-approve').style.display='none'" class="btn btn-secondary">Batal</button>
                     <button type="submit" name="submit_decision" id="btn_submit_decision" class="btn btn-primary">Simpan Keputusan</button>
                 </div>

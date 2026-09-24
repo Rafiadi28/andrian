@@ -991,7 +991,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                     if (in_array($t, $revisi_tabs)) {
                         // Mark as REVISION and create PENDING revision note
                         $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'REVISION') ON DUPLICATE KEY UPDATE status = 'REVISION'")->execute([$id_pengajuan, $t]);
-                        $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, catatan, status) VALUES (?, ?, ?, 'PENDING')")->execute([$id_pengajuan, $t, $catatan]);
+                        $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, revision_note, status, requested_by) VALUES (?, ?, ?, 'PENDING', ?)")->execute([$id_pengajuan, $t, $catatan, $user_id]);
                     } else {
                         // Mark unselected tabs as APPROVED so they are locked for the Analis
                         $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'APPROVED') ON DUPLICATE KEY UPDATE status = 'APPROVED'")->execute([$id_pengajuan, $t]);
@@ -1002,7 +1002,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                 foreach ($all_tabs as $t) {
                     $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'REVISION') ON DUPLICATE KEY UPDATE status = 'REVISION'")->execute([$id_pengajuan, $t]);
                 }
-                $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, catatan, status) VALUES (?, 'pemohon', ?, 'PENDING')")->execute([$id_pengajuan, $catatan]);
+                $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, revision_note, status, requested_by) VALUES (?, 'pemohon', ?, 'PENDING', ?)")->execute([$id_pengajuan, $catatan, $user_id]);
             }
 
             auditLog($pdo, $user_id, "Mengirim revisi (ID: $id_pengajuan) oleh $role");
