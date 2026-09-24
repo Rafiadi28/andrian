@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (isset($_SERVER['SCRIPT_FILENAME']) && @realpath((string) $_SERVER['SCRIPT_FILENAME']) === @realpath(__FILE__)) {
     http_response_code(403);
     exit;
@@ -247,8 +247,8 @@ function bankKreditMimeTypesForExtension(string $ext): array
 /**
  * Validasi isi file vs ekstensi.
  * - Jika finfo tersedia: MIME wajib diverifikasi (selalu ketat).
- * - Produksi (BK_PRODUCTION): tanpa finfo / finfo gagal → unggahan ditolak.
- * - Development: tanpa finfo → hanya whitelist ekstensi (kompatibilitas lokal).
+ * - Produksi (BK_PRODUCTION): tanpa finfo / finfo gagal â†’ unggahan ditolak.
+ * - Development: tanpa finfo â†’ hanya whitelist ekstensi (kompatibilitas lokal).
  *
  * @return string|null null = lolos, string = pesan error
  */
@@ -718,7 +718,7 @@ function pengajuanStatusesActivePipeline()
     return ['proses', 'diajukan', 'kasubag', 'kepatuhan', 'kabag', 'kadiv', 'direksi'];
 }
 
-/** Untuk disisipkan aman ke SQL IN (...) — nilai berasal dari kode, bukan input pengguna. */
+/** Untuk disisipkan aman ke SQL IN (...) â€” nilai berasal dari kode, bukan input pengguna. */
 function pengajuanStatusesActivePipelineSqlIn()
 {
     return "'" . implode("','", pengajuanStatusesActivePipeline()) . "'";
@@ -797,7 +797,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
         }
 
         // ============================================================
-        // COMPLIANCE ASSESSMENT VALIDATION — DISABLED
+        // COMPLIANCE ASSESSMENT VALIDATION â€” DISABLED
         // Kepatuhan removed from approval chain per workflow update.
         // Existing assessment_kepatuhan data preserved for audit.
         // ============================================================
@@ -1110,7 +1110,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
  * Allows any role to request analis to revise an already-approved application
  * 
  * Usage: After an application is approved (status=disetujui), a higher role can send it back for revision
- * New status: 'revisi_diajukan' → signifies revision is pending analis action
+ * New status: 'revisi_diajukan' â†’ signifies revision is pending analis action
  * Analis can then edit data and resubmit
  */
 function requestCompletedApplicationRevision($pdo, $id_pengajuan, $requestor_role, $requestor_id, $revisi_notes)
@@ -1178,7 +1178,7 @@ function requestCompletedApplicationRevision($pdo, $id_pengajuan, $requestor_rol
  */
 function getRoleLabels()
 {
-    // Tabel 'roles' tidak digunakan di sistem ini — kembalikan hardcoded map
+    // Tabel 'roles' tidak digunakan di sistem ini â€” kembalikan hardcoded map
     // agar isValidRole() dan getRoleLabel() tidak melempar query ke tabel yang tidak ada.
     return [
         'Superadmin'   => 'Admin Sistem',
@@ -1195,7 +1195,7 @@ function getRoleLabels()
  * Return true if the provided role key is allowable within the system.
  *
  * When the `roles` table exists we treat its contents as authoritative.
- * For backwards compatibility we also fall back to the hard‑coded
+ * For backwards compatibility we also fall back to the hardâ€‘coded
  * hierarchy (with Superadmin prepended).  This avoids sending invalid
  * values to the database enum column and triggers the "data truncated" warning.
  */
@@ -1213,7 +1213,7 @@ function isValidRole($role)
         return array_key_exists($role, $labels);
     }
 
-    // fallback to built‑in list
+    // fallback to builtâ€‘in list
     $allowed = getHierarchy();
     array_unshift($allowed, 'Superadmin', 'kepatuhan');
     return in_array($role, $allowed, true);
@@ -1460,7 +1460,7 @@ function notifyNextRole($id_pengajuan, $current_role, $action_type = 'approved',
 
 /**
  * Return a friendly label for a given role key.
- * Alias of getRoleDisplay() — consolidated to avoid duplication.
+ * Alias of getRoleDisplay() â€” consolidated to avoid duplication.
  */
 function getRoleLabel($key)
 {
@@ -1468,26 +1468,3 @@ function getRoleLabel($key)
 }
 
 ?>
- 
- f u n c t i o n   m a r k C h e c k p o i n t ( $ p d o ,   $ i d _ p e n g a j u a n ,   $ s e c t i o n )   { 
-         i f   ( ! $ i d _ p e n g a j u a n )   r e t u r n ; 
-         i f   ( i n _ a r r a y ( $ s e c t i o n ,   [ ' p e m o h o n ' ,   ' u s a h a ' ,   ' s t r u k t u r ' ,   ' n e r a c a ' ,   ' a g u n a n ' ,   ' 6 c ' ,   ' s c o r i n g ' ] ) )   { 
-                 t r y   { 
-                         $ s t m t   =   $ p d o - > p r e p a r e ( " S E L E C T   s t a t u s   F R O M   a n a l y s i s _ c h e c k p o i n t s   W H E R E   i d _ p e n g a j u a n   =   ?   A N D   t a b _ n a m e   =   ? " ) ; 
-                         $ s t m t - > e x e c u t e ( [ $ i d _ p e n g a j u a n ,   $ s e c t i o n ] ) ; 
-                         $ r o w   =   $ s t m t - > f e t c h ( P D O : : F E T C H _ A S S O C ) ; 
-                         i f   ( $ r o w )   { 
-                                 i f   ( $ r o w [ ' s t a t u s ' ]   = = =   ' R E V I S I O N ' )   { 
-                                         $ p d o - > p r e p a r e ( " U P D A T E   a n a l y s i s _ c h e c k p o i n t s   S E T   s t a t u s   =   ' F I X E D '   W H E R E   i d _ p e n g a j u a n   =   ?   A N D   t a b _ n a m e   =   ? " ) - > e x e c u t e ( [ $ i d _ p e n g a j u a n ,   $ s e c t i o n ] ) ; 
-                                         / /   A u d i t   l o g   s h o u l d   b e   h a n d l e d   b y   f o r m   d i f f s ,   b u t   a t   l e a s t   w e   m a r k e d   i t   F I X E D 
-                                 }   e l s e i f   ( $ r o w [ ' s t a t u s ' ]   = = =   ' A P P R O V E D ' )   { 
-                                         / /   D o   n o t h i n g   o r   m a y b e   i t   s h o u l d n ' t   h a v e   b e e n   e d i t e d .   
-                                 } 
-                         }   e l s e   { 
-                                 $ p d o - > p r e p a r e ( " I N S E R T   I N T O   a n a l y s i s _ c h e c k p o i n t s   ( i d _ p e n g a j u a n ,   t a b _ n a m e ,   s t a t u s )   V A L U E S   ( ? ,   ? ,   ' F I L L E D ' )   O N   D U P L I C A T E   K E Y   U P D A T E   s t a t u s   =   ' F I L L E D ' " ) - > e x e c u t e ( [ $ i d _ p e n g a j u a n ,   $ s e c t i o n ] ) ; 
-                         } 
-                 }   c a t c h   ( E x c e p t i o n   $ e )   { } 
-         } 
- } 
-  
- 
