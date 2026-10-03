@@ -500,11 +500,7 @@ try {
                 exit;
             }
 
-<<<<<<< HEAD
             $angsuran_diajukan = parseRupiahValue($_POST['angsuran_diajukan'] ?? 0);
-=======
-            $angsuran_diajukan = sanitizeNumber($_POST['angsuran_diajukan'] ?? 0);
->>>>>>> 27210d963403f91a37bc8d74355cae1b47c35948
             if ($angsuran_diajukan < 0) {
                 $angsuran_diajukan = 0;
             }
@@ -536,32 +532,19 @@ try {
                     }
                 }
 
-<<<<<<< HEAD
                 $gaji_pp    = parseRupiahValue($_POST['pppk_gaji'] ?? 0);
                 $biaya_hidup = parseRupiahValue($_POST['pppk_biaya_hidup'] ?? 0);
-=======
-                $gaji_pp    = sanitizeNumber($_POST['pppk_gaji'] ?? 0);
-                $biaya_hidup = sanitizeNumber($_POST['pppk_biaya_hidup'] ?? 0);
->>>>>>> 27210d963403f91a37bc8d74355cae1b47c35948
 
                 // --- Angsuran Bank Wonosobo (array dinamis, form baru) ---
                 $angsuran_nominal_arr = $_POST['pppk_angsuran_nominal'] ?? [];
                 if (is_array($angsuran_nominal_arr) && count($angsuran_nominal_arr) > 0) {
                     $cic = 0;
                     foreach ($angsuran_nominal_arr as $v) {
-<<<<<<< HEAD
                         $cic += parseRupiahValue($v);
                     }
                 } else {
                     // Fallback: pppk_total_angsuran dari hidden field, atau field lama
                     $cic = parseRupiahValue($_POST['pppk_total_angsuran'] ?? $_POST['pppk_angsuran_lain'] ?? 0);
-=======
-                        $cic += sanitizeNumber($v);
-                    }
-                } else {
-                    // Fallback: pppk_total_angsuran dari hidden field, atau field lama
-                    $cic = sanitizeNumber($_POST['pppk_total_angsuran'] ?? $_POST['pppk_angsuran_lain'] ?? 0);
->>>>>>> 27210d963403f91a37bc8d74355cae1b47c35948
                 }
 
                 // Repayment Capacity dari master parameter (dasar + persen per jenis kredit)
@@ -769,7 +752,6 @@ try {
                     ''                      // pppk_agunan_no_sk (tidak digunakan untuk perangkat_desa)
                 ];
                 $execParams[] = $id_pengajuan;
-                
                 $stmt->execute($execParams);
             }
 
@@ -881,18 +863,12 @@ try {
             $lama = strtoupper(trim($_POST['lama_usaha'] ?? '-'));
 
             // B. Omzet & Pendapatan Lain
-<<<<<<< HEAD
             $omset = parseRupiahValue($_POST['omset_per_bulan'] ?? 0);
             $pendapatan_lain = parseRupiahValue($_POST['pendapatan_lain'] ?? 0);
-=======
-            $omset = sanitizeNumber($_POST['omset_per_bulan'] ?? 0);
-            $pendapatan_lain = sanitizeNumber($_POST['pendapatan_lain'] ?? 0);
->>>>>>> 27210d963403f91a37bc8d74355cae1b47c35948
             if ($omset < 0) $omset = 0;
             if ($pendapatan_lain < 0) $pendapatan_lain = 0;
 
             // C. Rincian Biaya Usaha
-<<<<<<< HEAD
             $b_bahan_baku = parseRupiahValue($_POST['biaya_bahan_baku'] ?? 0);
             $b_gaji = parseRupiahValue($_POST['biaya_gaji'] ?? 0);
             $b_listrik = parseRupiahValue($_POST['biaya_listrik'] ?? 0);
@@ -900,30 +876,15 @@ try {
             $b_sewa = parseRupiahValue($_POST['biaya_sewa'] ?? 0);
             $b_transportasi = parseRupiahValue($_POST['biaya_transportasi'] ?? 0);
             $b_lainnya = parseRupiahValue($_POST['biaya_lainnya'] ?? 0);
-=======
-            $b_bahan_baku = sanitizeNumber($_POST['biaya_bahan_baku'] ?? 0);
-            $b_gaji = sanitizeNumber($_POST['biaya_gaji'] ?? 0);
-            $b_listrik = sanitizeNumber($_POST['biaya_listrik'] ?? 0);
-            $b_air = sanitizeNumber($_POST['biaya_air'] ?? 0);
-            $b_sewa = sanitizeNumber($_POST['biaya_sewa'] ?? 0);
-            $b_transportasi = sanitizeNumber($_POST['biaya_transportasi'] ?? 0);
-            $b_lainnya = sanitizeNumber($_POST['biaya_lainnya'] ?? 0);
->>>>>>> 27210d963403f91a37bc8d74355cae1b47c35948
             $total_biaya = $b_bahan_baku + $b_gaji + $b_listrik + $b_air + $b_sewa + $b_transportasi + $b_lainnya;
 
             // D. Laba Usaha = (Omzet + Pendapatan Lain) - Biaya Operasional
             $laba = ($omset + $pendapatan_lain) - $total_biaya;
 
             // E. Pengeluaran Tetap Debitur
-<<<<<<< HEAD
             $biaya_hidup = parseRupiahValue($_POST['biaya_hidup'] ?? 0);
             
             $cicilan_lain = parseRupiahValue($_POST['cicilan_lain'] ?? 0);
-=======
-            $biaya_hidup = sanitizeNumber($_POST['biaya_hidup'] ?? 0);
-
-            $cicilan_lain = sanitizeNumber($_POST['cicilan_lain'] ?? 0);
->>>>>>> 27210d963403f91a37bc8d74355cae1b47c35948
             
             $total_pengeluaran = $biaya_hidup + $cicilan_lain;
 
@@ -1602,7 +1563,7 @@ try {
                     }
                 }
 
-                // ===== Handle Multiple Agunan Foto Upload (New Feature) =====
+                // ===== HANDLE MULTIPLE AGUNAN FOTO UPLOAD (NEW FEATURE) =====
                 if (isset($_FILES['agunan_foto']) && is_array($_FILES['agunan_foto']['name'])) {
                     $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR;
                     if (!is_dir($uploadDir)) {
@@ -1652,14 +1613,17 @@ try {
                             continue; // Skip unsupported format
                         }
 
-                        // Validate file size (5 MB max)
+                        // Validate size (5MB max)
                         if ($fileSize > 5 * 1024 * 1024) {
                             continue; // Skip oversized file
                         }
 
                         // Validate MIME type
-                        $mimeErr = bankKreditVerifyUploadMime($tmpFile, $fileName);
-                        if ($mimeErr !== null) {
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $mime = finfo_file($finfo, $tmpFile);
+                        finfo_close($finfo);
+                        
+                        if (!in_array($mime, ['image/jpeg', 'image/png'])) {
                             continue; // Skip invalid MIME
                         }
 
@@ -2006,7 +1970,7 @@ try {
                 $stmtT = $pdo->prepare("SELECT SUM(nilai_taksasi) FROM jaminan_cashcolateral WHERE id_pengajuan=?");
                 $stmtT->execute([$id_pengajuan]);
                 $taksasi = floatval($stmtT->fetchColumn());
-
+                
                 $status_kelayakan = ($taksasi >= $jumlah_kredit) ? 'LAYAK' : 'TIDAK LAYAK';
                 $pdo->prepare("UPDATE pengajuan_kredit SET status_kelayakan=? WHERE id_pengajuan=?")
                     ->execute([$status_kelayakan, $id_pengajuan]);
@@ -2285,7 +2249,7 @@ try {
             ");
             $stmtJaminan->execute([$id_pengajuan, $id_pengajuan]);
             $jaminanRecord = $stmtJaminan->fetch();
-            $id_jaminan = $jaminanRecord ? $jaminanRecord['id_jaminan'] : null;
+            $id_jaminan_for_foto = $jaminanRecord ? $jaminanRecord['id_jaminan'] : null;
 
             // Insert into agunan_foto
             $keterangan = trim($_POST['keterangan_baru'] ?? '');
@@ -2293,7 +2257,7 @@ try {
                 INSERT INTO agunan_foto (id_jaminan, id_pengajuan, tipe_jaminan, nama_file, ukuran, tipe_file, keterangan, created_at, updated_at)
                 VALUES (?, ?, NULL, ?, ?, ?, ?, NOW(), NOW())
             ");
-            $stmtInsert->execute([$id_jaminan, $id_pengajuan, $newFilename, $file['size'], $mime, $keterangan]);
+            $stmtInsert->execute([$id_jaminan_for_foto, $id_pengajuan, $newFilename, $file['size'], $mime, $keterangan]);
 
             echo json_encode(['success' => true, 'message' => 'Foto agunan berhasil diupload.', 'filename' => $newFilename]);
             break;

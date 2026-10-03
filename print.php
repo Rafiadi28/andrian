@@ -545,6 +545,8 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             background: #fff;
             padding: 12px 14px;
             min-height: 108px;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .summary-label {
@@ -569,6 +571,8 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             margin-bottom: 18px;
             border: 1px solid var(--bw-line);
             background: #fff;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .section-header {
@@ -579,6 +583,26 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.06em;
+        }
+
+        .section-body {
+            background: #fff;
+        }
+
+        .section-body table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .section-body table th,
+        .section-body table td {
+            border-bottom: 1px solid var(--bw-line);
+        }
+
+        .section-body table tr:last-child th,
+        .section-body table tr:last-child td {
+            border-bottom: none;
         }
 
         table {
@@ -636,7 +660,11 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             min-height: 150px;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: flex-start;
+            align-items: center;
+            text-align: center;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .signature-role {
@@ -649,6 +677,7 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
         }
 
         .signature-line {
+            width: 100%;
             border-bottom: 1px solid #000;
             min-height: 28px;
             margin-bottom: 6px;
@@ -710,6 +739,19 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                margin: 0;
+            }
+
+            .print-shell {
+                max-width: none;
+                padding: 0;
+            }
+
+            .section,
+            .summary-card,
+            .signature-box {
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
         }
     </style>
