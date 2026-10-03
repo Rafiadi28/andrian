@@ -461,89 +461,84 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             color: var(--bw-muted);
             padding: 0 4px;
             margin-bottom: 8px;
+            font-weight: 600;
         }
 
         .bank-header {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 10px;
             margin-top: 4px;
-            padding: 10px 0 6px;
-            flex-direction: column;
+            padding: 4px 0 6px;
+            text-align: center;
         }
 
         .bank-badge {
-            width: 410px;
-            max-width: 100%;
-            height: 240px;
-            background: #0a0a0a;
-            border-radius: 28px;
+            width: min(430px, 92%);
+            height: 245px;
+            background: #f2f2f2;
+            border-radius: 26px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 14px;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+            padding: 10px 14px;
+            box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.03);
         }
 
         .bank-badge svg {
-            width: 78%;
-            height: 78%;
+            width: 80%;
+            height: 80%;
             display: block;
         }
 
         .brand-block {
             text-align: center;
-            margin-top: 8px;
+            margin-top: 2px;
         }
 
         .brand-subtitle {
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 800;
             color: var(--bw-blue);
             letter-spacing: 0.02em;
             text-transform: uppercase;
         }
 
         .brand-name {
-            font-size: 30px;
-            font-weight: 800;
+            font-size: clamp(24px, 3vw, 34px);
+            font-weight: 900;
             color: var(--bw-blue);
             letter-spacing: 0.02em;
+            line-height: 1.08;
             text-transform: uppercase;
-            line-height: 1.1;
             margin-top: 2px;
-        }
-
-        .brand-name .small {
-            font-size: 0.8em;
         }
 
         .brand-name .strong {
             display: block;
-            font-size: 1.05em;
         }
 
         .brand-sub {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--bw-blue);
             text-transform: uppercase;
             margin-top: 2px;
         }
 
-        .bank-logo {
-            display: none;
-        }
-
-        .bank-heading {
-            text-align: center;
+        .bank-info {
             margin-top: 6px;
+            font-size: 11px;
+            line-height: 1.6;
+            color: var(--bw-muted);
+            text-align: center;
         }
 
         .rule {
             border-top: 2px solid #1e2a39;
-            margin: 16px 0 12px;
+            margin: 12px 0 10px;
         }
 
         .doc-row {
@@ -552,8 +547,9 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             gap: 16px;
             font-size: 13px;
             color: var(--bw-text);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             padding: 0 4px;
+            align-items: center;
         }
 
         .doc-row strong {
@@ -747,10 +743,6 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             background: #fff;
         }
 
-        .line-box {
-            padding: 10px 0 0;
-        }
-
         .approval-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -880,6 +872,11 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
                 <div class="brand-name"><span class="strong">BANK WONOSOBO</span></div>
                 <div class="brand-sub">(PERSERODA)</div>
             </div>
+
+            <div class="bank-info">
+                Kantor Pusat: Jl. Ahmad Yani No. 160 Wonosobo 56311<br>
+                Telp: (0286) 321293 &nbsp;|&nbsp; Email: bprbankwonosobo@yahoo.co.id
+            </div>
         </div>
 
         <div class="rule"></div>
@@ -959,7 +956,7 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             <table class="detail-table">
                 <tr>
                     <th>Nama Debitur</th>
-                    <td><?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? '-') ?></td>
+                    <td><?= htmlspecialchars($data['nama_lengkap'] ?? $data['data_debitur'] ?? '-') ?></td>
                     <th>Jabatan</th>
                     <td><?= htmlspecialchars($data['pekerjaan'] ?? $data['jenis_pekerjaan'] ?? '-') ?></td>
                 </tr>
