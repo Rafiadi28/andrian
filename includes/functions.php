@@ -567,6 +567,92 @@ function getApprovalChainRoles(PDO $pdo, $jumlah_kredit)
     return $chain;
 }
 
+function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = [], array $roleDisplayTitles = []): array
+{
+    $stageOrder = ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
+    $sequence = [];
+    $directorFinalEntry = null;
+    $directorReplacementFor = null;
+
+    $legacyAliases = [
+        'kabag' => 'kabag_kredit',
+        'kasubag' => 'kasubag_analis',
+        'kabag_analis' => 'kabag_kredit',
+        'kadiv' => 'kadiv_bisnis',
+        'kadiv_kredit' => 'kadiv_bisnis',
+        'direksi' => 'direktur_utama',
+    ];
+
+    foreach ($stageOrder as $stageRole) {
+        if (!isset($approvalMap[$stageRole])) {
+            continue;
+        }
+
+        $entry = $approvalMap[$stageRole];
+        $approverRole = strtolower(trim((string)($entry['role_approver'] ?? $entry['level_approval'] ?? '')));
+        $approverRole = $legacyAliases[$approverRole] ?? $approverRole;
+
+        if ($stageRole === 'direktur_utama') {
+            $directorFinalEntry = $entry;
+            continue;
+        }
+
+        if (in_array($approverRole, ['direktur_utama', 'direksi'], true)) {
+            if ($directorFinalEntry === null) {
+                $directorFinalEntry = $entry;
+            }
+            if ($directorReplacementFor === null) {
+                $directorReplacementFor = $stageRole;
+            }
+            continue;
+        }
+
+        $roleInfo = $pejabatByRole[$stageRole] ?? null;
+        $jabatanTampil = $roleInfo['jabatan'] ?? ($roleDisplayTitles[$stageRole] ?? ucwords(str_replace('_', ' ', $stageRole)));
+        $namaTampil = $roleInfo['nama'] ?? ($entry['nama_approver'] ?? '');
+
+        $sequence[] = [
+            'id_pejabat' => $roleInfo['id_pejabat'] ?? null,
+            'role' => $stageRole,
+            'stage_role' => $stageRole,
+            'nama' => $namaTampil,
+            'jabatan' => $jabatanTampil,
+            'tanda_tangan' => $roleInfo['tanda_tangan'] ?? null,
+            'stempel' => $roleInfo['stempel'] ?? null,
+            'approval_entry' => $entry,
+            'acting_for' => '',
+            'original_role' => $stageRole,
+            'display_title' => $roleDisplayTitles[$stageRole] ?? $jabatanTampil,
+        ];
+    }
+
+    if ($directorFinalEntry !== null) {
+        $directorInfo = $pejabatByRole['direktur_utama'] ?? null;
+        $directorNama = $directorInfo['nama'] ?? ($directorFinalEntry['nama_approver'] ?? 'Direktur Utama');
+        $directorActingForText = '';
+
+        if ($directorReplacementFor !== null) {
+            $replacementTitle = $roleDisplayTitles[$directorReplacementFor] ?? ucwords(str_replace('_', ' ', $directorReplacementFor));
+            $directorActingForText = 'selaku Pengganti ' . $replacementTitle;
+        }
+
+        $sequence[] = [
+            'id_pejabat' => $directorInfo['id_pejabat'] ?? null,
+            'role' => 'direktur_utama',
+            'stage_role' => 'direktur_utama',
+            'nama' => $directorNama,
+            'jabatan' => 'Direktur Utama',
+            'tanda_tangan' => $directorInfo['tanda_tangan'] ?? null,
+            'stempel' => $directorInfo['stempel'] ?? null,
+            'approval_entry' => $directorFinalEntry,
+            'acting_for' => $directorActingForText,
+            'original_role' => $directorFinalEntry['level_approval'] ?? 'direktur_utama',
+            'display_title' => 'Direktur Utama',
+        ];
+    }
+
+    return $sequence;
+}
 
 function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
 {
@@ -1410,14 +1496,7 @@ function markAllNotificationsAsRead($id_user)
     }
 }
 
-/**
- * Notify next role(s) in approval chain
- * @param int $id_pengajuan Application ID
- * @param string $current_role Current role that approved
- * @param string $action_type Type of action (approved, rejected, revised, auto_routed)
- * @param string $message Optional custom message
- * @return bool True if successful
- */
+
 function notifyNextRole($id_pengajuan, $current_role, $action_type = 'approved', $message = '')
 {
     global $pdo;
@@ -1480,10 +1559,7 @@ function notifyNextRole($id_pengajuan, $current_role, $action_type = 'approved',
     }
 }
 
-/**
- * Return a friendly label for a given role key.
- * Alias of getRoleDisplay() â€” consolidated to avoid duplication.
- */
+
 function getRoleLabel($key)
 {
     return getRoleDisplay($key);
