@@ -332,9 +332,30 @@ function sanitizeText($text, $maxLength = 500)
  */
 function sanitizeNumber($value)
 {
-    $value = trim((string)$value);
-    $value = preg_replace('/[^0-9.\-]/', '', $value);
-    return (float)$value;
+    $s = trim((string)$value);
+    if ($s === '' || $s === '-' ) {
+        return 0.0;
+    }
+
+    // Remove all characters except digits, dot, comma, minus
+    $s = preg_replace('/[^0-9,\.\-]/u', '', $s);
+
+    // If both dot and comma exist, assume dot=thousands, comma=decimal
+    if (strpos($s, '.') !== false && strpos($s, ',') !== false) {
+        $s = str_replace('.', '', $s);
+        $s = str_replace(',', '.', $s);
+    } else {
+        // If only dot present, treat dot as thousands separator and remove
+        if (strpos($s, '.') !== false && strpos($s, ',') === false) {
+            $s = str_replace('.', '', $s);
+        }
+        // If only comma present, treat comma as decimal separator and convert to dot
+        if (strpos($s, ',') !== false && strpos($s, '.') === false) {
+            $s = str_replace(',', '.', $s);
+        }
+    }
+
+    return (float)$s;
 }
 
 /**
