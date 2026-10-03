@@ -470,51 +470,80 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             gap: 16px;
             margin-top: 4px;
             padding: 10px 0 6px;
+            flex-direction: column;
         }
 
-        .bank-logo {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            border: 2px solid #d0d9e6;
+        .bank-badge {
+            width: 410px;
+            max-width: 100%;
+            height: 240px;
+            background: #0a0a0a;
+            border-radius: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f7f9fc;
-            flex-shrink: 0;
+            padding: 14px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
         }
 
-        .bank-logo::before {
-            content: "";
-            width: 28px;
-            height: 28px;
-            border: 3px solid var(--bw-blue);
-            border-radius: 50%;
+        .bank-badge svg {
+            width: 78%;
+            height: 78%;
             display: block;
-            position: relative;
-            box-shadow: inset 0 0 0 2px rgba(15,63,132,.25);
         }
 
-        .bank-name {
-            font-size: 28px;
+        .brand-block {
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .brand-subtitle {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--bw-blue);
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .brand-name {
+            font-size: 30px;
             font-weight: 800;
             color: var(--bw-blue);
             letter-spacing: 0.02em;
             text-transform: uppercase;
-            text-align: center;
+            line-height: 1.1;
+            margin-top: 2px;
         }
 
-        .bank-meta {
-            text-align: center;
-            font-size: 12px;
-            color: var(--bw-muted);
+        .brand-name .small {
+            font-size: 0.8em;
+        }
+
+        .brand-name .strong {
+            display: block;
+            font-size: 1.05em;
+        }
+
+        .brand-sub {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--bw-blue);
+            text-transform: uppercase;
             margin-top: 2px;
-            line-height: 1.7;
+        }
+
+        .bank-logo {
+            display: none;
+        }
+
+        .bank-heading {
+            text-align: center;
+            margin-top: 6px;
         }
 
         .rule {
             border-top: 2px solid #1e2a39;
-            margin: 12px 0 10px;
+            margin: 16px 0 12px;
         }
 
         .doc-row {
@@ -803,8 +832,8 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
         }
 
         @page {
-            size: A4 portrait;
-            margin: 12mm 10mm;
+            size: <?= $paper['width'] ?> <?= $paper['height'] ?>;
+            margin: <?= $paper['margin'] ?>;
         }
 
         @media print {
@@ -817,6 +846,7 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
             .print-shell {
                 box-shadow: none;
                 max-width: none;
+                width: 100%;
                 margin: 0;
                 padding: 0;
             }
@@ -831,10 +861,24 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
         </div>
 
         <div class="bank-header">
-            <div class="bank-logo" aria-hidden="true"></div>
-            <div>
-                <div class="bank-name">PT BPR Bank Wonosobo (Perseroda)</div>
-                <div class="bank-meta">Kantor Pusat: Jl. Ahmad Yani No. 160 Wonosobo 56311<br>Telp: (0286) 321293 &nbsp;|&nbsp; Email: bprbankwonosobo@yahoo.co.id</div>
+            <div class="bank-badge" aria-label="Logo Bank Wonosobo">
+                <svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
+                    <title id="logoTitle">Logo PT BPR Bank Wonosobo</title>
+                    <desc id="logoDesc">Simbol emblem berbentuk gold W pada background hitam</desc>
+                    <g fill="none" stroke="#D7B36A" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M120 280 L190 120 L260 260 L330 120 L400 280"/>
+                        <path d="M160 280 L250 160 L330 280" opacity="0.9"/>
+                        <path d="M220 280 L310 160 L400 280" opacity="0.9"/>
+                        <path d="M120 280 L90 200 L150 160 L190 120"/>
+                        <path d="M480 120 L520 160 L550 200 L520 280 L480 280"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="brand-block">
+                <div class="brand-subtitle">PT BPR</div>
+                <div class="brand-name"><span class="strong">BANK WONOSOBO</span></div>
+                <div class="brand-sub">(PERSERODA)</div>
             </div>
         </div>
 
