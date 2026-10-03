@@ -21,25 +21,39 @@ require_once __DIR__ . '/functions.php';
  */
 function resolve_next_active_role(PDO $pdo, string $desiredRole): ?string
 {
+    $desiredRole = strtolower(trim($desiredRole));
     $chain = ['kasubag_analis', 'kepatuhan', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
-    $startIndex = array_search($desiredRole, $chain, true);
+    $replacementMap = [
+        'kasubag_analis' => 'direktur_utama',
+        'kabag_kredit' => 'direktur_utama',
+        'kadiv_bisnis' => 'direktur_utama',
+    ];
 
-    if ($startIndex === false) {
-        if ($desiredRole === 'analis') {
-            $startIndex = 0;
-        } else {
-            return null;
-        }
+    if ($desiredRole === '' || $desiredRole === 'analis') {
+        return isRoleActive($pdo, 'analis') ? 'analis' : null;
     }
 
-    for ($i = max(0, $startIndex); $i < count($chain); $i++) {
+    if (isRoleActive($pdo, $desiredRole)) {
+        return $desiredRole;
+    }
+
+    if (isset($replacementMap[$desiredRole]) && isRoleActive($pdo, $replacementMap[$desiredRole])) {
+        return $replacementMap[$desiredRole];
+    }
+
+    $startIndex = array_search($desiredRole, $chain, true);
+    if ($startIndex === false) {
+        return null;
+    }
+
+    for ($i = $startIndex + 1; $i < count($chain); $i++) {
         $role = $chain[$i];
         if (isRoleActive($pdo, $role)) {
             return $role;
         }
     }
 
-    return null;
+    return isRoleActive($pdo, 'direktur_utama') ? 'direktur_utama' : null;
 }
 
 /**

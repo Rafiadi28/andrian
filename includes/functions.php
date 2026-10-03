@@ -571,6 +571,7 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
 {
     $stageOrder = ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
     $sequence = [];
+    $seenRoles = [];
     $directorFinalEntry = null;
     $directorReplacementFor = null;
 
@@ -607,6 +608,10 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
             continue;
         }
 
+        if (isset($seenRoles[$stageRole])) {
+            continue;
+        }
+
         $roleInfo = $pejabatByRole[$stageRole] ?? null;
         $jabatanTampil = $roleInfo['jabatan'] ?? ($roleDisplayTitles[$stageRole] ?? ucwords(str_replace('_', ' ', $stageRole)));
         $namaTampil = $roleInfo['nama'] ?? ($entry['nama_approver'] ?? '');
@@ -624,9 +629,10 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
             'original_role' => $stageRole,
             'display_title' => $roleDisplayTitles[$stageRole] ?? $jabatanTampil,
         ];
+        $seenRoles[$stageRole] = true;
     }
 
-    if ($directorFinalEntry !== null) {
+    if ($directorFinalEntry !== null && !isset($seenRoles['direktur_utama'])) {
         $directorInfo = $pejabatByRole['direktur_utama'] ?? null;
         $directorNama = $directorInfo['nama'] ?? ($directorFinalEntry['nama_approver'] ?? 'Direktur Utama');
         $directorActingForText = '';
@@ -649,6 +655,7 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
             'original_role' => $directorFinalEntry['level_approval'] ?? 'direktur_utama',
             'display_title' => 'Direktur Utama',
         ];
+        $seenRoles['direktur_utama'] = true;
     }
 
     return $sequence;
@@ -668,7 +675,7 @@ function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
         $maxLevel = getEffectiveMaxApprovalLevel($pdo, $jumlah_kredit);
         $maxIndex = array_search($maxLevel, $hierarchy);
         
-        if ($currentIndex >= $maxIndex) {
+        if ($maxIndex !== false && $currentIndex >= $maxIndex) {
             return ['role' => 'selesai', 'skipped' => []];
         }
     }
@@ -686,6 +693,10 @@ function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
 
     return ['role' => 'selesai', 'skipped' => $skipped];
 }
+
+/**
+ * Audit log related functions
+ */
 
 function auditLog($pdo, $userId, $activity)
 {
