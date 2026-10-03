@@ -289,8 +289,7 @@ if ($semua_disetujui) {
 $stmt_pejabat = $pdo->prepare("
     SELECT id_pejabat, role, nama, jabatan, tanda_tangan, stempel, status 
     FROM master_pejabat 
-    ORDER BY FIELD(role, 'analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama')
-");
+    ORDER BY FIELD(role, 'analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama')");
 $stmt_pejabat->execute();
 $pejabat_data = $stmt_pejabat->fetchAll(PDO::FETCH_ASSOC);
 
@@ -314,6 +313,32 @@ $roleDisplayTitles = [
     'kadiv_bisnis' => 'Kepala Divisi Bisnis',
     'direktur_utama' => 'Direktur Utama'
 ];
+
+// Jika ada auto-skip karena pejabat cuti/non-aktif, tampilkan Direktur Utama sebagai pengganti
+// di cetakan tanda tangan agar TTD tetap muncul pada posisi terakhir.
+$directorReplacementDetected = false;
+foreach ((array) $approvals as $approvalEntry) {
+    $levelApproval = strtolower(trim((string)($approvalEntry['level_approval'] ?? $approvalEntry['role_approver'] ?? '')));
+    $isAutoSkip = (int)($approvalEntry['is_auto_skip'] ?? 0) === 1;
+    if ($isAutoSkip && in_array($levelApproval, ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'], true)) {
+        $directorReplacementDetected = true;
+        break;
+    }
+}
+
+if ($directorReplacementDetected && !isset($approval_map['direktur_utama'])) {
+    $directorInfo = $pejabat_by_role['direktur_utama'] ?? ['nama' => 'Direktur Utama', 'jabatan' => 'Direktur Utama'];
+    $approval_map['direktur_utama'] = [
+        'id_approval' => 0,
+        'id_user' => $directorInfo['id_pejabat'] ?? null,
+        'level_approval' => 'direktur_utama',
+        'role_approver' => 'direktur_utama',
+        'nama_approver' => $directorInfo['nama'] ?? 'Direktur Utama',
+        'keputusan' => 'setuju',
+        'tanggal_approval' => date('Y-m-d H:i:s'),
+        'catatan' => 'Pengganti pejabat cuti',
+    ];
+}
 
 $timeline_roles = $approval_chain_roles;
 $signature_roles = buildPrintSignatureSequence($approval_map, $pejabat_by_role, $roleDisplayTitles);

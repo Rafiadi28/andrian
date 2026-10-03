@@ -595,6 +595,14 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
 
         if ($stageRole === 'direktur_utama') {
             $directorFinalEntry = $entry;
+            if ($directorReplacementFor === null) {
+                foreach (['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'] as $subRole) {
+                    if (!isset($approvalMap[$subRole])) {
+                        $directorReplacementFor = $subRole;
+                        break;
+                    }
+                }
+            }
             continue;
         }
 
