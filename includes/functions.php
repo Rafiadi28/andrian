@@ -673,37 +673,75 @@ function formatRupiah($angka)
         return 'Rp 0';
     }
 
-    // Normalize common user-provided formats:
-    // - "5.000.000" (thousand separators with dots)
-    // - "5,000,000" (thousand separators with commas)
-    // - "Rp 5.000.000" (with currency prefix)
-    // Strategy: remove non-numeric except comma/dot/minus, then
-    // convert thousand separators to plain digits and use dot as decimal marker.
-    $s = (string)$angka;
-    $s = trim($s);
-    // remove currency symbol, spaces and any non-digit/,+-.
-    $s = preg_replace('/[^0-9,\.\-]/u', '', $s);
-
-    if ($s === '' || $s === '-' || $s === ',') {
+    $s = trim((string) $angka);
+    if ($s === '' || $s === '-' || $s === '+') {
         return 'Rp 0';
     }
 
-    // If both dot and comma exist, assume dot = thousands, comma = decimal
-    if (strpos($s, '.') !== false && strpos($s, ',') !== false) {
-        $s = str_replace('.', '', $s);
-        $s = str_replace(',', '.', $s);
-    } else {
-        // If only dot present, treat dot as thousand separator and remove it
-        if (strpos($s, '.') !== false && strpos($s, ',') === false) {
+    // Remove currency symbols and spacing, keep only digits and separators
+    $s = preg_replace('/[^0-9,\.\-]/u', '', $s);
+    if ($s === '' || $s === '-' || $s === ',' || $s === '.' || $s === '-,' || $s === '-.') {
+        return 'Rp 0';
+    }
+
+    $negative = false;
+    if (strpos($s, '-') === 0) {
+        $negative = true;
+        $s = substr($s, 1);
+    }
+
+    $hasDot = strpos($s, '.') !== false;
+    $hasComma = strpos($s, ',') !== false;
+
+    if ($hasDot && $hasComma) {
+        $lastDot = strrpos($s, '.');
+        $lastComma = strrpos($s, ',');
+
+        if ($lastDot > $lastComma) {
+            // Format seperti 1.234,56 atau 1,234.56 -> decimal point adalah yang terakhir
+            $s = str_replace(',', '', $s);
+        } else {
+            // Format seperti 1.234,56 -> decimal comma
             $s = str_replace('.', '', $s);
-        }
-        // If only comma present, treat comma as decimal separator and convert to dot
-        if (strpos($s, ',') !== false && strpos($s, '.') === false) {
             $s = str_replace(',', '.', $s);
+        }
+    } elseif ($hasDot) {
+        $parts = explode('.', $s);
+        if (count($parts) > 2) {
+            $s = implode('', $parts);
+        } else {
+            $last = end($parts);
+            if (count($parts) > 1 && strlen($last) === 3) {
+                $s = implode('', $parts);
+            }
+        }
+    } elseif ($hasComma) {
+        $parts = explode(',', $s);
+        if (count($parts) > 2) {
+            $s = implode('', $parts);
+        } else {
+            $last = end($parts);
+            if (count($parts) > 1 && strlen($last) === 3) {
+                $s = implode('', $parts);
+            } else {
+                $s = str_replace(',', '.', $s);
+            }
         }
     }
 
-    $num = (float)$s;
+    if ($s === '' || $s === '-' || $s === '.' || $s === ',') {
+        return 'Rp 0';
+    }
+
+    $num = (float) $s;
+    if (!is_finite($num)) {
+        return 'Rp 0';
+    }
+
+    if ($negative) {
+        $num = -$num;
+    }
+
     return 'Rp ' . number_format($num, 0, ',', '.');
 }
 
