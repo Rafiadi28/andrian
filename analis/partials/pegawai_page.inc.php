@@ -56,13 +56,49 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
             </div>
         <?php endif; ?>
 
+        <?php if (!empty($active_revisions)): ?>
+        <div style="background:#fee2e2; border:1px solid #ef4444; border-radius:8px; padding:1.5rem; margin-bottom:1.5rem;">
+            <h3 style="color:#b91c1c; margin-top:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4m0 4h.01"></path></svg>
+                ANALISA MEMERLUKAN REVISI
+            </h3>
+            <ul style="color:#991b1b; padding-left:1.5rem; margin-bottom:1rem; line-height:1.6;">
+            <?php foreach($active_revisions as $rev): ?>
+                <li>
+                    <strong><?= htmlspecialchars(strtoupper($rev['tab_name'])) ?></strong> 
+                    <?= $rev['field_name'] ? ' - <span>' . htmlspecialchars($rev['field_name']) . '</span>' : '' ?><br/>
+                    <i>"<?= nl2br(htmlspecialchars($rev['revision_note'])) ?>"</i>
+                </li>
+            <?php endforeach; ?>
+            </ul>
+            <p style="margin:0;">
+                <a href="#tab-<?= htmlspecialchars(strtolower($active_revisions[0]['tab_name'])) ?>" style="background:#dc2626; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:bold; font-size:0.9rem;">
+                    Lanjutkan Revisi &rarr;
+                </a>
+            </p>
+        </div>
+        <?php endif; ?>
+
+        <?php
+        if (!function_exists('renderTabBadgePegawai')) {
+            function renderTabBadgePegawai($tabKey, $checkpoints) {
+                $status = $checkpoints[$tabKey] ?? 'DRAFT';
+                if ($status === 'APPROVED') return ' <span style="color:#16a34a; margin-left:4px;" title="Sudah Benar / Approved">&#10004;</span>';
+                if ($status === 'REVISION') return ' <span style="color:#dc2626; margin-left:4px;" title="Perlu Revisi">&#9888;</span>';
+                if ($status === 'FIXED') return ' <span style="color:#ca8a04; margin-left:4px;" title="Sedang Diperbaiki">&#10000;</span>';
+                if ($status === 'FILLED') return ' <span style="color:#2563eb; margin-left:4px;" title="Terisi">&#9679;</span>';
+                return '';
+            }
+        }
+        $chk = $checkpoints ?? [];
+        ?>
         <div class="form-stepper">
-            <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pribadi</a>
-            <a href="#tab-penghasilan" class="nav-link-step" data-target="tab-penghasilan">2. Analisa</a>
-            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">3. Struktur Kredit</a>
-            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">4. Agunan</a>
-            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">5. Analisa 6C</a>
-            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">6. Review & Submit</a>
+            <a href="#tab-pemohon" class="nav-link-step active" data-target="tab-pemohon">1. Data Pribadi<?= renderTabBadgePegawai('pemohon', $chk) ?></a>
+            <a href="#tab-penghasilan" class="nav-link-step" data-target="tab-penghasilan">2. Analisa<?= renderTabBadgePegawai('penghasilan', $chk) ?></a>
+            <a href="#tab-struktur" class="nav-link-step" data-target="tab-struktur">3. Struktur Kredit<?= renderTabBadgePegawai('struktur', $chk) ?></a>
+            <a href="#tab-agunan" class="nav-link-step" data-target="tab-agunan">4. Agunan<?= renderTabBadgePegawai('agunan', $chk) ?></a>
+            <a href="#tab-6c" class="nav-link-step" data-target="tab-6c">5. Analisa 6C<?= renderTabBadgePegawai('6c', $chk) ?></a>
+            <a href="#tab-scoring" class="nav-link-step" data-target="tab-scoring">6. Review & Submit<?= renderTabBadgePegawai('scoring', $chk) ?></a>
         </div>
 
         <form method="POST" enctype="multipart/form-data" onsubmit="return false;">
@@ -305,4 +341,29 @@ include __DIR__ . '/pegawai_head_raw.inc.php';
                 if (typeof updateScoringSummary === 'function') updateScoringSummary();
             });
         })();
-        
+    </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isRevisiMode = <?= json_encode(isset($st) && ($st === 'revisi' || $st === 'revisi_diajukan')) ?>;
+    const checkpoints = <?= isset($checkpoints_json) ? $checkpoints_json : '{}' ?>;
+    if (isRevisiMode) {
+        const tabs = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            const tabId = tab.id.replace('tab-', '');
+            const status = checkpoints[tabId] || 'DRAFT';
+            if (status !== 'REVISION' && status !== 'FIXED') {
+                const elements = tab.querySelectorAll('input, select, textarea, button:not(.nav-link-step)');
+                elements.forEach(el => {
+                    if(!el.classList.contains('accordion-btn')) {
+                        el.disabled = true; el.style.opacity = '0.7'; el.style.cursor = 'not-allowed';
+                    }
+                });
+                const header = tab.querySelector('.tab-title') || tab.querySelector('h3');
+                if (header) {
+                    header.innerHTML += ' <span style="font-size:0.8rem; background:#e2e8f0; color:#475569; padding:2px 8px; border-radius:12px; margin-left:10px; vertical-align:middle;">&lang; TERKUNCI &rang;</span>';
+                }
+            }
+        });
+    }
+});
+</script>

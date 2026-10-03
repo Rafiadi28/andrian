@@ -247,8 +247,8 @@ function bankKreditMimeTypesForExtension(string $ext): array
 /**
  * Validasi isi file vs ekstensi.
  * - Jika finfo tersedia: MIME wajib diverifikasi (selalu ketat).
- * - Produksi (BK_PRODUCTION): tanpa finfo / finfo gagal → unggahan ditolak.
- * - Development: tanpa finfo → hanya whitelist ekstensi (kompatibilitas lokal).
+ * - Produksi (BK_PRODUCTION): tanpa finfo / finfo gagal â†’ unggahan ditolak.
+ * - Development: tanpa finfo â†’ hanya whitelist ekstensi (kompatibilitas lokal).
  *
  * @return string|null null = lolos, string = pesan error
  */
@@ -567,6 +567,92 @@ function getApprovalChainRoles(PDO $pdo, $jumlah_kredit)
     return $chain;
 }
 
+function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = [], array $roleDisplayTitles = []): array
+{
+    $stageOrder = ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
+    $sequence = [];
+    $directorFinalEntry = null;
+    $directorReplacementFor = null;
+
+    $legacyAliases = [
+        'kabag' => 'kabag_kredit',
+        'kasubag' => 'kasubag_analis',
+        'kabag_analis' => 'kabag_kredit',
+        'kadiv' => 'kadiv_bisnis',
+        'kadiv_kredit' => 'kadiv_bisnis',
+        'direksi' => 'direktur_utama',
+    ];
+
+    foreach ($stageOrder as $stageRole) {
+        if (!isset($approvalMap[$stageRole])) {
+            continue;
+        }
+
+        $entry = $approvalMap[$stageRole];
+        $approverRole = strtolower(trim((string)($entry['role_approver'] ?? $entry['level_approval'] ?? '')));
+        $approverRole = $legacyAliases[$approverRole] ?? $approverRole;
+
+        if ($stageRole === 'direktur_utama') {
+            $directorFinalEntry = $entry;
+            continue;
+        }
+
+        if (in_array($approverRole, ['direktur_utama', 'direksi'], true)) {
+            if ($directorFinalEntry === null) {
+                $directorFinalEntry = $entry;
+            }
+            if ($directorReplacementFor === null) {
+                $directorReplacementFor = $stageRole;
+            }
+            continue;
+        }
+
+        $roleInfo = $pejabatByRole[$stageRole] ?? null;
+        $jabatanTampil = $roleInfo['jabatan'] ?? ($roleDisplayTitles[$stageRole] ?? ucwords(str_replace('_', ' ', $stageRole)));
+        $namaTampil = $roleInfo['nama'] ?? ($entry['nama_approver'] ?? '');
+
+        $sequence[] = [
+            'id_pejabat' => $roleInfo['id_pejabat'] ?? null,
+            'role' => $stageRole,
+            'stage_role' => $stageRole,
+            'nama' => $namaTampil,
+            'jabatan' => $jabatanTampil,
+            'tanda_tangan' => $roleInfo['tanda_tangan'] ?? null,
+            'stempel' => $roleInfo['stempel'] ?? null,
+            'approval_entry' => $entry,
+            'acting_for' => '',
+            'original_role' => $stageRole,
+            'display_title' => $roleDisplayTitles[$stageRole] ?? $jabatanTampil,
+        ];
+    }
+
+    if ($directorFinalEntry !== null) {
+        $directorInfo = $pejabatByRole['direktur_utama'] ?? null;
+        $directorNama = $directorInfo['nama'] ?? ($directorFinalEntry['nama_approver'] ?? 'Direktur Utama');
+        $directorActingForText = '';
+
+        if ($directorReplacementFor !== null) {
+            $replacementTitle = $roleDisplayTitles[$directorReplacementFor] ?? ucwords(str_replace('_', ' ', $directorReplacementFor));
+            $directorActingForText = 'selaku Pengganti ' . $replacementTitle;
+        }
+
+        $sequence[] = [
+            'id_pejabat' => $directorInfo['id_pejabat'] ?? null,
+            'role' => 'direktur_utama',
+            'stage_role' => 'direktur_utama',
+            'nama' => $directorNama,
+            'jabatan' => 'Direktur Utama',
+            'tanda_tangan' => $directorInfo['tanda_tangan'] ?? null,
+            'stempel' => $directorInfo['stempel'] ?? null,
+            'approval_entry' => $directorFinalEntry,
+            'acting_for' => $directorActingForText,
+            'original_role' => $directorFinalEntry['level_approval'] ?? 'direktur_utama',
+            'display_title' => 'Direktur Utama',
+        ];
+    }
+
+    return $sequence;
+}
 
 function findNextTarget($currentRole, $pdo, $jumlah_kredit = null)
 {
@@ -651,6 +737,48 @@ function formatRupiah($angka)
     return "Rp " . number_format((float)$angka, 0, ',', '.');
 }
 
+function parseRupiahValue($value)
+{
+    if ($value === null || $value === '') {
+        return 0.0;
+    }
+
+    if (is_int($value) || is_float($value)) {
+        return (float) $value;
+    }
+
+    $str = trim((string) $value);
+    if ($str === '') {
+        return 0.0;
+    }
+
+    if (is_numeric($str)) {
+        return (float) $str;
+    }
+
+    $clean = strtoupper($str);
+    $clean = preg_replace('/\s+/', '', $clean);
+    $clean = str_replace(['RP', 'IDR', 'USD', 'EUR'], '', $clean);
+
+    if (strpos($clean, ',') !== false && strpos($clean, '.') !== false) {
+        $clean = str_replace('.', '', $clean);
+        $clean = str_replace(',', '.', $clean);
+    } 
+    elseif (strpos($clean, ',') !== false) {
+        $clean = str_replace(',', '.', $clean);
+    }
+    elseif (strpos($clean, '.') !== false) {
+        $parts = explode('.', $clean);
+        $lastPart = end($parts);
+        if (count($parts) > 2 || strlen($lastPart) === 3) {
+            $clean = str_replace('.', '', $clean);
+        }
+    }
+
+    $clean = preg_replace('/(?!^-)[^0-9.]/', '', $clean);
+    return ((float) $clean) ?: 0.0;
+}
+
 /**
  * Label status_pengajuan yang selaras dengan posisi approval (tahap workflow).
  * UPDATED: Kepatuhan role maps to 'kepatuhan' status
@@ -676,7 +804,7 @@ function pengajuanStatusesActivePipeline()
     return ['proses', 'diajukan', 'kasubag', 'kepatuhan', 'kabag', 'kadiv', 'direksi'];
 }
 
-/** Untuk disisipkan aman ke SQL IN (...) — nilai berasal dari kode, bukan input pengguna. */
+/** Untuk disisipkan aman ke SQL IN (...) â€” nilai berasal dari kode, bukan input pengguna. */
 function pengajuanStatusesActivePipelineSqlIn()
 {
     return "'" . implode("','", pengajuanStatusesActivePipeline()) . "'";
@@ -733,7 +861,7 @@ function checkComplianceAssessmentStatus($pdo, $id_pengajuan)
  * Actions: 'setuju' | 'revisi' | 'tolak' | 'kirim_ulang'
  * Returns array: ['success'=>bool, 'message'=>string]
  */
-function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $catatan)
+function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $catatan, $revisi_tabs = [])
 {
     $catatan = sanitizeApprovalCatatan($catatan);
     try {
@@ -755,7 +883,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
         }
 
         // ============================================================
-        // COMPLIANCE ASSESSMENT VALIDATION — DISABLED
+        // COMPLIANCE ASSESSMENT VALIDATION â€” DISABLED
         // Kepatuhan removed from approval chain per workflow update.
         // Existing assessment_kepatuhan data preserved for audit.
         // ============================================================
@@ -941,6 +1069,28 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
                 }
             }
 
+            // ===== UPDATE CHECKPOINTS & REVISIONS =====
+            $all_tabs = ['pemohon', 'usaha', 'penghasilan', 'struktur', 'neraca', 'agunan', '6c', 'scoring'];
+            
+            if (!empty($revisi_tabs)) {
+                foreach ($all_tabs as $t) {
+                    if (in_array($t, $revisi_tabs)) {
+                        // Mark as REVISION and create PENDING revision note
+                        $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'REVISION') ON DUPLICATE KEY UPDATE status = 'REVISION'")->execute([$id_pengajuan, $t]);
+                        $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, revision_note, status, requested_by) VALUES (?, ?, ?, 'PENDING', ?)")->execute([$id_pengajuan, $t, $catatan, $user_id]);
+                    } else {
+                        // Mark unselected tabs as APPROVED so they are locked for the Analis
+                        $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'APPROVED') ON DUPLICATE KEY UPDATE status = 'APPROVED'")->execute([$id_pengajuan, $t]);
+                    }
+                }
+            } else {
+                // Fallback if no tabs selected (legacy or missing UI): unlock all tabs
+                foreach ($all_tabs as $t) {
+                    $pdo->prepare("INSERT INTO analysis_checkpoints (id_pengajuan, tab_name, status) VALUES (?, ?, 'REVISION') ON DUPLICATE KEY UPDATE status = 'REVISION'")->execute([$id_pengajuan, $t]);
+                }
+                $pdo->prepare("INSERT INTO analysis_revisions (id_pengajuan, tab_name, revision_note, status, requested_by) VALUES (?, 'pemohon', ?, 'PENDING', ?)")->execute([$id_pengajuan, $catatan, $user_id]);
+            }
+
             auditLog($pdo, $user_id, "Mengirim revisi (ID: $id_pengajuan) oleh $role");
             $pdo->commit();
             return ['success' => true, 'message' => 'Pengajuan dikembalikan untuk revisi ke analis.'];
@@ -1068,7 +1218,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
  * Allows any role to request analis to revise an already-approved application
  * 
  * Usage: After an application is approved (status=disetujui), a higher role can send it back for revision
- * New status: 'revisi_diajukan' → signifies revision is pending analis action
+ * New status: 'revisi_diajukan' â†’ signifies revision is pending analis action
  * Analis can then edit data and resubmit
  */
 function requestCompletedApplicationRevision($pdo, $id_pengajuan, $requestor_role, $requestor_id, $revisi_notes)
@@ -1136,7 +1286,7 @@ function requestCompletedApplicationRevision($pdo, $id_pengajuan, $requestor_rol
  */
 function getRoleLabels()
 {
-    // Tabel 'roles' tidak digunakan di sistem ini — kembalikan hardcoded map
+    // Tabel 'roles' tidak digunakan di sistem ini â€” kembalikan hardcoded map
     // agar isValidRole() dan getRoleLabel() tidak melempar query ke tabel yang tidak ada.
     return [
         'Superadmin'   => 'Admin Sistem',
@@ -1153,7 +1303,7 @@ function getRoleLabels()
  * Return true if the provided role key is allowable within the system.
  *
  * When the `roles` table exists we treat its contents as authoritative.
- * For backwards compatibility we also fall back to the hard‑coded
+ * For backwards compatibility we also fall back to the hardâ€‘coded
  * hierarchy (with Superadmin prepended).  This avoids sending invalid
  * values to the database enum column and triggers the "data truncated" warning.
  */
@@ -1171,7 +1321,7 @@ function isValidRole($role)
         return array_key_exists($role, $labels);
     }
 
-    // fallback to built‑in list
+    // fallback to builtâ€‘in list
     $allowed = getHierarchy();
     array_unshift($allowed, 'Superadmin', 'kepatuhan');
     return in_array($role, $allowed, true);
@@ -1346,14 +1496,7 @@ function markAllNotificationsAsRead($id_user)
     }
 }
 
-/**
- * Notify next role(s) in approval chain
- * @param int $id_pengajuan Application ID
- * @param string $current_role Current role that approved
- * @param string $action_type Type of action (approved, rejected, revised, auto_routed)
- * @param string $message Optional custom message
- * @return bool True if successful
- */
+
 function notifyNextRole($id_pengajuan, $current_role, $action_type = 'approved', $message = '')
 {
     global $pdo;
@@ -1416,10 +1559,7 @@ function notifyNextRole($id_pengajuan, $current_role, $action_type = 'approved',
     }
 }
 
-/**
- * Return a friendly label for a given role key.
- * Alias of getRoleDisplay() — consolidated to avoid duplication.
- */
+
 function getRoleLabel($key)
 {
     return getRoleDisplay($key);

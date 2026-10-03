@@ -973,12 +973,34 @@ $timeline = $stmt->fetchAll();
                 <?php
                     $repayment_capacity = floatval($data['repayment_capacity'] ?? 0);
                     $angsuran_diajukan = floatval($data['angsuran_diajukan'] ?? 0);
+                    $sistem_bunga = strtolower(trim($data['sistem_bunga'] ?? 'anuitas'));
+                    $calculated_angsuran = null;
+                    if ($angsuran_diajukan <= 0 && floatval($data['jumlah_kredit'] ?? 0) > 0) {
+                        $loan_amount = floatval($data['jumlah_kredit'] ?? 0);
+                        $jangka_waktu = intval($data['jangka_waktu'] ?? 12);
+                        if ($jangka_waktu <= 0) {
+                            $jangka_waktu = 12;
+                        }
+                        $suku_bunga = floatval($data['suku_bunga'] ?? 0);
+                        if (strpos($sistem_bunga, 'flat') !== false) {
+                            $calculated_angsuran = ($loan_amount + ($loan_amount * ($suku_bunga / 100) * ($jangka_waktu / 12))) / $jangka_waktu;
+                        } else {
+                            if ($suku_bunga > 0) {
+                                $r = ($suku_bunga / 100) / 12;
+                                $calculated_angsuran = $loan_amount * ($r * pow(1 + $r, $jangka_waktu)) / (pow(1 + $r, $jangka_waktu) - 1);
+                            } else {
+                                $calculated_angsuran = $loan_amount / $jangka_waktu;
+                            }
+                        }
+                        $calculated_angsuran = round($calculated_angsuran);
+                    }
+                    $display_angsuran = $angsuran_diajukan > 0 ? $angsuran_diajukan : ($calculated_angsuran ?? 0);
                     $status_kelayakan_repayment = trim($data['status_kelayakan'] ?? '');
                     if ($status_kelayakan_repayment === '') {
-                        $status_kelayakan_repayment = ($repayment_capacity >= $angsuran_diajukan) ? 'LAYAK' : 'TIDAK LAYAK';
+                        $status_kelayakan_repayment = ($repayment_capacity >= $display_angsuran) ? 'LAYAK' : 'TIDAK LAYAK';
                     }
                     $rc_color = ($status_kelayakan_repayment === 'LAYAK') ? '#15803d' : '#b91c1c';
-                    $margin_keamanan = $repayment_capacity - $angsuran_diajukan;
+                    $margin_keamanan = $repayment_capacity - $display_angsuran;
                 ?>
                 <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 5px; padding: 0.7rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
@@ -992,7 +1014,13 @@ $timeline = $stmt->fetchAll();
                         </div>
                         <div style="background: rgba(255,255,255,0.5); padding: 0.4rem; border-radius: 3px;">
                             <span style="color: #065f46; font-weight: 600;">Angsuran:</span><br>
-                            <span style="font-weight: 700;"><?= formatRupiah($angsuran_diajukan) ?></span>
+                            <span style="font-weight: 700;"><?= formatRupiah($display_angsuran) ?></span>
+                            <?php if ($angsuran_diajukan <= 0 && $calculated_angsuran !== null): ?>
+                            <div style="margin-top: 0.4rem; font-size: 0.65rem; color: #475569; line-height: 1.3;">
+                                <strong>Perhitungan angsuran:</strong><br>
+                                <?= htmlspecialchars('Jumlah kredit / Jangka waktu + bunga ' . ($sistem_bunga === 'flat' ? 'flat' : 'anuitas')) ?>
+                            </div>
+                            <?php endif; ?>
                         </div>
                         <div style="background: rgba(255,255,255,0.5); padding: 0.4rem; border-radius: 3px;">
                             <span style="color: #065f46; font-weight: 600;">Margin:</span><br>
