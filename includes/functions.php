@@ -332,9 +332,30 @@ function sanitizeText($text, $maxLength = 500)
  */
 function sanitizeNumber($value)
 {
-    $value = trim((string)$value);
-    $value = preg_replace('/[^0-9.\-]/', '', $value);
-    return (float)$value;
+    $s = trim((string)$value);
+    if ($s === '' || $s === '-' ) {
+        return 0.0;
+    }
+
+    // Remove all characters except digits, dot, comma, minus
+    $s = preg_replace('/[^0-9,\.\-]/u', '', $s);
+
+    // If both dot and comma exist, assume dot=thousands, comma=decimal
+    if (strpos($s, '.') !== false && strpos($s, ',') !== false) {
+        $s = str_replace('.', '', $s);
+        $s = str_replace(',', '.', $s);
+    } else {
+        // If only dot present, treat dot as thousands separator and remove
+        if (strpos($s, '.') !== false && strpos($s, ',') === false) {
+            $s = str_replace('.', '', $s);
+        }
+        // If only comma present, treat comma as decimal separator and convert to dot
+        if (strpos($s, ',') !== false && strpos($s, '.') === false) {
+            $s = str_replace(',', '.', $s);
+        }
+    }
+
+    return (float)$s;
 }
 
 /**
@@ -753,7 +774,80 @@ function enumAllows($pdo, $table, $column, $value)
 
 function formatRupiah($angka)
 {
-    return "Rp " . number_format((float)$angka, 0, ',', '.');
+    if ($angka === null || $angka === '') {
+        return 'Rp 0';
+    }
+
+    $s = trim((string) $angka);
+    if ($s === '' || $s === '-' || $s === '+') {
+        return 'Rp 0';
+    }
+
+    // Remove currency symbols and spacing, keep only digits and separators
+    $s = preg_replace('/[^0-9,\.\-]/u', '', $s);
+    if ($s === '' || $s === '-' || $s === ',' || $s === '.' || $s === '-,' || $s === '-.') {
+        return 'Rp 0';
+    }
+
+    $negative = false;
+    if (strpos($s, '-') === 0) {
+        $negative = true;
+        $s = substr($s, 1);
+    }
+
+    $hasDot = strpos($s, '.') !== false;
+    $hasComma = strpos($s, ',') !== false;
+
+    if ($hasDot && $hasComma) {
+        $lastDot = strrpos($s, '.');
+        $lastComma = strrpos($s, ',');
+
+        if ($lastDot > $lastComma) {
+            // Format seperti 1.234,56 atau 1,234.56 -> decimal point adalah yang terakhir
+            $s = str_replace(',', '', $s);
+        } else {
+            // Format seperti 1.234,56 -> decimal comma
+            $s = str_replace('.', '', $s);
+            $s = str_replace(',', '.', $s);
+        }
+    } elseif ($hasDot) {
+        $parts = explode('.', $s);
+        if (count($parts) > 2) {
+            $s = implode('', $parts);
+        } else {
+            $last = end($parts);
+            if (count($parts) > 1 && strlen($last) === 3) {
+                $s = implode('', $parts);
+            }
+        }
+    } elseif ($hasComma) {
+        $parts = explode(',', $s);
+        if (count($parts) > 2) {
+            $s = implode('', $parts);
+        } else {
+            $last = end($parts);
+            if (count($parts) > 1 && strlen($last) === 3) {
+                $s = implode('', $parts);
+            } else {
+                $s = str_replace(',', '.', $s);
+            }
+        }
+    }
+
+    if ($s === '' || $s === '-' || $s === '.' || $s === ',') {
+        return 'Rp 0';
+    }
+
+    $num = (float) $s;
+    if (!is_finite($num)) {
+        return 'Rp 0';
+    }
+
+    if ($negative) {
+        $num = -$num;
+    }
+
+    return 'Rp ' . number_format($num, 0, ',', '.');
 }
 
 function parseRupiahValue($value)
