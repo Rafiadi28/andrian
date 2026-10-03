@@ -417,571 +417,649 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
     <title>Cetak Pengajuan Kredit</title>
     <style>
         :root {
-            --bw-navy: #0f172a;
-            --bw-blue: #1d4ed8;
-            --bw-gold: #b99543;
-            --bw-soft: #f8fafc;
-            --bw-line: #dfe7ef;
+            --bw-blue: #0f3f84;
+            --bw-blue-soft: #eaf1fb;
+            --bw-blue-2: #1a4d8f;
+            --bw-gold: #d8b566;
+            --bw-gold-soft: #fff3d6;
             --bw-text: #1f2937;
-            --bw-muted: #5b6472;
-            --bw-success: #15803d;
-            --bw-warning: #b45309;
-            --bw-danger: #b91c1c;
+            --bw-muted: #64748b;
+            --bw-line: #d7e2ef;
+            --bw-success: #1e8e4a;
+            --bw-warning: #d97706;
+            --bw-danger: #c0392b;
+            --bw-bg: #f3f4f6;
         }
 
         * { box-sizing: border-box; }
         html, body {
             margin: 0;
             padding: 0;
-            background: #fff;
+            background: var(--bw-bg);
             color: var(--bw-text);
             font-family: Arial, Helvetica, sans-serif;
         }
-        body { line-height: 1.4; }
+
+        body {
+            line-height: 1.35;
+        }
 
         .print-shell {
-            max-width: 1000px;
+            max-width: 980px;
             margin: 0 auto;
-            padding: 18px 22px 28px;
+            background: #fff;
+            min-height: 100vh;
+            padding: 18px 24px 10px;
+            box-shadow: 0 0 0 1px rgba(15, 63, 132, 0.05);
         }
 
-        .letterhead {
+        .topmeta {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 18px;
-            border-bottom: 3px solid var(--bw-gold);
-            padding-bottom: 14px;
-            margin-bottom: 18px;
+            align-items: center;
+            font-size: 12px;
+            color: var(--bw-muted);
+            padding: 0 4px;
+            margin-bottom: 8px;
         }
 
-        .logo-box {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: #eff6ff;
-            border: 2px solid var(--bw-blue);
+        .bank-header {
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            gap: 16px;
+            margin-top: 4px;
+            padding: 10px 0 6px;
+        }
+
+        .bank-logo {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: 2px solid #d0d9e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7f9fc;
             flex-shrink: 0;
         }
 
-        .logo-box img {
-            width: 78px;
-            height: 78px;
-            object-fit: contain;
+        .bank-logo::before {
+            content: "";
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--bw-blue);
+            border-radius: 50%;
             display: block;
-        }
-
-        .brand-copy {
-            flex: 1;
-            min-width: 0;
+            position: relative;
+            box-shadow: inset 0 0 0 2px rgba(15,63,132,.25);
         }
 
         .bank-name {
-            font-size: 23px;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--bw-blue);
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .bank-meta {
+            text-align: center;
+            font-size: 12px;
+            color: var(--bw-muted);
+            margin-top: 2px;
+            line-height: 1.7;
+        }
+
+        .rule {
+            border-top: 2px solid #1e2a39;
+            margin: 12px 0 10px;
+        }
+
+        .doc-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--bw-text);
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+
+        .doc-row strong {
             font-weight: 700;
-            color: var(--bw-navy);
+        }
+
+        .doc-title {
+            text-align: center;
+            font-size: 30px;
+            font-weight: 800;
+            margin: 16px 0 14px;
             letter-spacing: 0.03em;
+            color: var(--bw-text);
             text-transform: uppercase;
         }
 
-        .bank-sub {
-            font-size: 11px;
-            letter-spacing: 0.09em;
-            color: var(--bw-muted);
-            text-transform: uppercase;
-            margin-top: 3px;
-        }
-
-        .doc-code {
-            min-width: 190px;
-            text-align: right;
-            color: var(--bw-muted);
-            font-size: 11px;
-        }
-
-        .doc-code strong {
-            display: block;
-            margin-top: 4px;
-            font-size: 16px;
-            color: var(--bw-navy);
-        }
-
-        .doc-title-box {
-            background: #f8fafc;
-            border: 1px solid var(--bw-line);
-            padding: 14px 18px;
-            margin-bottom: 16px;
-        }
-
-        .doc-title-box h1 {
-            margin: 0;
-            text-align: center;
-            font-size: 26px;
+        .status-banner {
+            background: linear-gradient(180deg, #fdf5d8, #f9e7b3);
+            color: #9a6200;
+            border: 1px solid #e0c777;
+            padding: 7px 12px;
             font-weight: 700;
-            color: var(--bw-navy);
-            letter-spacing: 0.06em;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .doc-title-meta {
-            margin-top: 8px;
-            text-align: center;
-            font-size: 11px;
-            color: var(--bw-muted);
+        .status-banner::before {
+            content: "⚑";
+            font-size: 14px;
         }
 
-        .summary-grid {
+        .summary-panel {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
+            border: 1px solid var(--bw-line);
+            background: #f4f8ff;
+            padding: 12px;
             margin-bottom: 18px;
         }
 
-        .summary-card {
-            border: 1px solid var(--bw-line);
+        .mini-card {
             background: #fff;
-            padding: 12px 14px;
-            min-height: 108px;
-            break-inside: avoid;
-            page-break-inside: avoid;
+            border: 1px solid var(--bw-line);
+            padding: 10px 12px;
+            min-height: 68px;
         }
 
-        .summary-label {
+        .mini-label {
             font-size: 10px;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
             color: var(--bw-muted);
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
-        .summary-value {
-            margin-top: 8px;
+        .mini-value {
             font-size: 15px;
             font-weight: 700;
-            color: var(--bw-navy);
-            word-break: break-word;
-        }
-
-        .summary-value.status-approved { color: var(--bw-success); }
-        .summary-value.status-pending { color: var(--bw-warning); }
-
-        .section {
-            margin-bottom: 18px;
-            border: 1px solid var(--bw-line);
-            background: #fff;
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-
-        .section-header {
-            background: #0f172a;
-            color: #fff;
-            padding: 10px 14px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .section-body {
-            background: #fff;
-        }
-
-        .section-body table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .section-body table th,
-        .section-body table td {
-            border-bottom: 1px solid var(--bw-line);
-        }
-
-        .section-body table tr:last-child th,
-        .section-body table tr:last-child td {
-            border-bottom: none;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        th, td {
-            padding: 9px 12px;
-            border-bottom: 1px solid var(--bw-line);
-            vertical-align: top;
-            word-break: break-word;
-            font-size: 12px;
-        }
-
-        th {
-            width: 34%;
-            text-align: left;
-            background: #f8fafc;
-            color: var(--bw-navy);
-            font-weight: 700;
-        }
-
-        td {
             color: var(--bw-text);
+            word-break: break-word;
         }
 
-        .muted { color: var(--bw-muted); }
-
-        .status-pill {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            background: #dcfce7;
+        .mini-value.status-ok {
             color: var(--bw-success);
         }
 
-        .status-pill.pending {
-            background: #fef3c7;
+        .mini-value.status-warn {
             color: var(--bw-warning);
         }
 
-        .signature-block {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 22px;
-            padding: 18px 14px 10px;
+        .mini-value.status-danger {
+            color: var(--bw-danger);
         }
 
-        .signature-box {
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            text-align: center;
-            break-inside: avoid;
-            page-break-inside: avoid;
+        .section-box {
+            margin-bottom: 18px;
+            border: 1px solid var(--bw-line);
+            background: #fff;
         }
 
-        .signature-role {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--bw-muted);
+        .section-head {
+            background: linear-gradient(180deg, #0d3d7a 0%, #123c7e 100%);
+            color: #fff;
+            padding: 10px 14px;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            margin-bottom: 10px;
+            font-size: 13px;
         }
 
-        .signature-line {
-            width: 100%;
-            border-bottom: 1px solid #000;
-            min-height: 28px;
-            margin-bottom: 6px;
+        .section-head.light {
+            background: linear-gradient(180deg, #1e5ead, #19529a);
         }
 
-        .signature-name {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--bw-navy);
+        .financial-box {
+            background: #fff;
+            border: 1px solid var(--bw-line);
+            padding: 0;
         }
 
-        .signature-img {
-            margin-top: 8px;
-            max-width: 140px;
-            max-height: 60px;
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0;
+            background: #f8fbe7;
+            border: 1px solid #e7d9a6;
+        }
+
+        .kpi {
+            background: #f8fbe9;
+            padding: 12px 10px;
+            border-right: 1px solid #e7d9a6;
+            min-height: 78px;
+        }
+
+        .kpi:last-child { border-right: none; }
+
+        .kpi label {
             display: block;
-        }
-
-        .note {
-            margin-top: 10px;
-            padding: 12px 14px;
-            background: #f8fafc;
-            border: 1px dashed var(--bw-line);
-            font-size: 11px;
+            font-size: 10px;
             color: var(--bw-muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
         }
 
-        .score-table {
-            border-collapse: collapse;
+        .kpi strong {
+            font-size: 14px;
+            color: var(--bw-text);
+        }
+
+        .budget-table {
             width: 100%;
-            margin: 0;
+            border-collapse: collapse;
+            margin-top: 0;
+            border: 1px solid var(--bw-line);
         }
 
-        .score-table th,
-        .score-table td {
+        .budget-table td {
+            padding: 10px 12px;
+            border-top: 1px solid var(--bw-line);
+            font-size: 13px;
+            background: #eaf3ff;
+        }
+
+        .budget-table td:first-child {
+            width: 60%;
+            font-weight: 600;
+            color: var(--bw-text);
+            background: #dfeefe;
+        }
+
+        .budget-table td:last-child {
+            text-align: right;
+            font-weight: 700;
+            color: var(--bw-blue);
+            background: #ebf4ff;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            background: #fff;
+        }
+
+        .detail-table th,
+        .detail-table td {
             border: 1px solid var(--bw-line);
             padding: 8px 10px;
-            text-align: left;
             font-size: 12px;
+            vertical-align: top;
+            word-break: break-word;
         }
 
-        .score-table th {
-            width: 28%;
-            background: #f8fafc;
-        }
-
-        .score-table td:nth-child(2) {
-            width: 16%;
-            text-align: center;
+        .detail-table th {
+            width: 24%;
+            color: var(--bw-text);
+            background: #f6f9ff;
             font-weight: 700;
+        }
+
+        .detail-table td {
+            background: #fff;
+        }
+
+        .line-box {
+            padding: 10px 0 0;
+        }
+
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            padding: 12px;
+            background: #f5f9ff;
+            border: 1px solid var(--bw-line);
+            margin-top: 0;
+        }
+
+        .approval-card {
+            min-height: 124px;
+            background: #f4f9ff;
+            border: 1px solid var(--bw-line);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .approval-role {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--bw-blue);
+            text-transform: uppercase;
+            line-height: 1.4;
+        }
+
+        .approval-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--bw-text);
+            margin-top: 8px;
+        }
+
+        .approval-status {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--bw-success);
+            font-weight: 700;
+        }
+
+        .approval-status::before {
+            content: "✓";
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            background: #dff7ea;
+            text-align: center;
+            line-height: 16px;
+        }
+
+        .approval-status.pending {
+            color: var(--bw-warning);
+        }
+
+        .approval-status.pending::before {
+            content: "";
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--bw-warning);
+        }
+
+        .footer-note {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-top: 18px;
+            padding-top: 10px;
+            border-top: 1px solid var(--bw-line);
+            font-size: 11px;
+            color: var(--bw-muted);
         }
 
         @page {
-            size: <?= $paper['width'] ?> <?= $paper['height'] ?>;
-            margin: <?= $paper['margin'] ?>;
+            size: A4 portrait;
+            margin: 12mm 10mm;
         }
 
         @media print {
             body {
+                background: #fff;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                margin: 0;
             }
 
             .print-shell {
+                box-shadow: none;
                 max-width: none;
+                margin: 0;
                 padding: 0;
-            }
-
-            .section,
-            .summary-card,
-            .signature-box {
-                break-inside: avoid;
-                page-break-inside: avoid;
             }
         }
     </style>
 </head>
 <body>
     <div class="print-shell">
-        <header class="letterhead">
-            <div class="logo-box">
-                <img src="assets/img/logo_bank.png" alt="Logo Bank Wonosobo">
-            </div>
-            <div class="brand-copy">
-                <div class="bank-name">PT. BPR Bank Wonosobo (Persero)</div>
-                <div class="bank-sub">Sistem Analisa Kredit</div>
-            </div>
-            <div class="doc-code">
-                <span>Nomor Pengajuan</span>
-                <strong><?= htmlspecialchars((string)($data['id_pengajuan'] ?? '-')) ?></strong>
-            </div>
-        </header>
+        <div class="topmeta">
+            <div>03/10/26, 12:31</div>
+            <div>Pengajuan <strong><?= htmlspecialchars((string)($data['id_pengajuan'] ?? '-')) ?></strong></div>
+        </div>
 
-        <div class="doc-title-box">
-            <h1>FORMULIR ANALISA KREDIT</h1>
-            <div class="doc-title-meta">
-                <?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? $data['nama_pemohon'] ?? '-') ?> • <?= htmlspecialchars($data['jenis_kredit'] ?? '-') ?> • <?= date('d-m-Y') ?>
+        <div class="bank-header">
+            <div class="bank-logo" aria-hidden="true"></div>
+            <div>
+                <div class="bank-name">PT BPR Bank Wonosobo (Perseroda)</div>
+                <div class="bank-meta">Kantor Pusat: Jl. Ahmad Yani No. 160 Wonosobo 56311<br>Telp: (0286) 321293 &nbsp;|&nbsp; Email: bprbankwonosobo@yahoo.co.id</div>
             </div>
         </div>
 
-        <section class="summary-grid">
-            <div class="summary-card">
-                <div class="summary-label">Pemohon</div>
-                <div class="summary-value"><?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? $data['nama_pemohon'] ?? '-') ?></div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Plafon</div>
-                <div class="summary-value">Rp <?= number_format((float)($data['jumlah_kredit'] ?? 0), 0, ',', '.') ?></div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Tenor</div>
-                <div class="summary-value"><?= htmlspecialchars((string)($data['jangka_waktu'] ?? '-')) ?> Bulan</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Status</div>
-                <div class="summary-value <?= (strtolower(trim((string)($teks_status ?? ''))) === '✓ disetujui' || strtolower(trim((string)($teks_status ?? ''))) === '✓ disetujui untuk dicairkan') ? 'status-approved' : 'status-pending' ?>"><?= $teks_status ?></div>
-            </div>
-        </section>
+        <div class="rule"></div>
 
-        <section class="section">
-            <div class="section-header">I. Data Pengajuan</div>
-            <div class="section-body">
-                <table>
-                    <tr><th>ID Pengajuan</th><td><?= htmlspecialchars((string)($data['id_pengajuan'] ?? '-')) ?></td></tr>
-                    <tr><th>Nama Debitur</th><td><?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? $data['nama_pemohon'] ?? '-') ?></td></tr>
-                    <tr><th>Jenis Kredit</th><td><?= htmlspecialchars($data['jenis_kredit'] ?? '-') ?></td></tr>
-                    <tr><th>Jangka Waktu</th><td><?= htmlspecialchars((string)($data['jangka_waktu'] ?? '-')) ?> bulan</td></tr>
-                    <tr><th>Plafon</th><td>Rp <?= number_format((float)($data['jumlah_kredit'] ?? 0), 0, ',', '.') ?></td></tr>
-                    <tr><th>Suku Bunga</th><td><?= htmlspecialchars((string)($data['suku_bunga'] ?? '-')) ?>%</td></tr>
-                    <tr><th>Tujuan Penggunaan</th><td><?= htmlspecialchars($data['tujuan_penggunaan'] ?? $data['tujuan_kredit'] ?? '-') ?></td></tr>
-                    <tr><th>Status</th><td><span class="status-pill <?= (strtolower(trim((string)($teks_status ?? ''))) === '✓ disetujui' || strtolower(trim((string)($teks_status ?? ''))) === '✓ disetujui untuk dicairkan') ? '' : 'pending' ?>"><?= $teks_status ?></span></td></tr>
-                </table>
-            </div>
-        </section>
+        <div class="doc-row">
+            <div><strong>Nomor:</strong> NK-00034/2026</div>
+            <div>Wonosobo, <?= date('d F Y') ?></div>
+        </div>
 
-        <section class="section">
-            <div class="section-header">II. Data Pemohon</div>
-            <div class="section-body">
-                <table>
-                    <tr><th>Nama Lengkap</th><td><?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? $data['nama_pemohon'] ?? '-') ?></td></tr>
-                    <tr><th>NIK</th><td><?= htmlspecialchars($data['nik'] ?? '-') ?></td></tr>
-                    <tr><th>NPWP</th><td><?= htmlspecialchars($data['npwp'] ?? '-') ?></td></tr>
-                    <tr><th>Alamat KTP</th><td><?= htmlspecialchars($data['alamat_ktp'] ?? '-') ?></td></tr>
-                    <tr><th>Alamat Domisili</th><td><?= htmlspecialchars($data['alamat_domisili'] ?? $data['alamat'] ?? '-') ?></td></tr>
-                    <tr><th>No HP</th><td><?= htmlspecialchars($data['no_hp'] ?? $data['no_telepon'] ?? '-') ?></td></tr>
-                    <tr><th>Status Pernikahan</th><td><?= htmlspecialchars($data['status_perkawinan'] ?? '-') ?></td></tr>
-                    <tr><th>Nama Pasangan</th><td><?= htmlspecialchars($data['nama_pasangan'] ?? '-') ?></td></tr>
-                </table>
-            </div>
-        </section>
+        <div class="doc-title">Lembar Analisa Kredit</div>
 
-        <section class="section">
-            <div class="section-header">III. Analisa Keuangan & Usaha</div>
-            <div class="section-body">
-                <table>
-                    <tr><th>Pekerjaan / Usaha</th><td><?= htmlspecialchars($data['pekerjaan'] ?? $data['nama_usaha'] ?? '-') ?></td></tr>
-                    <tr><th>Bidang Usaha</th><td><?= htmlspecialchars($data['bidang_usaha'] ?? '-') ?></td></tr>
-                    <tr><th>Omzet / Bulan</th><td>Rp <?= number_format((float)($data['omset_per_bulan'] ?? 0), 0, ',', '.') ?></td></tr>
-                    <tr><th>Pendapatan Lain</th><td>Rp <?= number_format((float)($data['pendapatan_lain'] ?? 0), 0, ',', '.') ?></td></tr>
-                    <tr><th>Pengeluaran Tetap</th><td>Rp <?= number_format((float)($data['total_pengeluaran_tetap'] ?? 0), 0, ',', '.') ?></td></tr>
-                    <tr><th>Repayment Capacity</th><td>Rp <?= number_format((float)($data['repayment_capacity'] ?? 0), 0, ',', '.') ?></td></tr>
-                    <tr><th>Angsuran Diajukan</th><td>Rp <?= number_format((float)($data['angsuran_diajukan'] ?? 0), 0, ',', '.') ?></td></tr>
-                </table>
-            </div>
-        </section>
+        <div class="status-banner">Menunggu Persetujuan</div>
 
-        <section class="section">
-            <div class="section-header">IV. Jaminan</div>
-            <div class="section-body">
-                <?php
-                $jaminan_rows = [];
-                foreach ($jaminan_tanah as $jt) {
-                    $jaminan_rows[] = '<strong>Tanah/Bangunan:</strong> ' . htmlspecialchars($jt['alamat_agunan'] ?? $jt['alamat'] ?? '-') . ' • Nilai: Rp ' . number_format((float)($jt['nilai_taksasi'] ?? $jt['nilai_pasar'] ?? 0), 0, ',', '.');
-                }
-                foreach ($jaminan_kendaraan as $jk) {
-                    $jaminan_rows[] = '<strong>Kendaraan:</strong> ' . htmlspecialchars(trim((string)($jk['merk'] ?? '') . ' ' . ($jk['tipe'] ?? '')) ?: '-') . ' • Nilai: Rp ' . number_format((float)($jk['nilai_taksasi'] ?? $jk['nilai_pasar'] ?? 0), 0, ',', '.');
-                }
-                foreach ($jaminan_emas as $je) {
-                    $jaminan_rows[] = '<strong>Emas:</strong> ' . htmlspecialchars((string)($je['berat'] ?? '-')) . ' gr • Nilai: Rp ' . number_format((float)($je['nilai_pasar'] ?? 0), 0, ',', '.');
-                }
-                ?>
-                <table>
+        <div class="summary-panel">
+            <div class="mini-card">
+                <div class="mini-label">Pemohon</div>
+                <div class="mini-value"><?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? $data['nama_pemohon'] ?? '-') ?></div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-label">Status Kredit</div>
+                <div class="mini-value status-warn">Menunggu</div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-label">Plafon Disetujui</div>
+                <div class="mini-value">Rp <?= number_format((float)($data['jumlah_kredit'] ?? 0), 0, ',', '.') ?></div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-label">Risiko</div>
+                <div class="mini-value status-danger"><?= htmlspecialchars(strtoupper((string)($risk_level ?? 'SEDANG'))) ?></div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-label">Jangka Waktu</div>
+                <div class="mini-value"><?= htmlspecialchars((string)($data['jangka_waktu'] ?? '-')) ?> Bulan</div>
+            </div>
+            <div class="mini-card">
+                <div class="mini-label">Suku Bunga</div>
+                <div class="mini-value"><?= htmlspecialchars((string)($data['suku_bunga'] ?? '0')) ?>%/tahun</div>
+            </div>
+        </div>
+
+        <div class="section-box">
+            <div class="section-head">Analisa Kesehatan Keuangan</div>
+            <div class="financial-box">
+                <div class="financial-grid">
+                    <div class="kpi">
+                        <label>Penghasilan Bulanan</label>
+                        <strong>Rp <?= number_format((float)($monthly_income ?? 0), 0, ',', '.') ?></strong>
+                    </div>
+                    <div class="kpi">
+                        <label>Angsuran Bulanan</label>
+                        <strong>Rp <?= number_format((float)($monthly_installment ?? 0), 0, ',', '.') ?></strong>
+                    </div>
+                    <div class="kpi">
+                        <label>Sisa Kapasitas</label>
+                        <strong>Rp <?= number_format((float)($remaining_capacity ?? 0), 0, ',', '.') ?></strong>
+                    </div>
+                </div>
+                <table class="budget-table">
                     <tr>
-                        <th>Detail Jaminan</th>
-                        <td><?= !empty($jaminan_rows) ? implode('<br>', $jaminan_rows) : '<span class="muted">-</span>' ?></td>
+                        <td>Gaji Pokok / THB Bulanan</td>
+                        <td>Rp <?= number_format((float)($data['omset_per_bulan'] ?? 0), 0, ',', '.') ?></td>
                     </tr>
                     <tr>
-                        <th>Total Nilai Jaminan</th>
-                        <td>Rp <?= number_format((float)$total_collateral, 0, ',', '.') ?></td>
+                        <td>Tunjangan & Pendapatan Lain</td>
+                        <td>Rp <?= number_format((float)($data['pendapatan_lain'] ?? 0), 0, ',', '.') ?></td>
+                    </tr>
+                    <tr>
+                        <td>Total Penghasilan Bulanan</td>
+                        <td>Rp <?= number_format((float)($monthly_income ?? 0), 0, ',', '.') ?></td>
                     </tr>
                 </table>
             </div>
-        </section>
+        </div>
 
-        <section class="section">
-            <div class="section-header">V. Analisa 6C</div>
-            <div class="section-body">
-                <table class="score-table">
-                    <tr>
-                        <th>Komponen</th>
-                        <th>Skor</th>
-                        <th>Penilaian</th>
-                        <th>Catatan</th>
-                    </tr>
-                    <?php foreach ($scoreRows as $item): ?>
-                        <?php
-                        $score = (int)($print_6c[$item['key']] ?? 0);
-                        $note = $normalizePrintText($print_6c[$item['note_key']] ?? '', '-');
-                        ?>
-                        <tr>
-                            <td><?= htmlspecialchars($item['label']) ?></td>
-                            <td style="color: <?= $colorLabel6C($score) ?>;"><?= $score ?: '-' ?></td>
-                            <td><?= $score ? htmlspecialchars($gradeLabel6C($score)) : '-' ?></td>
-                            <td><?= htmlspecialchars($note) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <tr>
-                        <th>Rata-rata Skor</th>
-                        <td colspan="3"><?= number_format((float)$analisa_6c_total, 2, ',', '.') ?> / 5</td>
-                    </tr>
-                    <tr>
-                        <th>Rekomendasi</th>
-                        <td colspan="3"><?= htmlspecialchars($rekomendasi_6c) ?></td>
-                    </tr>
-                </table>
-            </div>
-        </section>
+        <div class="section-box">
+            <div class="section-head light">I. Data Diri Pemohon</div>
+            <table class="detail-table">
+                <tr>
+                    <th>Nama Debitur</th>
+                    <td><?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? '-') ?></td>
+                    <th>Jabatan</th>
+                    <td><?= htmlspecialchars($data['pekerjaan'] ?? $data['jenis_pekerjaan'] ?? '-') ?></td>
+                </tr>
+                <tr>
+                    <th>Nomor CIF</th>
+                    <td><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
+                    <th>Usia</th>
+                    <td><?= htmlspecialchars((string)($data['usia'] ?? '-')) ?> Tahun</td>
+                </tr>
+                <tr>
+                    <th>Nomor KTP</th>
+                    <td><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
+                    <th>Sisa Masa Kerja</th>
+                    <td><?= htmlspecialchars((string)($data['masa_kerja'] ?? '-')) ?></td>
+                </tr>
+                <tr>
+                    <th>Alamat</th>
+                    <td colspan="3"><?= htmlspecialchars($data['alamat_domisili'] ?? $data['alamat_ktp'] ?? $data['alamat'] ?? '-') ?></td>
+                </tr>
+                <tr>
+                    <th>Jaminan</th>
+                    <td><?= !empty($jaminan_tanah) || !empty($jaminan_kendaraan) || !empty($jaminan_emas) ? 'Tersedia' : 'Tidak tersedia' ?></td>
+                    <th>Pekerjaan</th>
+                    <td><?= htmlspecialchars($data['pekerjaan'] ?? $data['nama_usaha'] ?? '-') ?></td>
+                </tr>
+                <tr>
+                    <th>Pinjaman Ke</th>
+                    <td><?= htmlspecialchars((string)($data['pinjaman_ke'] ?? '1')) ?></td>
+                    <th>Tujuan Kredit</th>
+                    <td><?= htmlspecialchars($data['tujuan_penggunaan'] ?? $data['tujuan_kredit'] ?? '-') ?></td>
+                </tr>
+            </table>
+        </div>
 
-        <section class="section">
-            <div class="section-header">VI. Assessment Kepatuhan</div>
-            <div class="section-body">
-                <table>
-                    <?php
-                    $hasil_kepatuhan = $normalizePrintText($compliance_data['hasil_kepatuhan'] ?? 'Belum diisi', 'Belum diisi');
-                    $kesimpulan_kepatuhan = $normalizePrintText($compliance_data['kesimpulan'] ?? '-', '-');
-                    $rekomendasi_kepatuhan = $normalizePrintText($compliance_data['rekomendasi'] ?? '-', '-');
-                    ?>
-                    <tr><th>Hasil</th><td><?= htmlspecialchars(strtoupper($hasil_kepatuhan)) ?></td></tr>
-                    <tr><th>Checklist</th><td><?= $compliance_summary['comply'] . ' comply / ' . $compliance_summary['not_comply'] . ' not comply / ' . $compliance_summary['na'] . ' N/A' ?></td></tr>
-                    <tr><th>Kesimpulan</th><td><?= nl2br(htmlspecialchars($kesimpulan_kepatuhan)) ?></td></tr>
-                    <tr><th>Rekomendasi</th><td><?= nl2br(htmlspecialchars($rekomendasi_kepatuhan)) ?></td></tr>
-                </table>
-            </div>
-        </section>
+        <div class="section-box">
+            <div class="section-head light">II. Informasi Kredit & Struktur Pembayaran</div>
+            <table class="detail-table">
+                <tr>
+                    <th>Produk Kredit</th>
+                    <td><?= htmlspecialchars($data['jenis_kredit'] ?? '-') ?></td>
+                    <th>KK</th>
+                    <td><?= htmlspecialchars($data['jenis_pekerjaan'] ?? 'UMUM') ?></td>
+                </tr>
+                <tr>
+                    <th>Tujuan Kredit</th>
+                    <td><?= htmlspecialchars($data['tujuan_penggunaan'] ?? $data['tujuan_kredit'] ?? '-') ?></td>
+                    <th>Plafon</th>
+                    <td>Rp <?= number_format((float)($data['jumlah_kredit'] ?? 0), 0, ',', '.') ?></td>
+                </tr>
+                <tr>
+                    <th>Jangka Waktu</th>
+                    <td><?= htmlspecialchars((string)($data['jangka_waktu'] ?? '-')) ?> Bulan</td>
+                    <th>Suku Bunga</th>
+                    <td><?= htmlspecialchars((string)($data['suku_bunga'] ?? '0')) ?>% per tahun</td>
+                </tr>
+                <tr>
+                    <th>Angsuran Per Bulan</th>
+                    <td>Rp <?= number_format((float)($monthly_installment ?? 0), 0, ',', '.') ?></td>
+                    <th>Grace Period</th>
+                    <td><?= htmlspecialchars((string)($data['grace_period'] ?? '0')) ?> Bulan</td>
+                </tr>
+                <tr>
+                    <th>Agunan / Jaminan</th>
+                    <td colspan="3"><?= !empty($jaminan_rows) ? implode(', ', $jaminan_rows) : '-' ?></td>
+                </tr>
+            </table>
+        </div>
 
-        <section class="section">
-            <div class="section-header">VII. Persetujuan</div>
-            <div class="section-body">
-                <table>
+        <div class="section-box">
+            <div class="section-head light">III. Hasil Analisa 6C (Kelayakan Kredit)</div>
+            <table class="detail-table">
+                <tr>
+                    <th>Unsur Penilaian (6C)</th>
+                    <th>Skor Nilai</th>
+                    <th>Interpretasi / Keterangan</th>
+                </tr>
+                <?php foreach ($scoreRows as $item): ?>
+                    <?php $score = (int)($print_6c[$item['key']] ?? 0); ?>
                     <tr>
-                        <th>Role</th>
-                        <th>Nama</th>
-                        <th>Tanggal</th>
-                        <th>Status</th>
+                        <td><?= htmlspecialchars($item['label']) ?></td>
+                        <td><?= $score ?: '-' ?></td>
+                        <td><?= htmlspecialchars($gradeLabel6C($score)) ?: '-' ?></td>
                     </tr>
-                    <?php if (!empty($approvals)): ?>
-                        <?php foreach ($approvals as $a): ?>
-                            <tr>
-                                <td><?= htmlspecialchars((string)($a['role_approver'] ?? $a['level_approval'] ?? '-')) ?></td>
-                                <td><?= htmlspecialchars((string)($a['nama_approver'] ?? '-')) ?></td>
-                                <td><?= htmlspecialchars((string)($a['tanggal'] ?? $a['tanggal_approval'] ?? '-')) ?></td>
-                                <td><?= htmlspecialchars((string)($a['keputusan'] ?? '-')) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="4" class="muted">Belum ada riwayat persetujuan.</td></tr>
-                    <?php endif; ?>
-                </table>
-            </div>
-        </section>
+                <?php endforeach; ?>
+                <tr>
+                    <th>Total SKOR 6C</th>
+                    <td colspan="2"><?= number_format((float)$analisa_6c_total, 2, ',', '.') ?> / 5.00</td>
+                </tr>
+            </table>
+        </div>
 
-        <section class="section">
-            <div class="section-header">VIII. Tanda Tangan Pejabat</div>
-            <div class="signature-block">
+        <div class="section-box">
+            <div class="section-head light">Kesimpulan Akhir & Rekomendasi</div>
+            <table class="detail-table">
+                <tr>
+                    <th>Status Risiko</th>
+                    <td><?= htmlspecialchars(strtoupper((string)($risk_level ?? 'SEDANG'))) ?></td>
+                </tr>
+                <tr>
+                    <th>Kelayakan Kredit</th>
+                    <td><?= $semua_disetujui ? 'LAYAK' : 'MENUNGGU' ?></td>
+                </tr>
+                <tr>
+                    <th>Status Kelayakan Pembayaran</th>
+                    <td><?= ($remaining_capacity ?? 0) > 0 ? 'LAYAK' : 'TIDAK LAYAK' ?></td>
+                </tr>
+                <tr>
+                    <th>Repayment Capacity</th>
+                    <td>Rp <?= number_format((float)($data['repayment_capacity'] ?? 0), 0, ',', '.') ?></td>
+                </tr>
+                <tr>
+                    <th>Rekomendasi Analisis</th>
+                    <td><?= htmlspecialchars($rekomendasi_6c) ?></td>
+                </tr>
+                <tr>
+                    <th>Catatan Khusus</th>
+                    <td><?= htmlspecialchars($normalizePrintText($compliance_data['catatan'] ?? 'Tidak ada catatan khusus', 'Tidak ada catatan khusus')) ?></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section-box">
+            <div class="section-head">V. Timeline Proses Persetujuan</div>
+            <div class="approval-grid">
                 <?php foreach ($signature_roles as $sig): ?>
                     <?php
                     $role = $sig['role'] ?? '';
-                    $nama_pejabat = $sig['nama'] ?? '';
-                    $tanda_tangan = $sig['tanda_tangan'] ?? '';
-                    $stempel = $sig['stempel'] ?? '';
-                    if (empty($tanda_tangan) && empty($stempel) && empty($nama_pejabat)) {
-                        continue;
-                    }
+                    $nama = $sig['nama'] ?? '';
+                    $status = !empty($sig['keputusan']) && strtolower((string)$sig['keputusan']) === 'setuju' ? 'Disetujui' : 'Menunggu Persetujuan';
+                    $statusClass = !empty($sig['keputusan']) && strtolower((string)$sig['keputusan']) === 'setuju' ? '' : 'pending';
                     ?>
-                    <div class="signature-box">
-                        <div class="signature-role"><?= htmlspecialchars($roleDisplayTitles[$role] ?? $role) ?></div>
-                        <div class="signature-line"></div>
-                        <div class="signature-name"><?= htmlspecialchars($nama_pejabat) ?></div>
-                        <?php if (!empty($tanda_tangan)): ?>
-                            <img class="signature-img" src="<?= htmlspecialchars($tanda_tangan) ?>" alt="Tanda Tangan">
-                        <?php endif; ?>
-                        <?php if (!empty($stempel)): ?>
-                            <img class="signature-img" src="<?= htmlspecialchars($stempel) ?>" alt="Stempel" style="max-width:90px; margin-top:4px;">
-                        <?php endif; ?>
+                    <div class="approval-card">
+                        <div class="approval-role"><?= htmlspecialchars($roleDisplayTitles[$role] ?? $role) ?></div>
+                        <div class="approval-name"><?= htmlspecialchars($nama ?: '-') ?></div>
+                        <div class="approval-status <?= $statusClass ?>"><?= $status ?></div>
                     </div>
                 <?php endforeach; ?>
             </div>
-            <?php if (!empty($ttd_replacement_note)): ?>
-                <div class="note"><?= htmlspecialchars($ttd_replacement_note) ?></div>
-            <?php endif; ?>
-        </section>
+        </div>
 
-        <div class="note">Catatan: Dokumen ini dihasilkan secara otomatis oleh sistem analisa kredit Bank Wonosobo untuk kepentingan internal dan proses pencairan.</div>
+        <div class="footer-note">
+            <div>Dokumen ini dicetak otomatis oleh sistem analisa kredit BPR Bank Wonosobo.</div>
+            <div>Halaman 1 dari 2</div>
+        </div>
     </div>
 </body>
 </html>
