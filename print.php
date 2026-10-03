@@ -33,6 +33,40 @@ if (!$data) {
     die("Data tidak ditemukan.");
 }
 
+$normalizePrintText = static function ($value, $fallback = '-') {
+    if ($value === null || $value === '') {
+        return $fallback;
+    }
+    $text = trim((string) $value);
+    return $text === '' ? $fallback : $text;
+};
+
+$resolvePrintData = static function (array $row, array $keys, $fallback = '-') use ($normalizePrintText) {
+    foreach ($keys as $key) {
+        if (array_key_exists($key, $row) && $row[$key] !== null && trim((string) $row[$key]) !== '') {
+            return $normalizePrintText($row[$key], $fallback);
+        }
+    }
+    return $fallback;
+};
+
+$gradeLabel6C = static function ($score) {
+    $score = (int) $score;
+    if ($score >= 5) return 'Sangat Baik';
+    if ($score == 4) return 'Baik';
+    if ($score == 3) return 'Cukup';
+    if ($score == 2) return 'Kurang';
+    if ($score == 1) return 'Sangat Kurang';
+    return '-';
+};
+
+$colorLabel6C = static function ($score) {
+    $score = (int) $score;
+    if ($score >= 4) return '#15803d';
+    if ($score == 3) return '#b45309';
+    return '#b91c1c';
+};
+
 // Analis: only print their own submissions
 if (($_SESSION['role'] ?? '') === 'analis'
     && (int)($data['input_by'] ?? 0) !== (int)($_SESSION['user_id'] ?? 0)) {
@@ -43,7 +77,7 @@ if (($_SESSION['role'] ?? '') === 'analis'
 // Fetch 6C analysis data
 $stmt6c = $pdo->prepare("SELECT * FROM analisa_5c WHERE id_pengajuan = ?");
 $stmt6c->execute([$id]);
-$print_6c = $stmt6c->fetch(PDO::FETCH_ASSOC);
+$print_6c = $stmt6c->fetch(PDO::FETCH_ASSOC) ?: [];
 
 // ===== FETCH COMPLIANCE ASSESSMENT DATA =====
 $stmt_compliance = $pdo->prepare("SELECT * FROM assessment_kepatuhan WHERE id_pengajuan = ?");
@@ -55,10 +89,24 @@ $compliance_items = [];
 if ($compliance_data && !empty($compliance_data['checklist_data'])) {
     $all_checklist = json_decode($compliance_data['checklist_data'], true) ?: [];
     foreach ($all_checklist as $key => $item) {
-        // Only include items that are NOT 'na' (N/A)
         if (isset($item['val']) && $item['val'] !== 'na') {
             $compliance_items[$key] = $item;
         }
+    }
+}
+
+$compliance_summary = [
+    'comply' => 0,
+    'not_comply' => 0,
+    'na' => 0,
+];
+if ($compliance_data && !empty($compliance_data['checklist_data'])) {
+    $all_checklist = json_decode($compliance_data['checklist_data'], true) ?: [];
+    foreach ($all_checklist as $item) {
+        $val = strtolower((string)($item['val'] ?? ''));
+        if ($val === 'comply') $compliance_summary['comply']++;
+        elseif ($val === 'not_comply') $compliance_summary['not_comply']++;
+        elseif ($val === 'na') $compliance_summary['na']++;
     }
 }
 
@@ -319,6 +367,22 @@ if ($from === 'dashboard' || $from === 'riwayat') {
     $user_role = $_SESSION['role'] ?? 'analis';
     $back_url = isset($role_dashboards[$user_role]) ? $role_dashboards[$user_role] : 'detail.php?id=' . $id;
 }
+
+$scoreRows = [
+    ['label' => 'Karakter', 'key' => 'character_score', 'note_key' => 'catatan_character'],
+    ['label' => 'Kapasitas', 'key' => 'capacity_score', 'note_key' => 'catatan_capacity'],
+    ['label' => 'Modal', 'key' => 'capital_score', 'note_key' => 'catatan_capital'],
+    ['label' => 'Agunan', 'key' => 'collateral_score', 'note_key' => 'catatan_collateral'],
+    ['label' => 'Condition', 'key' => 'condition_score', 'note_key' => 'catatan_condition'],
+    ['label' => 'Risiko', 'key' => 'constraint_score', 'note_key' => 'catatan_constraint_risk'],
+];
+
+$analisa_6c_total = 0;
+foreach ($scoreRows as $row) {
+    $analisa_6c_total += (int)($print_6c[$row['key']] ?? 0);
+}
+$analisa_6c_total = count($scoreRows) > 0 ? round($analisa_6c_total / count($scoreRows), 2) : 0;
+$rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ada rekomendasi');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -587,6 +651,31 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             color: var(--bw-muted);
         }
 
+        .score-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0;
+        }
+
+        .score-table th,
+        .score-table td {
+            border: 1px solid var(--bw-line);
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .score-table th {
+            width: 28%;
+            background: #f8fafc;
+        }
+
+        .score-table td:nth-child(2) {
+            width: 16%;
+            text-align: center;
+            font-weight: 700;
+        }
+
         @page {
             size: <?= $paper['width'] ?> <?= $paper['height'] ?>;
             margin: <?= $paper['margin'] ?>;
@@ -617,7 +706,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
         </header>
 
         <div class="doc-title-box">
-            <h1>FORMULIR PENGAJUAN KREDIT</h1>
+            <h1>FORMULIR ANALISA KREDIT</h1>
             <div class="doc-title-meta">
                 <?= htmlspecialchars($data['nama_lengkap'] ?? $data['nama_debitur'] ?? $data['nama_pemohon'] ?? '-') ?> • <?= htmlspecialchars($data['jenis_kredit'] ?? '-') ?> • <?= date('d-m-Y') ?>
             </div>
@@ -698,7 +787,7 @@ if ($from === 'dashboard' || $from === 'riwayat') {
                     $jaminan_rows[] = '<strong>Tanah/Bangunan:</strong> ' . htmlspecialchars($jt['alamat_agunan'] ?? $jt['alamat'] ?? '-') . ' • Nilai: Rp ' . number_format((float)($jt['nilai_taksasi'] ?? $jt['nilai_pasar'] ?? 0), 0, ',', '.');
                 }
                 foreach ($jaminan_kendaraan as $jk) {
-                    $jaminan_rows[] = '<strong>Kendaraan:</strong> ' . htmlspecialchars(($jk['merk'] ?? '') . ' ' . ($jk['tipe'] ?? '')) . ' • Nilai: Rp ' . number_format((float)($jk['nilai_taksasi'] ?? $jk['nilai_pasar'] ?? 0), 0, ',', '.');
+                    $jaminan_rows[] = '<strong>Kendaraan:</strong> ' . htmlspecialchars(trim((string)($jk['merk'] ?? '') . ' ' . ($jk['tipe'] ?? '')) ?: '-') . ' • Nilai: Rp ' . number_format((float)($jk['nilai_taksasi'] ?? $jk['nilai_pasar'] ?? 0), 0, ',', '.');
                 }
                 foreach ($jaminan_emas as $je) {
                     $jaminan_rows[] = '<strong>Emas:</strong> ' . htmlspecialchars((string)($je['berat'] ?? '-')) . ' gr • Nilai: Rp ' . number_format((float)($je['nilai_pasar'] ?? 0), 0, ',', '.');
@@ -720,13 +809,33 @@ if ($from === 'dashboard' || $from === 'riwayat') {
         <section class="section">
             <div class="section-header">V. Analisa 6C</div>
             <div class="section-body">
-                <table>
-                    <tr><th>Karakter</th><td><?= htmlspecialchars((string)($print_6c['karakter'] ?? $print_6c['character'] ?? '-')) ?></td></tr>
-                    <tr><th>Kapasitas</th><td><?= htmlspecialchars((string)($print_6c['kapasitas'] ?? $print_6c['capacity'] ?? '-')) ?></td></tr>
-                    <tr><th>Modal</th><td><?= htmlspecialchars((string)($print_6c['modal'] ?? $print_6c['capital'] ?? '-')) ?></td></tr>
-                    <tr><th>Agunan</th><td><?= htmlspecialchars((string)($print_6c['agunan'] ?? $print_6c['collateral'] ?? '-')) ?></td></tr>
-                    <tr><th>Syariah</th><td><?= htmlspecialchars((string)($print_6c['syariah'] ?? $print_6c['condition'] ?? '-')) ?></td></tr>
-                    <tr><th>Risiko</th><td><?= htmlspecialchars((string)($print_6c['risiko'] ?? $print_6c['constraint'] ?? '-')) ?></td></tr>
+                <table class="score-table">
+                    <tr>
+                        <th>Komponen</th>
+                        <th>Skor</th>
+                        <th>Penilaian</th>
+                        <th>Catatan</th>
+                    </tr>
+                    <?php foreach ($scoreRows as $item): ?>
+                        <?php
+                        $score = (int)($print_6c[$item['key']] ?? 0);
+                        $note = $normalizePrintText($print_6c[$item['note_key']] ?? '', '-');
+                        ?>
+                        <tr>
+                            <td><?= htmlspecialchars($item['label']) ?></td>
+                            <td style="color: <?= $colorLabel6C($score) ?>;"><?= $score ?: '-' ?></td>
+                            <td><?= $score ? htmlspecialchars($gradeLabel6C($score)) : '-' ?></td>
+                            <td><?= htmlspecialchars($note) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <tr>
+                        <th>Rata-rata Skor</th>
+                        <td colspan="3"><?= number_format((float)$analisa_6c_total, 2, ',', '.') ?> / 5</td>
+                    </tr>
+                    <tr>
+                        <th>Rekomendasi</th>
+                        <td colspan="3"><?= htmlspecialchars($rekomendasi_6c) ?></td>
+                    </tr>
                 </table>
             </div>
         </section>
@@ -735,8 +844,15 @@ if ($from === 'dashboard' || $from === 'riwayat') {
             <div class="section-header">VI. Assessment Kepatuhan</div>
             <div class="section-body">
                 <table>
-                    <tr><th>Kepatuhan</th><td><?= htmlspecialchars((string)($compliance_data['kepatuhan'] ?? '-')) ?></td></tr>
-                    <tr><th>Catatan</th><td><?= nl2br(htmlspecialchars((string)($compliance_data['catatan'] ?? '-'))) ?></td></tr>
+                    <?php
+                    $hasil_kepatuhan = $normalizePrintText($compliance_data['hasil_kepatuhan'] ?? 'Belum diisi', 'Belum diisi');
+                    $kesimpulan_kepatuhan = $normalizePrintText($compliance_data['kesimpulan'] ?? '-', '-');
+                    $rekomendasi_kepatuhan = $normalizePrintText($compliance_data['rekomendasi'] ?? '-', '-');
+                    ?>
+                    <tr><th>Hasil</th><td><?= htmlspecialchars(strtoupper($hasil_kepatuhan)) ?></td></tr>
+                    <tr><th>Checklist</th><td><?= $compliance_summary['comply'] . ' comply / ' . $compliance_summary['not_comply'] . ' not comply / ' . $compliance_summary['na'] . ' N/A' ?></td></tr>
+                    <tr><th>Kesimpulan</th><td><?= nl2br(htmlspecialchars($kesimpulan_kepatuhan)) ?></td></tr>
+                    <tr><th>Rekomendasi</th><td><?= nl2br(htmlspecialchars($rekomendasi_kepatuhan)) ?></td></tr>
                 </table>
             </div>
         </section>
