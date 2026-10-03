@@ -476,21 +476,22 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
         }
 
         .bank-badge {
-            width: min(430px, 92%);
-            height: 245px;
-            background: #f2f2f2;
-            border-radius: 26px;
+            width: min(700px, 92%);
+            height: 240px;
+            background: #ececeb;
+            border-radius: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 14px;
-            box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.03);
+            padding: 18px 12px;
+            box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.02);
         }
 
         .bank-badge svg {
-            width: 80%;
-            height: 80%;
+            width: 78%;
+            height: 78%;
             display: block;
+            overflow: visible;
         }
 
         .brand-block {
@@ -507,7 +508,7 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
         }
 
         .brand-name {
-            font-size: clamp(24px, 3vw, 34px);
+            font-size: clamp(24px, 3vw, 38px);
             font-weight: 900;
             color: var(--bw-blue);
             letter-spacing: 0.02em;
@@ -854,15 +855,15 @@ $rekomendasi_6c = $normalizePrintText($print_6c['rekomendasi'] ?? '-', 'Belum ad
 
         <div class="bank-header">
             <div class="bank-badge" aria-label="Logo Bank Wonosobo">
-                <svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
+                <svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
                     <title id="logoTitle">Logo PT BPR Bank Wonosobo</title>
-                    <desc id="logoDesc">Simbol emblem berbentuk gold W pada background hitam</desc>
-                    <g fill="none" stroke="#D7B36A" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M120 280 L190 120 L260 260 L330 120 L400 280"/>
-                        <path d="M160 280 L250 160 L330 280" opacity="0.9"/>
-                        <path d="M220 280 L310 160 L400 280" opacity="0.9"/>
-                        <path d="M120 280 L90 200 L150 160 L190 120"/>
-                        <path d="M480 120 L520 160 L550 200 L520 280 L480 280"/>
+                    <desc id="logoDesc">Emblem berbentuk W dengan garis emas</desc>
+                    <g fill="none" stroke="#D5AE68" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M150 290 L210 130 L280 265 L350 130 L420 290"/>
+                        <path d="M170 290 L250 180 L320 290" opacity="0.96"/>
+                        <path d="M320 290 L390 180 L470 290" opacity="0.96"/>
+                        <path d="M150 290 L110 210 L180 160 L210 130"/>
+                        <path d="M490 130 L520 160 L590 210 L550 290 L490 290"/>
                     </g>
                 </svg>
             </div>
