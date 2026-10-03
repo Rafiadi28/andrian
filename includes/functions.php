@@ -648,7 +648,42 @@ function enumAllows($pdo, $table, $column, $value)
 
 function formatRupiah($angka)
 {
-    return "Rp " . number_format((float)$angka, 0, ',', '.');
+    if ($angka === null || $angka === '') {
+        return 'Rp 0';
+    }
+
+    // Normalize common user-provided formats:
+    // - "5.000.000" (thousand separators with dots)
+    // - "5,000,000" (thousand separators with commas)
+    // - "Rp 5.000.000" (with currency prefix)
+    // Strategy: remove non-numeric except comma/dot/minus, then
+    // convert thousand separators to plain digits and use dot as decimal marker.
+    $s = (string)$angka;
+    $s = trim($s);
+    // remove currency symbol, spaces and any non-digit/,+-.
+    $s = preg_replace('/[^0-9,\.\-]/u', '', $s);
+
+    if ($s === '' || $s === '-' || $s === ',') {
+        return 'Rp 0';
+    }
+
+    // If both dot and comma exist, assume dot = thousands, comma = decimal
+    if (strpos($s, '.') !== false && strpos($s, ',') !== false) {
+        $s = str_replace('.', '', $s);
+        $s = str_replace(',', '.', $s);
+    } else {
+        // If only dot present, treat dot as thousand separator and remove it
+        if (strpos($s, '.') !== false && strpos($s, ',') === false) {
+            $s = str_replace('.', '', $s);
+        }
+        // If only comma present, treat comma as decimal separator and convert to dot
+        if (strpos($s, ',') !== false && strpos($s, '.') === false) {
+            $s = str_replace(',', '.', $s);
+        }
+    }
+
+    $num = (float)$s;
+    return 'Rp ' . number_format($num, 0, ',', '.');
 }
 
 /**
