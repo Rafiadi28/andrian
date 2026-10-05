@@ -458,10 +458,9 @@ if (stripos($sistem_bunga_display, 'anuitas') !== false) {
 $kelayakan_kredit = ($analisa_6c_total >= 3) ? 'LAYAK' : 'TIDAK LAYAK';
 if ($semua_disetujui) $kelayakan_kredit = 'LAYAK';
 
-// Signature roles for keputusan page — 3 signers: Analis, Kepatuhan, Kabag Kredit
+// Signature roles for keputusan page — 2 signers: Analis, Kabag Kredit
 $ttd_roles = [
     ['role' => 'analis', 'title' => 'ANALIS KREDIT'],
-    ['role' => 'kepatuhan', 'title' => 'KEPATUHAN'],
     ['role' => 'kabag_kredit', 'title' => 'KEPALA BAGIAN KREDIT'],
 ];
 
