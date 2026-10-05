@@ -458,30 +458,27 @@ if (stripos($sistem_bunga_display, 'anuitas') !== false) {
 $kelayakan_kredit = ($analisa_6c_total >= 3) ? 'LAYAK' : 'TIDAK LAYAK';
 if ($semua_disetujui) $kelayakan_kredit = 'LAYAK';
 
-// Signature roles for keputusan page — 2 signers: Analis, Kabag Kredit
-$ttd_roles = [
-    ['role' => 'analis', 'title' => 'ANALIS KREDIT'],
-    ['role' => 'kabag_kredit', 'title' => 'KEPALA BAGIAN KREDIT'],
-];
-
+// Signature roles for keputusan page
+// ATURAN BISNIS: TTD Lembar Keputusan dinamis sesuai approval aslinya (mengikuti cuti & plafon)
 $ttd_data = [];
-foreach ($ttd_roles as $tr) {
-    $r = $tr['role'];
-    $pej = $pejabat_by_role[$r] ?? null;
-    $app = $approval_approved[$r] ?? ($approval_latest[$r] ?? null);
-    $nama_ttd = $pej['nama'] ?? ($app['nama_approver'] ?? ($r === 'kepatuhan' ? 'Petugas Kepatuhan' : '-'));
+foreach ($signature_roles as $sig) {
+    $app = $sig['approval_entry'] ?? null;
     $tgl_ttd = '';
+    
     if ($app && !empty($app['tanggal_approval'])) {
         $tgl_ttd = date('d/m/Y', strtotime($app['tanggal_approval']));
-    } elseif ($r === 'kepatuhan' && $compliance_data && !empty($compliance_data['updated_at'])) {
-        $tgl_ttd = date('d/m/Y', strtotime($compliance_data['updated_at']));
-    }
-    if (empty($tgl_ttd)) {
+    } else {
         $tgl_ttd = date('d/m/Y');
     }
+    
+    $title = $sig['display_title'] ?? $sig['jabatan'] ?? '';
+    if (empty($title)) {
+        $title = str_replace('_', ' ', $sig['role']);
+    }
+    
     $ttd_data[] = [
-        'title' => $tr['title'],
-        'nama' => strtoupper($nama_ttd),
+        'title' => strtoupper($title),
+        'nama' => strtoupper($sig['nama'] ?? '-'),
         'tanggal' => $tgl_ttd,
     ];
 }
@@ -1507,7 +1504,7 @@ if (empty($catatan_khusus) && $compliance_data) {
     </div>
 
     <!-- Signature Block -->
-    <div class="signature-block">
+    <div class="signature-block" style="grid-template-columns: repeat(<?= count($ttd_data) ?: 1 ?>, 1fr);">
         <?php foreach ($ttd_data as $ttd): ?>
             <div class="sig-col">
                 <div class="sig-title"><?= htmlspecialchars($ttd['title']) ?></div>
