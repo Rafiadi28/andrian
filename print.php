@@ -315,48 +315,14 @@ $roleDisplayTitles = [
     'direktur_utama' => 'Direktur Utama'
 ];
 
-// Jika ada auto-skip karena pejabat cuti/non-aktif, tampilkan Direktur Utama sebagai pengganti
-// di cetakan tanda tangan agar TTD tetap muncul pada posisi terakhir.
-$directorReplacementDetected = false;
-foreach ((array) $approvals as $approvalEntry) {
-    $levelApproval = strtolower(trim((string)($approvalEntry['level_approval'] ?? $approvalEntry['role_approver'] ?? '')));
-    $isAutoSkip = (int)($approvalEntry['is_auto_skip'] ?? 0) === 1;
-    if ($isAutoSkip && in_array($levelApproval, ['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'], true)) {
-        $directorReplacementDetected = true;
-        break;
-    }
-}
-
-if ($directorReplacementDetected && !isset($approval_map_no_kepatuhan['direktur_utama'])) {
-    $directorInfo = $pejabat_by_role['direktur_utama'] ?? ['nama' => 'Direktur Utama', 'jabatan' => 'Direktur Utama'];
-    $approval_map_no_kepatuhan['direktur_utama'] = [
-        'id_approval' => 0,
-        'id_user' => $directorInfo['id_pejabat'] ?? null,
-        'level_approval' => 'direktur_utama',
-        'role_approver' => 'direktur_utama',
-        'nama_approver' => $directorInfo['nama'] ?? 'Direktur Utama',
-        'keputusan' => 'setuju',
-        'tanggal_approval' => date('Y-m-d H:i:s'),
-        'catatan' => 'Pengganti pejabat cuti',
-    ];
-}
+// ATURAN BISNIS: Direktur Utama HANYA masuk TTD jika plafon >= 500 juta.
+// Cuti pejabat TIDAK menambahkan Direktur Utama ke TTD.
+// Signature sequence dibangun murni dari approval records yang ada.
 
 $timeline_roles = $approval_chain_roles;
 $signature_roles = buildPrintSignatureSequence($approval_map_no_kepatuhan, $pejabat_by_role, $roleDisplayTitles);
 
-$directorReplacementInSignature = false;
-foreach ($signature_roles as $sig) {
-    if (($sig['role'] ?? '') === 'direktur_utama' && !empty($sig['acting_for'])) {
-        $directorReplacementInSignature = true;
-        break;
-    }
-}
-
-if ($directorReplacementInSignature) {
-    $ttd_replacement_note = '⚠ Direktur Utama bertindak sebagai pengganti pejabat yang cuti, tetapi tetap ditampilkan di urutan tanda tangan paling akhir.';
-} else {
-    $ttd_replacement_note = '';
-}
+$ttd_replacement_note = '';
 
 // Paper styles
 $paper_styles = [
@@ -417,7 +383,7 @@ $nomor_dokumen = 'NK.' . str_pad((string)($data['id_pengajuan'] ?? '0'), 5, '0',
 $pengajuan_label = 'Pengajuan_' . strtoupper(str_replace(' ', '_', $data['nama_lengkap'] ?? $data['nama_debitur'] ?? 'UNKNOWN')) . '_' . date('Ymd');
 
 // Build timeline data including kepatuhan
-$timeline_full_roles = ['analis', 'kasubag_analis', 'kepatuhan', 'kabag_kredit', 'direktur_utama'];
+$timeline_full_roles = ['analis', 'kasubag_analis', 'kepatuhan', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
 $timeline_data = [];
 foreach ($timeline_full_roles as $tRole) {
     $entry = null;

@@ -23,11 +23,11 @@ function resolve_next_active_role(PDO $pdo, string $desiredRole): ?string
 {
     $desiredRole = strtolower(trim($desiredRole));
     $chain = ['kasubag_analis', 'kepatuhan', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
-    $replacementMap = [
-        'kasubag_analis' => 'direktur_utama',
-        'kabag_kredit' => 'direktur_utama',
-        'kadiv_bisnis' => 'direktur_utama',
-    ];
+
+    // ATURAN BISNIS: Pejabat cuti di-SKIP (maju ke role berikutnya dalam chain).
+    // JANGAN escalate ke direktur_utama sebagai pengganti.
+    // Direktur Utama hanya masuk workflow jika plafon >= 500 juta
+    // (ditentukan oleh getMaxApprovalLevel / findNextTarget).
 
     if ($desiredRole === '' || $desiredRole === 'analis') {
         return isRoleActive($pdo, 'analis') ? 'analis' : null;
@@ -37,10 +37,7 @@ function resolve_next_active_role(PDO $pdo, string $desiredRole): ?string
         return $desiredRole;
     }
 
-    if (isset($replacementMap[$desiredRole]) && isRoleActive($pdo, $replacementMap[$desiredRole])) {
-        return $replacementMap[$desiredRole];
-    }
-
+    // Desired role tidak aktif (cuti/nonaktif) → cari role aktif berikutnya dalam chain
     $startIndex = array_search($desiredRole, $chain, true);
     if ($startIndex === false) {
         return null;
@@ -53,7 +50,8 @@ function resolve_next_active_role(PDO $pdo, string $desiredRole): ?string
         }
     }
 
-    return isRoleActive($pdo, 'direktur_utama') ? 'direktur_utama' : null;
+    // Tidak ada role aktif ditemukan dalam sisa chain
+    return null;
 }
 
 /**

@@ -549,15 +549,14 @@ function hasInactiveApprovalSubordinate(PDO $pdo): bool
 }
 
 /**
- * Determine the effective final approval level based on loan amount
- * and active approval chain coverage.
- * If any subordinate approver in the chain is cuti/nonaktif, loans below
- * 500 juta still require Direktur Utama as replacement approval.
+ * Determine the effective final approval level based on loan amount.
+ * ATURAN BISNIS: Direktur Utama HANYA masuk jika plafon >= 500 juta.
+ * Status cuti pejabat TIDAK mempengaruhi level approval maksimum.
  */
 function getEffectiveMaxApprovalLevel(PDO $pdo, $jumlah_kredit)
 {
     // Approval threshold is based solely on loan amount.
-    // Kadiv cuti does not by itself escalate <500 juta applications to Direktur Utama.
+    // Cuti pejabat TIDAK mengubah level approval maksimum.
     return getMaxApprovalLevel($jumlah_kredit);
 }
 
@@ -590,11 +589,13 @@ function getApprovalChainRoles(PDO $pdo, $jumlah_kredit)
 
 function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = [], array $roleDisplayTitles = []): array
 {
+    // ATURAN BISNIS: TTD sequence dibangun dari approval records yang ada.
+    // Direktur Utama HANYA muncul jika ada approval record (karena plafon >= 500 juta).
+    // TIDAK ADA logic "Pengganti" — Direktur Utama BUKAN pengganti pejabat cuti.
     $stageOrder = ['analis', 'kasubag_analis', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
     $sequence = [];
     $seenRoles = [];
     $directorFinalEntry = null;
-    $directorReplacementFor = null;
 
     $legacyAliases = [
         'kabag' => 'kabag_kredit',
@@ -614,25 +615,17 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
         $approverRole = strtolower(trim((string)($entry['role_approver'] ?? $entry['level_approval'] ?? '')));
         $approverRole = $legacyAliases[$approverRole] ?? $approverRole;
 
+        // Direktur Utama selalu di posisi terakhir
         if ($stageRole === 'direktur_utama') {
             $directorFinalEntry = $entry;
-            if ($directorReplacementFor === null) {
-                foreach (['kasubag_analis', 'kabag_kredit', 'kadiv_bisnis'] as $subRole) {
-                    if (!isset($approvalMap[$subRole])) {
-                        $directorReplacementFor = $subRole;
-                        break;
-                    }
-                }
-            }
             continue;
         }
 
+        // Jika approval di level ini dilakukan oleh Direktur (legacy data),
+        // simpan sebagai director entry, jangan tampilkan di posisi subordinate
         if (in_array($approverRole, ['direktur_utama', 'direksi'], true)) {
             if ($directorFinalEntry === null) {
                 $directorFinalEntry = $entry;
-            }
-            if ($directorReplacementFor === null) {
-                $directorReplacementFor = $stageRole;
             }
             continue;
         }
@@ -661,15 +654,10 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
         $seenRoles[$stageRole] = true;
     }
 
+    // Direktur Utama selalu di urutan TERAKHIR, tanpa keterangan "Pengganti"
     if ($directorFinalEntry !== null && !isset($seenRoles['direktur_utama'])) {
         $directorInfo = $pejabatByRole['direktur_utama'] ?? null;
         $directorNama = $directorInfo['nama'] ?? ($directorFinalEntry['nama_approver'] ?? 'Direktur Utama');
-        $directorActingForText = '';
-
-        if ($directorReplacementFor !== null) {
-            $replacementTitle = $roleDisplayTitles[$directorReplacementFor] ?? ucwords(str_replace('_', ' ', $directorReplacementFor));
-            $directorActingForText = 'selaku Pengganti ' . $replacementTitle;
-        }
 
         $sequence[] = [
             'id_pejabat' => $directorInfo['id_pejabat'] ?? null,
@@ -680,8 +668,8 @@ function buildPrintSignatureSequence(array $approvalMap, array $pejabatByRole = 
             'tanda_tangan' => $directorInfo['tanda_tangan'] ?? null,
             'stempel' => $directorInfo['stempel'] ?? null,
             'approval_entry' => $directorFinalEntry,
-            'acting_for' => $directorActingForText,
-            'original_role' => $directorFinalEntry['level_approval'] ?? 'direktur_utama',
+            'acting_for' => '',
+            'original_role' => 'direktur_utama',
             'display_title' => 'Direktur Utama',
         ];
         $seenRoles['direktur_utama'] = true;
