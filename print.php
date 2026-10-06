@@ -382,46 +382,49 @@ $cetak_timestamp = date('d F Y') . ' pukul ' . date('H:i:s');
 $nomor_dokumen = 'NK.' . str_pad((string)($data['id_pengajuan'] ?? '0'), 5, '0', STR_PAD_LEFT) . '/' . date('Y');
 $pengajuan_label = 'Pengajuan_' . strtoupper(str_replace(' ', '_', $data['nama_lengkap'] ?? $data['nama_debitur'] ?? 'UNKNOWN')) . '_' . date('Ymd');
 
-// Build timeline data including kepatuhan
-$timeline_full_roles = ['analis', 'kasubag_analis', 'kepatuhan', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
-$timeline_data = [];
-foreach ($timeline_full_roles as $tRole) {
-    $entry = null;
-    if ($tRole === 'kepatuhan') {
-        // Use kepatuhan from approval_latest (not filtered out)
-        $entry = $approval_latest['kepatuhan'] ?? null;
-        $pejabat = $pejabat_by_role['kepatuhan'] ?? null;
-        $nama = $pejabat['nama'] ?? ($entry['nama_approver'] ?? 'Petugas Kepatuhan');
-    } else {
-        $entry = $approval_approved[$tRole] ?? ($approval_latest[$tRole] ?? null);
-        $pejabat = $pejabat_by_role[$tRole] ?? null;
-        $nama = $pejabat['nama'] ?? ($entry['nama_approver'] ?? '-');
-    }
-    
-    $isApproved = false;
-    if ($tRole === 'kepatuhan') {
-        // Check kepatuhan from either approval or compliance_data
-        $isApproved = (isset($approval_approved['kepatuhan'])) || 
-                      ($compliance_data && strtolower($compliance_data['status'] ?? '') === 'comply');
-        if (!$isApproved && $entry && strtolower($entry['keputusan'] ?? '') === 'setuju') {
-            $isApproved = true;
+$jenis_pek = $data['jenis_pekerjaan'] ?? 'umum';
+$is_pegawai = in_array($jenis_pek, ['pppk', 'perangkat_desa'], true);
+
+// Hitung usia dan sisa masa kerja dari input asli agar sesuai dengan form
+$usia_tercetak = $data['usia'] ?? null;
+if ($usia_tercetak === null || trim((string)$usia_tercetak) === '' || (string)$usia_tercetak === '-') {
+    $tanggal_lahir = $data['tanggal_lahir'] ?? null;
+    if (!empty($tanggal_lahir) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal_lahir)) {
+        try {
+            $usia_tercetak = (new DateTime('today'))->diff(new DateTime($tanggal_lahir))->y;
+        } catch (Exception $e) {
+            $usia_tercetak = '-';
         }
     } else {
-        $isApproved = isset($approval_approved[$tRole]);
+        $usia_tercetak = '-';
     }
-    
-    $tanggal = '';
-    if ($entry && !empty($entry['tanggal_approval'])) {
-        $tanggal = date('d-m-Y H:i', strtotime($entry['tanggal_approval']));
+}
+
+$sisa_masa_kerja_tercetak = '-';
+if ($is_pegawai) {
+    $tgl_akhir_kontrak = trim((string)($data['departemen_bagian'] ?? $data['pppk_tgl_akhir'] ?? $data['desk_tgl_akhir'] ?? ''));
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl_akhir_kontrak)) {
+        try {
+            $today = new DateTime('today');
+            $akhir = new DateTime($tgl_akhir_kontrak);
+            if ($akhir > $today) {
+                $diff = $today->diff($akhir);
+                $parts = [];
+                if ($diff->y > 0) $parts[] = $diff->y . ' Tahun';
+                if ($diff->m > 0) $parts[] = $diff->m . ' Bulan';
+                if (empty($parts)) $parts[] = '< 1 Bulan';
+                $sisa_masa_kerja_tercetak = implode(' ', $parts);
+            } else {
+                $sisa_masa_kerja_tercetak = 'Sudah Berakhir';
+            }
+        } catch (Exception $e) {
+            $sisa_masa_kerja_tercetak = $data['lama_usaha'] ?? '-';
+        }
+    } else {
+        $sisa_masa_kerja_tercetak = $data['lama_usaha'] ?? '-';
     }
-    
-    $timeline_data[] = [
-        'role' => $tRole,
-        'title' => $roleDisplayTitles[$tRole] ?? ucwords(str_replace('_', ' ', $tRole)),
-        'nama' => $nama,
-        'approved' => $isApproved,
-        'tanggal' => $tanggal,
-    ];
+} else {
+    $sisa_masa_kerja_tercetak = $data['lama_usaha'] ?? '-';
 }
 
 // Agunan description
@@ -444,50 +447,84 @@ if (!empty($jaminan_emas)) {
 }
 if (!empty($agunan_items)) {
     $agunan_desc = implode(', ', $agunan_items);
-} elseif (!empty($data['jaminan']) && trim($data['jaminan']) !== '') {
+} elseif (!empty($data['jaminan']) && trim((string)$data['jaminan']) !== '') {
     $agunan_desc = $data['jaminan'];
 }
 
 // Sistem bunga display
-$sistem_bunga_display = ucfirst($data['sistem_bunga'] ?? 'Anuitas');
+$sistem_bunga_display = ucfirst((string)($data['sistem_bunga'] ?? 'Anuitas'));
 if (stripos($sistem_bunga_display, 'anuitas') !== false) {
     $sistem_bunga_display = 'Anuitas / Efektif';
 }
 
 // Kelayakan kredit
 $kelayakan_kredit = ($analisa_6c_total >= 3) ? 'LAYAK' : 'TIDAK LAYAK';
-if ($semua_disetujui) $kelayakan_kredit = 'LAYAK';
+if ($semua_disetujui) {
+    $kelayakan_kredit = 'LAYAK';
+}
+
+// Build timeline data including kepatuhan
+$timeline_full_roles = ['analis', 'kasubag_analis', 'kepatuhan', 'kabag_kredit', 'kadiv_bisnis', 'direktur_utama'];
+$timeline_data = [];
+foreach ($timeline_full_roles as $tRole) {
+    $entry = null;
+    if ($tRole === 'kepatuhan') {
+        $entry = $approval_latest['kepatuhan'] ?? null;
+        $pejabat = $pejabat_by_role['kepatuhan'] ?? null;
+        $nama = $pejabat['nama'] ?? ($entry['nama_approver'] ?? 'Petugas Kepatuhan');
+    } else {
+        $entry = $approval_approved[$tRole] ?? ($approval_latest[$tRole] ?? null);
+        $pejabat = $pejabat_by_role[$tRole] ?? null;
+        $nama = $pejabat['nama'] ?? ($entry['nama_approver'] ?? '-');
+    }
+
+    $isApproved = false;
+    if ($tRole === 'kepatuhan') {
+        $isApproved = (isset($approval_approved['kepatuhan'])) ||
+            ($compliance_data && strtolower((string)($compliance_data['status'] ?? '')) === 'comply');
+        if (!$isApproved && $entry && strtolower((string)($entry['keputusan'] ?? '')) === 'setuju') {
+            $isApproved = true;
+        }
+    } else {
+        $isApproved = isset($approval_approved[$tRole]);
+    }
+
+    $tanggal = '';
+    if ($entry && !empty($entry['tanggal_approval'])) {
+        $tanggal = date('d-m-Y H:i', strtotime($entry['tanggal_approval']));
+    }
+
+    $timeline_data[] = [
+        'role' => $tRole,
+        'title' => $roleDisplayTitles[$tRole] ?? ucwords(str_replace('_', ' ', $tRole)),
+        'nama' => $nama,
+        'approved' => $isApproved,
+        'tanggal' => $tanggal,
+    ];
+}
 
 // Signature roles for keputusan page
-// ATURAN BISNIS: TTD Lembar Keputusan dinamis sesuai approval aslinya (mengikuti cuti & plafon)
 $ttd_data = [];
 foreach ($signature_roles as $sig) {
     $app = $sig['approval_entry'] ?? null;
     $tgl_ttd = '';
-    
+
     if ($app && !empty($app['tanggal_approval'])) {
         $tgl_ttd = date('d/m/Y', strtotime($app['tanggal_approval']));
     } else {
         $tgl_ttd = date('d/m/Y');
     }
-    
+
     $title = $sig['display_title'] ?? $sig['jabatan'] ?? '';
     if (empty($title)) {
-        $title = str_replace('_', ' ', $sig['role']);
+        $title = str_replace('_', ' ', $sig['role'] ?? '');
     }
-    
+
     $ttd_data[] = [
-        'title' => strtoupper($title),
-        'nama' => strtoupper($sig['nama'] ?? '-'),
+        'title' => strtoupper((string)$title),
+        'nama' => strtoupper((string)($sig['nama'] ?? '-')),
         'tanggal' => $tgl_ttd,
     ];
-}
-
-// Note analis / catatan khusus
-$catatan_khusus = $normalizePrintText($data['catatan_khusus'] ?? ($data['catatan'] ?? ''), '');
-$note_analis = $normalizePrintText($print_6c['catatan_kesimpulan'] ?? ($print_6c['catatan_rekomendasi'] ?? ''), '');
-if (empty($catatan_khusus) && $compliance_data) {
-    $catatan_khusus = $normalizePrintText($compliance_data['catatan'] ?? '', '');
 }
 ?>
 <!DOCTYPE html>
@@ -1227,13 +1264,13 @@ if (empty($catatan_khusus) && $compliance_data) {
                 <th>Nomor CIF</th>
                 <td><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
                 <th>Usia</th>
-                <td><?= htmlspecialchars((string)($data['usia'] ?? '-')) ?> Tahun</td>
+                <td><?= htmlspecialchars((string) $usia_tercetak) ?><?= is_numeric($usia_tercetak) ? ' Tahun' : '' ?></td>
             </tr>
             <tr>
                 <th>Nomor KTP</th>
                 <td><?= htmlspecialchars($data['nik'] ?? '-') ?></td>
                 <th>Sisa Masa Kerja</th>
-                <td><?= htmlspecialchars((string)($data['masa_kerja'] ?? '-')) ?></td>
+                <td><?= htmlspecialchars((string) $sisa_masa_kerja_tercetak) ?></td>
             </tr>
             <tr>
                 <th>Alamat</th>
