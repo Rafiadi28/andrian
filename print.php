@@ -1118,7 +1118,7 @@ if (empty($catatan_khusus) && $compliance_data) {
     <!-- Bank Header -->
     <div class="bank-header">
         <div class="bank-logo">
-            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 120 120" xmlns="logobawon.png">
                 <rect width="120" height="120" rx="12" fill="#f0ece3"/>
                 <g transform="translate(15,20) scale(0.75)">
                     <g fill="none" stroke="#D5AE68" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
