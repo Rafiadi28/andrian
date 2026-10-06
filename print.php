@@ -1118,17 +1118,7 @@ if (empty($catatan_khusus) && $compliance_data) {
     <!-- Bank Header -->
     <div class="bank-header">
         <div class="bank-logo">
-            <svg viewBox="0 0 120 120" xmlns="logobawon.png">
-                <rect width="120" height="120" rx="12" fill="#f0ece3"/>
-                <g transform="translate(15,20) scale(0.75)">
-                    <g fill="none" stroke="#D5AE68" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 85 L35 35 L52 78 L68 35 L83 85"/>
-                        <path d="M25 85 L48 55 L62 85" opacity="0.9"/>
-                        <path d="M62 85 L76 55 L100 85" opacity="0.9"/>
-                    </g>
-                </g>
-                <text x="60" y="108" text-anchor="middle" fill="#0f3f84" font-size="8" font-weight="800" font-family="Arial">BANK WONOSOBO</text>
-            </svg>
+            <img src="logobawon.png" alt="Logo Bank Wonosobo" style="display:block; width:100%; height:100%; object-fit:contain;">
         </div>
         <div class="bank-text">
             <div class="bank-name">PT BPR BANK WONOSOBO (PERSERODA)</div>
@@ -1441,17 +1431,7 @@ if (empty($catatan_khusus) && $compliance_data) {
     <!-- Bank Header (repeated) -->
     <div class="bank-header">
         <div class="bank-logo">
-            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                <rect width="120" height="120" rx="12" fill="#f0ece3"/>
-                <g transform="translate(15,20) scale(0.75)">
-                    <g fill="none" stroke="#D5AE68" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 85 L35 35 L52 78 L68 35 L83 85"/>
-                        <path d="M25 85 L48 55 L62 85" opacity="0.9"/>
-                        <path d="M62 85 L76 55 L100 85" opacity="0.9"/>
-                    </g>
-                </g>
-                <text x="60" y="108" text-anchor="middle" fill="#0f3f84" font-size="8" font-weight="800" font-family="Arial">BANK WONOSOBO</text>
-            </svg>
+            <img src="logobawon.png" alt="Logo Bank Wonosobo" style="display:block; width:100%; height:100%; object-fit:contain;">
         </div>
         <div class="bank-text">
             <div class="bank-name">PT BPR BANK WONOSOBO (PERSERODA)</div>
