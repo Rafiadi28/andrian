@@ -1314,14 +1314,7 @@ function processApproval($pdo, $id_pengajuan, $role, $user_id, $keputusan, $cata
     }
 }
 
-/**
- * Request revision for completed/approved applications
- * Allows any role to request analis to revise an already-approved application
- * 
- * Usage: After an application is approved (status=disetujui), a higher role can send it back for revision
- * New status: 'revisi_diajukan' â†’ signifies revision is pending analis action
- * Analis can then edit data and resubmit
- */
+
 function requestCompletedApplicationRevision($pdo, $id_pengajuan, $requestor_role, $requestor_id, $revisi_notes)
 {
     try {
@@ -1400,14 +1393,7 @@ function getRoleLabels()
     ];
 }
 
-/**
- * Return true if the provided role key is allowable within the system.
- *
- * When the `roles` table exists we treat its contents as authoritative.
- * For backwards compatibility we also fall back to the hardâ€‘coded
- * hierarchy (with Superadmin prepended).  This avoids sending invalid
- * values to the database enum column and triggers the "data truncated" warning.
- */
+
 function isValidRole($role)
 {
     // normalize the user input

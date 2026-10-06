@@ -691,32 +691,27 @@ function hitungRepayment($nilaiDasar, $jenisKredit = null, array $options = []) 
 }
 
 /**
- * Check if No SK (application number) is unique
- * Prevents duplicate No SK entries in the database
- * 
- * USAGE for PPPK:
- * $unique = is_unique_no_sk($pdo, $no_sk);
- * if (!$unique) {
- *     throw new Exception("No SK sudah digunakan");
- * }
- * 
- * @param PDO $pdo Database connection
- * @param string $no_sk The No SK to check
- * @param int $excludeId Optional: exclude specific id_pengajuan (for updates)
- * @return bool True if unique, false if duplicate
+ * Check if No SK (application number) is unique for a specific employee type.
+ * Prevents duplicate No SK entries within the same type of credit.
  */
-function is_unique_no_sk(PDO $pdo, $no_sk, $excludeId = 0) {
+function is_unique_no_sk(PDO $pdo, $no_sk, $excludeId = 0, $jenisPekerjaan = null) {
     try {
-        $no_sk = trim((string)$no_sk);
-        
-        if (empty($no_sk)) {
+        $no_sk = normalizeNoSkValue((string)$no_sk);
+
+        if ($no_sk === '') {
             return false;
         }
 
-        // Check in pengajuan_kredit table (excluding finished/rejected ones)
-        $sql = "SELECT COUNT(*) FROM pengajuan_kredit WHERE UPPER(bidang_usaha) = UPPER(?) AND status_pengajuan NOT IN ('selesai', 'ditolak', 'batal')";
-        $params = [$no_sk];
-        
+        $sql = "SELECT COUNT(*) FROM pengajuan_kredit WHERE (UPPER(TRIM(COALESCE(bidang_usaha, ''))) = ? OR UPPER(TRIM(COALESCE(pppk_agunan_no_sk, ''))) = ?)";
+        $params = [$no_sk, $no_sk];
+
+        if ($jenisPekerjaan !== null && $jenisPekerjaan !== '') {
+            $sql .= " AND jenis_pekerjaan = ?";
+            $params[] = strtolower(trim((string)$jenisPekerjaan));
+        }
+
+        $sql .= " AND status_pengajuan NOT IN ('draft', 'revisi', 'revisi_diajukan', 'ditolak', 'selesai', 'batal')";
+
         if ($excludeId > 0) {
             $sql .= " AND id_pengajuan <> ?";
             $params[] = (int)$excludeId;
@@ -724,12 +719,97 @@ function is_unique_no_sk(PDO $pdo, $no_sk, $excludeId = 0) {
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        
+
         $count = (int)$stmt->fetchColumn();
         return $count == 0;
     } catch (Exception $e) {
-        // If query fails, assume not unique (fail-safe)
         return false;
+    }
+}
+
+/**
+ * Normalize nominal No SK value so same text with different spacing/case is treated the same.
+ */
+function normalizeNoSkValue($value): string {
+    return strtoupper(preg_replace('/\s+/', ' ', trim((string)($value ?? ''))));
+}
+
+/**
+ * Count how many valid PPPK/Perangkat Desa applications already use the same No SK,
+ * separated by jenis_pekerjaan to avoid cross-type counting.
+ *
+ * Statuses considered as valid usage are those still active or already finalized,
+ * while draft/revision/rejected/cancelled are excluded.
+ */
+function countValidPegawaiNoSkUsage(PDO $pdo, array $noSkValues, int $excludeId = 0, ?string $jenisPekerjaan = null): int {
+    $normalizedValues = [];
+    foreach ($noSkValues as $value) {
+        $normalized = normalizeNoSkValue($value);
+        if ($normalized !== '') {
+            $normalizedValues[] = $normalized;
+        }
+    }
+
+    if (empty($normalizedValues)) {
+        return 0;
+    }
+
+    $sql = "SELECT COUNT(*) FROM pengajuan_kredit WHERE jenis_pekerjaan IN ('pppk', 'perangkat_desa')";
+    if ($jenisPekerjaan !== null && $jenisPekerjaan !== '') {
+        $sql .= " AND jenis_pekerjaan = ?";
+    }
+
+    $sql .= " AND status_pengajuan NOT IN ('draft', 'revisi', 'revisi_diajukan', 'ditolak', 'batal')";
+    $sql .= " AND (";
+    $params = [];
+
+    if ($jenisPekerjaan !== null && $jenisPekerjaan !== '') {
+        $params[] = strtolower(trim((string)$jenisPekerjaan));
+    }
+
+    foreach ($normalizedValues as $index => $value) {
+        if ($index > 0) {
+            $sql .= ' OR ';
+        }
+        $sql .= "(UPPER(TRIM(COALESCE(bidang_usaha, ''))) = ? OR UPPER(TRIM(COALESCE(pppk_agunan_no_sk, ''))) = ?)";
+        $params[] = $value;
+        $params[] = $value;
+    }
+    $sql .= ")";
+
+    if ($excludeId > 0) {
+        $sql .= " AND id_pengajuan <> ?";
+        $params[] = (int)$excludeId;
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return (int) $stmt->fetchColumn();
+}
+
+/**
+ * Fail-safe validation: PPPK/Perangkat Desa can have max 5 active applications for the same No SK per jenis.
+ */
+function ensurePegawaiNoSkQuota(PDO $pdo, array $noSkValues, int $excludeId = 0, int $maxAllowed = 5, ?string $jenisPekerjaan = null): void {
+    $normalized = [];
+    foreach ($noSkValues as $value) {
+        $candidate = normalizeNoSkValue($value);
+        if ($candidate !== '') {
+            $normalized[] = $candidate;
+        }
+    }
+
+    if (empty($normalized)) {
+        return;
+    }
+
+    if ($jenisPekerjaan === null || $jenisPekerjaan === '') {
+        throw new InvalidArgumentException('Jenis pekerjaan wajib ditentukan untuk validasi kuota No SK pegawai.');
+    }
+
+    $count = countValidPegawaiNoSkUsage($pdo, $normalized, $excludeId, $jenisPekerjaan);
+    if ($count >= $maxAllowed) {
+        throw new Exception('No SK ini sudah dipakai pada ' . $count . ' pengajuan aktif untuk jenis ' . strtoupper($jenisPekerjaan) . '. Maksimal ' . $maxAllowed . ' pengajuan valid untuk No SK yang sama. Silakan gunakan No SK lain atau selesaikan pengajuan yang sudah ada.');
     }
 }
 
@@ -1143,14 +1223,7 @@ function fetch_data_analis_untuk_kepatuhan(PDO $pdo, $id_pengajuan) {
     }
 }
 
-/**
- * Validate data kepatuhan review
- * Pastikan semua data required ada sebelum kepatuhan membuat assessment
- * 
- * @param PDO $pdo Database connection
- * @param int $id_pengajuan ID pengajuan kredit
- * @return array Validation result dengan keys: valid, missing, warnings
- */
+
 function validate_data_analis_untuk_kepatuhan(PDO $pdo, $id_pengajuan) {
     $id_pengajuan = (int)$id_pengajuan;
     
