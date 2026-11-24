@@ -46,17 +46,29 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-    // Migrasi skema idempotent — di-throttle agar tidak membebani setiap request (tetap aman: skema akan dicek lagi setelah interval)
+    // Migrasi skema idempotent — di-throttle agar tidak membebani setiap request
     $logDir = __DIR__ . '/../logs';
     if (!is_dir($logDir)) {
         @mkdir($logDir, 0755, true);
     }
+    // Jika folder logs tidak writable (server permission), gunakan sys temp dir sebagai fallback
+    if (!is_writable($logDir)) {
+        $logDir = sys_get_temp_dir() . '/bankwonosobo_andrian';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+    }
     $schemaStamp = $logDir . '/.schema_ensure_stamp';
     $schemaIntervalSec = 90;
-    if (!is_file($schemaStamp) || (time() - filemtime($schemaStamp)) >= $schemaIntervalSec) {
+    // Gunakan file_put_contents sebagai fallback jika touch() tidak diizinkan oleh server
+    $needsRun = !is_file($schemaStamp) || (time() - @filemtime($schemaStamp)) >= $schemaIntervalSec;
+    if ($needsRun) {
         require_once __DIR__ . '/../includes/schema_realtime_migrate.php';
         bankKreditEnsureSchema($pdo);
-        @touch($schemaStamp);
+        // Coba touch() dulu; jika gagal (permission), coba file_put_contents; jika tetap gagal, abaikan saja
+        if (!@touch($schemaStamp)) {
+            @file_put_contents($schemaStamp, date('Y-m-d H:i:s'));
+        }
     }
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());

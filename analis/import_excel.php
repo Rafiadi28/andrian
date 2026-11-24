@@ -1,14 +1,9 @@
 <?php
-// Tangkap fatal error agar tidak blank 500
-set_error_handler(function ($severity, $message, $file, $line) {
-    throw new ErrorException($message, 0, $severity, $file, $line);
-});
-
-try {
-
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../helpers/AnalisisKreditImporter.php';
 requireSameRole('analis');
+
+try {
 
 // 1. ACTION: DOWNLOAD TEMPLATE RESMI
 if (isset($_GET['action']) && $_GET['action'] === 'download_template') {
