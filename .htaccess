@@ -24,6 +24,11 @@ ServerSignature Off
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+    # ── ROUTING: bank-kredit/ virtual prefix ──
+    # BASE_URL = '/andrian/bank-kredit' tetapi file fisik ada langsung di /andrian/
+    # Rewrite bank-kredit/xxx → xxx agar request bisa menemukan file PHP yang benar
+    RewriteRule ^bank-kredit/(.*)$ $1 [L]
+
     # Blokir folder config, logs, backups, docs
     RewriteRule ^config(/.*)?$  - [F,L]
     RewriteRule ^logs(/.*)?$    - [F,L]
