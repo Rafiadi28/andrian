@@ -126,7 +126,7 @@ if (isset($_GET['status']) && $_GET['status'] === 'success' && !empty($_SESSION[
 }
 
 // Ambil riwayat 8 import / draft pengajuan terakhir oleh analis ini
-$stmtHist = $pdo->prepare("SELECT id_pengajuan, nama_debitur, nik, jumlah_kredit, status_pengajuan, tanggal_analisa, created_at FROM pengajuan_kredit WHERE input_by = ? ORDER BY id_pengajuan DESC LIMIT 8");
+$stmtHist = $pdo->prepare("SELECT id_pengajuan, nama_debitur, nik, jumlah_kredit, status_pengajuan, tanggal_analisa, tanggal_pengajuan FROM pengajuan_kredit WHERE input_by = ? ORDER BY id_pengajuan DESC LIMIT 8");
 $stmtHist->execute([$_SESSION['user_id']]);
 $recentImports = $stmtHist->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -795,7 +795,7 @@ $recentImports = $stmtHist->fetchAll(PDO::FETCH_ASSOC);
                                                 <?= strtoupper(htmlspecialchars($row['status_pengajuan'])) ?>
                                             </span>
                                         </td>
-                                        <td><?= htmlspecialchars($row['tanggal_analisa'] ?? '-') ?></td>
+                                        <td><?= htmlspecialchars($row['tanggal_analisa'] ?? $row['tanggal_pengajuan'] ?? '-') ?></td>
                                         <td>
                                             <a href="input.php?id=<?= $row['id_pengajuan'] ?>" class="btn btn-primary" style="padding: 4px 10px; font-size: 0.85rem; text-decoration: none;">
                                                 Buka Form Analisis &rarr;
