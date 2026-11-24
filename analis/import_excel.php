@@ -1,4 +1,11 @@
 <?php
+// Tangkap fatal error agar tidak blank 500
+set_error_handler(function ($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+try {
+
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../helpers/AnalisisKreditImporter.php';
 requireSameRole('analis');
@@ -862,3 +869,19 @@ $recentImports = $stmtHist->fetchAll(PDO::FETCH_ASSOC);
     </script>
 </body>
 </html>
+<?php
+} catch (Throwable $e) {
+    // Jika terjadi fatal error, tampilkan pesan yang informatif
+    http_response_code(500);
+    $errMsg = htmlspecialchars($e->getMessage());
+    $errFile = htmlspecialchars($e->getFile());
+    $errLine = (int) $e->getLine();
+    error_log("IMPORT_EXCEL FATAL: {$e->getMessage()} in {$e->getFile()}:{$e->getLine()}");
+    echo "<!DOCTYPE html><html><head><title>Error</title></head><body>";
+    echo "<h2 style='color:#991b1b;'>Terjadi Kesalahan pada Import Excel</h2>";
+    echo "<p><strong>Pesan:</strong> {$errMsg}</p>";
+    echo "<p><strong>File:</strong> {$errFile} (baris {$errLine})</p>";
+    echo "<p><a href='import_excel.php'>← Kembali ke halaman Import</a></p>";
+    echo "</body></html>";
+}
+?>
