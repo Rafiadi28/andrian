@@ -94,6 +94,10 @@ $ico_edit        = navSvgIcon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-
                     <?= $ico_input ?> Input Pengajuan
                 </a>
             </div>
+
+            <a href="<?= BASE_URL ?>/analis/import_excel.php" class="<?= basename($_SERVER['PHP_SELF']) == 'import_excel.php' ? 'active' : '' ?>">
+                <?= $ico_doc ?> Import Excel Analisis
+            </a>
             <?php
             $analisNavQ = isset($ANALIS_INPUT_NAV_QUERY) ? $ANALIS_INPUT_NAV_QUERY : '';
             $pegawaiInputNav = isset($jenis_pekerjaan) && in_array($jenis_pekerjaan, ['pppk', 'perangkat_desa'], true);

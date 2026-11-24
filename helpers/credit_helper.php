@@ -139,67 +139,7 @@ function klasifikasi_6c($rata) {
     }
 }
 
-/* ===================================================================================================
- * [BACKUP] VERSI SEBELUM REVISI (LOGIKA HARDCODE 75%)
- * ===================================================================================================
- * Fungsi-fungsi di bawah ini merupakan fungsi asli sebelum dilakukan revisi untuk mendukung 
- * Repayment Capacity yang dapat di-custom dengan Model Approval Berjenjang.
- * Rollback dapat dilakukan sewaktu-waktu dengan mengaktifkan blok ini.
- *
- * /**
- *  * Calculate repayment capacity
- *  * FORMULA: Repayment = Gaji - (Pengeluaran + Angsuran Lain)
- *  * /
- * function hitung_repayment_old($gaji, $pengeluaran, $angsuran = 0) {
- *     $gaji = (float)($gaji ?? 0);
- *     $pengeluaran = (float)($pengeluaran ?? 0);
- *     $angsuran = (float)($angsuran ?? 0);
- *     $repayment = $gaji - ($pengeluaran + $angsuran);
- *     return $repayment;
- * }
- *
- * /**
- *  * Classify repayment capacity quality
- *  * RULES: >= 95% Sangat Layak, >= 75% Layak, dst.
- *  * /
- * function klasifikasi_repayment_old($nilai, $gaji = null) {
- *     $nilai = (float)$nilai;
- *     if ($gaji !== null) {
- *         $gaji = (float)$gaji;
- *         if ($gaji <= 0) return "Tidak Layak";
- *         $persen = ($nilai / $gaji) * 100;
- *     } else {
- *         $persen = $nilai;
- *     }
- *     if ($persen >= 95) return "Sangat Layak";
- *     elseif ($persen >= 75) return "Layak";
- *     elseif ($persen >= 50) return "Cukup";
- *     else return "Tidak Layak";
- * }
- *
- * /**
- *  * Calculate Repayment Capacity with standard multiplier
- *  * FORMULA: Repayment Capacity = Penghasilan Bersih × 0.75
- *  * /
- * function hitungRepayment_old($penghasilanBersih) {
- *     $penghasilanBersih = (float)($penghasilanBersih ?? 0);
- *     return $penghasilanBersih * 0.75;
- * }
- * =================================================================================================== */
 
-/**
- * Calculate repayment capacity
- * 
- * FORMULA: Repayment = Gaji - (Pengeluaran + Angsuran Lain)
- * 
- * This represents the remaining income after all fixed expenses
- * and other obligations are deducted.
- * 
- * @param float $gaji Monthly income
- * @param float $pengeluaran Monthly expenses
- * @param float $angsuran Other monthly installments (optional, default 0)
- * @return float|null Repayment capacity, or null if invalid
- */
 function hitung_repayment($gaji, $pengeluaran, $angsuran = 0) {
     $gaji = (float)($gaji ?? 0);
     $pengeluaran = (float)($pengeluaran ?? 0);

@@ -840,7 +840,13 @@ $PREFILL_JSON_OUT = $prefill_json ?? 'null';
                 <button type="button" class="btn btn-secondary" onclick="if (document.referrer) { history.back(); } else { window.location.href = 'dashboard.php'; }">← Kembali</button>
                 <h2 style="margin:0;">Input Analisa Kredit</h2>
             </div>
-            <a href="riwayat.php" class="btn btn-secondary">Lihat Riwayat</a>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <a href="import_excel.php" class="btn" style="background:#1b365d;color:#ffffff;display:inline-flex;align-items:center;gap:0.4rem;font-weight:600;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"></path></svg>
+                    Import dari Excel
+                </a>
+                <a href="riwayat.php" class="btn btn-secondary">Lihat Riwayat</a>
+            </div>
         </div>
 
         <?php if ($FORM_BANNER !== ''): ?>

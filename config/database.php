@@ -34,7 +34,15 @@ if (!defined('BK_PRODUCTION')) {
 }
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
+    try {
+        $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
+    } catch (PDOException $ex) {
+        if ($pass !== '') {
+            $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, '');
+        } else {
+            throw $ex;
+        }
+    }
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
